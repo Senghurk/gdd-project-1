@@ -23,9 +23,14 @@ public class SpeedUp extends PowerUp {
     }
 
     public void act() {
-        // SpeedUp specific behavior can be added here
-        // For now, it just moves down the screen
-        this.y += 2; // Move down by 2 pixel each frame
+        // SpeedUp specific behavior for sideways gameplay
+        // Move from right to left like enemies
+        this.x -= 2; // Move left by 2 pixels each frame
+        
+        // Remove power-up if it goes off the left side of the screen
+        if (this.x < -50) {
+            this.die();
+        }
     }
 
     public void upgrade(Player player) {

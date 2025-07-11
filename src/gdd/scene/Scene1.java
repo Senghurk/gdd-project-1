@@ -57,34 +57,26 @@ public class Scene1 extends JPanel {
 
     private int currentRow = -1;
     // TODO load this map from a file
-    private int mapOffset = 0;
-    private final int[][] MAP = {
-        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0},
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0},
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0},
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0},
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0},
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0},
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}
-    };
+    // Replace MAP array with dynamic star generation
+    private List<Star> stars = new ArrayList<>();
 
+    // Star class for random background stars
+    private static class Star {
+        int x, y, size, speed;
+        Color color;
+        
+        public Star(int x, int y, int size, int speed, Color color) {
+            this.x = x;
+            this.y = y;
+            this.size = size;
+            this.speed = speed;
+            this.color = color;
+        }
+    }
+
+    // Remove the old MAP array - replace with dynamic star generation
+    // The MAP array is no longer used with the new star field system
+    
     private HashMap<Integer, SpawnDetails> spawnMap = new HashMap<>();
     private AudioPlayer audioPlayer;
     private int lastRowToShow;
@@ -109,19 +101,20 @@ public class Scene1 extends JPanel {
 
     private void loadSpawnDetails() {
         // TODO load this from a file
-        spawnMap.put(50, new SpawnDetails("PowerUp-SpeedUp", 100, 0));
-        spawnMap.put(200, new SpawnDetails("Alien1", 200, 0));
-        spawnMap.put(300, new SpawnDetails("Alien1", 300, 0));
+        // For sideways gameplay, spawn enemies from the right side (x = BOARD_WIDTH) with varying y positions
+        spawnMap.put(50, new SpawnDetails("PowerUp-SpeedUp", BOARD_WIDTH - 50, 100));
+        spawnMap.put(200, new SpawnDetails("Alien1", BOARD_WIDTH - 50, 200));
+        spawnMap.put(300, new SpawnDetails("Alien1", BOARD_WIDTH - 50, 300));
 
-        spawnMap.put(400, new SpawnDetails("Alien1", 400, 0));
-        spawnMap.put(401, new SpawnDetails("Alien1", 450, 0));
-        spawnMap.put(402, new SpawnDetails("Alien1", 500, 0));
-        spawnMap.put(403, new SpawnDetails("Alien1", 550, 0));
+        spawnMap.put(400, new SpawnDetails("Alien1", BOARD_WIDTH - 50, 100));
+        spawnMap.put(401, new SpawnDetails("Alien1", BOARD_WIDTH - 50, 150));
+        spawnMap.put(402, new SpawnDetails("Alien1", BOARD_WIDTH - 50, 200));
+        spawnMap.put(403, new SpawnDetails("Alien1", BOARD_WIDTH - 50, 250));
 
-        spawnMap.put(500, new SpawnDetails("Alien1", 100, 0));
-        spawnMap.put(501, new SpawnDetails("Alien1", 150, 0));
-        spawnMap.put(502, new SpawnDetails("Alien1", 200, 0));
-        spawnMap.put(503, new SpawnDetails("Alien1", 350, 0));
+        spawnMap.put(500, new SpawnDetails("Alien1", BOARD_WIDTH - 50, 300));
+        spawnMap.put(501, new SpawnDetails("Alien1", BOARD_WIDTH - 50, 350));
+        spawnMap.put(502, new SpawnDetails("Alien1", BOARD_WIDTH - 50, 400));
+        spawnMap.put(503, new SpawnDetails("Alien1", BOARD_WIDTH - 50, 450));
     }
 
     private void initBoard() {
@@ -159,6 +152,9 @@ public class Scene1 extends JPanel {
         explosions = new ArrayList<>();
         shots = new ArrayList<>();
 
+        // Initialize the star field for background
+        initStarField();
+
         // for (int i = 0; i < 4; i++) {
         // for (int j = 0; j < 6; j++) {
         // var enemy = new Enemy(ALIEN_INIT_X + (ALIEN_WIDTH + ALIEN_GAP) * j,
@@ -170,65 +166,18 @@ public class Scene1 extends JPanel {
         // shot = new Shot();
     }
 
-    private void drawMap(Graphics g) {
-        // Draw scrolling starfield background
-
-        // Calculate smooth scrolling offset (1 pixel per frame)
-        int scrollOffset = (frame) % BLOCKHEIGHT;
-
-        // Calculate which rows to draw based on screen position
-        int baseRow = (frame) / BLOCKHEIGHT;
-        int rowsNeeded = (BOARD_HEIGHT / BLOCKHEIGHT) + 2; // +2 for smooth scrolling
-
-        // Loop through rows that should be visible on screen
-        for (int screenRow = 0; screenRow < rowsNeeded; screenRow++) {
-            // Calculate which MAP row to use (with wrapping)
-            int mapRow = (baseRow + screenRow) % MAP.length;
-
-            // Calculate Y position for this row
-            // int y = (screenRow * BLOCKHEIGHT) - scrollOffset;
-            int y = BOARD_HEIGHT - ( (screenRow * BLOCKHEIGHT) - scrollOffset );
-
-            // Skip if row is completely off-screen
-            if (y > BOARD_HEIGHT || y < -BLOCKHEIGHT) {
-                continue;
-            }
-
-            // Draw each column in this row
-            for (int col = 0; col < MAP[mapRow].length; col++) {
-                if (MAP[mapRow][col] == 1) {
-                    // Calculate X position
-                    int x = col * BLOCKWIDTH;
-
-                    // Draw a cluster of stars
-                    drawStarCluster(g, x, y, BLOCKWIDTH, BLOCKHEIGHT);
-                }
+    private void drawStarField(Graphics g) {
+        // Draw the scrolling star field
+        for (Star star : stars) {
+            g.setColor(star.color);
+            g.fillOval(star.x, star.y, star.size, star.size);
+            
+            // Add a subtle glow effect for larger stars
+            if (star.size > 1) {
+                g.setColor(new Color(star.color.getRed(), star.color.getGreen(), star.color.getBlue(), 50));
+                g.fillOval(star.x - 1, star.y - 1, star.size + 2, star.size + 2);
             }
         }
-
-    }
-
-    private void drawStarCluster(Graphics g, int x, int y, int width, int height) {
-        // Set star color to white
-        g.setColor(Color.WHITE);
-
-        // Draw multiple stars in a cluster pattern
-        // Main star (larger)
-        int centerX = x + width / 2;
-        int centerY = y + height / 2;
-        g.fillOval(centerX - 2, centerY - 2, 4, 4);
-
-        // Smaller surrounding stars
-        g.fillOval(centerX - 15, centerY - 10, 2, 2);
-        g.fillOval(centerX + 12, centerY - 8, 2, 2);
-        g.fillOval(centerX - 8, centerY + 12, 2, 2);
-        g.fillOval(centerX + 10, centerY + 15, 2, 2);
-
-        // Tiny stars for more detail
-        g.fillOval(centerX - 20, centerY + 5, 1, 1);
-        g.fillOval(centerX + 18, centerY - 15, 1, 1);
-        g.fillOval(centerX - 5, centerY - 18, 1, 1);
-        g.fillOval(centerX + 8, centerY + 20, 1, 1);
     }
 
     private void drawAliens(Graphics g) {
@@ -289,12 +238,16 @@ public class Scene1 extends JPanel {
 
     private void drawBombing(Graphics g) {
 
-        // for (Enemy e : enemies) {
-        //     Enemy.Bomb b = e.getBomb();
-        //     if (!b.isDestroyed()) {
-        //         g.drawImage(b.getImage(), b.getX(), b.getY(), this);
-        //     }
-        // }
+        for (Enemy e : enemies) {
+            // Only Alien1 has bombs
+            if (e instanceof Alien1) {
+                Alien1 alien = (Alien1) e;
+                Alien1.Bomb b = alien.getBomb();
+                if (!b.isDestroyed()) {
+                    g.drawImage(b.getImage(), b.getX(), b.getY(), this);
+                }
+            }
+        }
     }
 
     private void drawExplosions(Graphics g) {
@@ -334,12 +287,13 @@ public class Scene1 extends JPanel {
 
         if (inGame) {
 
-            drawMap(g);  // Draw background stars first
+            drawStarField(g);  // Draw background stars first
             drawExplosions(g);
             drawPowreUps(g);
             drawAliens(g);
             drawPlayer(g);
             drawShot(g);
+            drawBombing(g); // Draw enemy bombs
 
         } else {
 
@@ -370,10 +324,19 @@ public class Scene1 extends JPanel {
         g.setFont(small);
         g.drawString(message, (BOARD_WIDTH - fontMetrics.stringWidth(message)) / 2,
                 BOARD_WIDTH / 2);
+
+        // Add restart instruction
+        g.setColor(Color.yellow);
+        g.setFont(g.getFont().deriveFont(12f));
+        String restartText = "Press R to Restart";
+        int restartWidth = g.getFontMetrics().stringWidth(restartText);
+        g.drawString(restartText, (BOARD_WIDTH - restartWidth) / 2, BOARD_WIDTH / 2 + 30);
     }
 
     private void update() {
 
+        // Update background stars
+        updateStarField();
 
         // Check enemy spawn
         // TODO this approach can only spawn one enemy at a frame
@@ -424,6 +387,11 @@ public class Scene1 extends JPanel {
         for (Enemy enemy : enemies) {
             if (enemy.isVisible()) {
                 enemy.act(direction);
+                // Check if enemy has gone off the left side of the screen
+                if (enemy.getX() < -50) { // Give some buffer for image width
+                    inGame = false;
+                    message = "Invasion!";
+                }
             }
         }
 
@@ -432,39 +400,29 @@ public class Scene1 extends JPanel {
         for (Shot shot : shots) {
 
             if (shot.isVisible()) {
-                int shotX = shot.getX();
-                int shotY = shot.getY();
-
+                shot.act(); // Update shot position using its movement logic
+                
                 for (Enemy enemy : enemies) {
-                    // Collision detection: shot and enemy
-                    int enemyX = enemy.getX();
-                    int enemyY = enemy.getY();
-
-                    if (enemy.isVisible() && shot.isVisible()
-                            && shotX >= (enemyX)
-                            && shotX <= (enemyX + ALIEN_WIDTH)
-                            && shotY >= (enemyY)
-                            && shotY <= (enemyY + ALIEN_HEIGHT)) {
+                    // Use proper rectangle-to-rectangle collision detection
+                    if (enemy.isVisible() && shot.isVisible() && shot.collidesWith(enemy)) {
 
                         var ii = new ImageIcon(IMG_EXPLOSION);
                         enemy.setImage(ii.getImage());
                         enemy.setDying(true);
-                        explosions.add(new Explosion(enemyX, enemyY));
+                        explosions.add(new Explosion(enemy.getX(), enemy.getY()));
                         deaths++;
                         shot.die();
                         shotsToRemove.add(shot);
+                        break; // Exit inner loop since shot is destroyed
                     }
                 }
 
-                int y = shot.getY();
-                // y -= 4;
-                y -= 20;
-
-                if (y < 0) {
+                int x = shot.getX();
+                // Remove old shot movement code since Shot.act() now handles movement
+                // For sideways gameplay, remove shots that go off the right side
+                if (x > BOARD_WIDTH) {
                     shot.die();
                     shotsToRemove.add(shot);
-                } else {
-                    shot.setY(y);
                 }
             }
         }
@@ -498,44 +456,59 @@ public class Scene1 extends JPanel {
         // }
         // bombs - collision detection
         // Bomb is with enemy, so it loops over enemies
-        /*
         for (Enemy enemy : enemies) {
 
             int chance = randomizer.nextInt(15);
-            Enemy.Bomb bomb = enemy.getBomb();
+            
+            // Only Alien1 has bombs, so check if it's an Alien1
+            if (enemy instanceof Alien1) {
+                Alien1 alien = (Alien1) enemy;
+                Alien1.Bomb bomb = alien.getBomb();
 
-            if (chance == CHANCE && enemy.isVisible() && bomb.isDestroyed()) {
+                if (chance == CHANCE && enemy.isVisible() && bomb.isDestroyed()) {
 
-                bomb.setDestroyed(false);
-                bomb.setX(enemy.getX());
-                bomb.setY(enemy.getY());
-            }
+                    bomb.setDestroyed(false);
+                    bomb.setX(enemy.getX());
+                    bomb.setY(enemy.getY());
+                }
 
-            int bombX = bomb.getX();
-            int bombY = bomb.getY();
-            int playerX = player.getX();
-            int playerY = player.getY();
+                int bombX = bomb.getX();
+                int bombY = bomb.getY();
+                int playerX = player.getX();
+                int playerY = player.getY();
 
-            if (player.isVisible() && !bomb.isDestroyed()
-                    && bombX >= (playerX)
-                    && bombX <= (playerX + PLAYER_WIDTH)
-                    && bombY >= (playerY)
-                    && bombY <= (playerY + PLAYER_HEIGHT)) {
+                if (player.isVisible() && !bomb.isDestroyed()
+                        && bombX >= (playerX)
+                        && bombX <= (playerX + PLAYER_WIDTH)
+                        && bombY >= (playerY)
+                        && bombY <= (playerY + PLAYER_HEIGHT)) {
 
-                var ii = new ImageIcon(IMG_EXPLOSION);
-                player.setImage(ii.getImage());
-                player.setDying(true);
-                bomb.setDestroyed(true);
-            }
-
-            if (!bomb.isDestroyed()) {
-                bomb.setY(bomb.getY() + 1);
-                if (bomb.getY() >= GROUND - BOMB_HEIGHT) {
+                    var ii = new ImageIcon(IMG_EXPLOSION);
+                    player.setImage(ii.getImage());
+                    player.setDying(true);
                     bomb.setDestroyed(true);
+                    explosions.add(new Explosion(playerX, playerY));
+                    inGame = false;
+                    message = "Game Over!";
+                }
+
+                if (!bomb.isDestroyed()) {
+                    bomb.act(); // Use bomb's act method for movement
+                    // For sideways gameplay, remove bombs that go off the left side
+                    if (bomb.getX() < 0) {
+                        bomb.setDestroyed(true);
+                    }
                 }
             }
         }
-         */
+        
+        // Update explosions
+        for (Explosion explosion : explosions) {
+            explosion.act(); // Handle explosion animation lifecycle
+        }
+        
+        // Remove completed explosions
+        explosions.removeIf(explosion -> !explosion.isVisible());
     }
 
     private void doGameCycle() {
@@ -556,29 +529,125 @@ public class Scene1 extends JPanel {
 
         @Override
         public void keyReleased(KeyEvent e) {
-            player.keyReleased(e);
+            // Only handle player key releases when game is running
+            if (inGame) {
+                player.keyReleased(e);
+            }
         }
 
         @Override
         public void keyPressed(KeyEvent e) {
             System.out.println("Scene2.keyPressed: " + e.getKeyCode());
 
-            player.keyPressed(e);
-
-            int x = player.getX();
-            int y = player.getY();
-
             int key = e.getKeyCode();
 
-            if (key == KeyEvent.VK_SPACE && inGame) {
-                System.out.println("Shots: " + shots.size());
-                if (shots.size() < 4) {
-                    // Create a new shot and add it to the list
-                    Shot shot = new Shot(x, y);
-                    shots.add(shot);
-                }
+            // Handle restart when game is over
+            if (!inGame && key == KeyEvent.VK_R) {
+                restartGame();
+                return;
             }
 
+            // Only handle player controls when game is running
+            if (inGame) {
+                player.keyPressed(e);
+
+                int x = player.getX();
+                int y = player.getY();
+
+                if (key == KeyEvent.VK_SPACE) {
+                    System.out.println("Shots: " + shots.size());
+                    if (shots.size() < 4) {
+                        // Create a new shot and add it to the list
+                        Shot shot = new Shot(x, y);
+                        shots.add(shot);
+                    }
+                }
+            }
         }
+    }
+
+    private void initStarField() {
+        // Initialize random stars across the screen
+        for (int i = 0; i < 100; i++) {
+            int x = randomizer.nextInt(BOARD_WIDTH + 200); // Start some stars off-screen
+            int y = randomizer.nextInt(BOARD_HEIGHT);
+            int size = randomizer.nextInt(3) + 1; // Stars size 1-3
+            int speed = 1; // All stars move at the same slow speed
+            
+            // Create different colored stars
+            Color color = Color.WHITE;
+            int colorChoice = randomizer.nextInt(10);
+            if (colorChoice < 7) {
+                color = Color.WHITE;
+            } else if (colorChoice < 9) {
+                color = new Color(200, 200, 255); // Light blue
+            } else {
+                color = new Color(255, 255, 200); // Light yellow
+            }
+            
+            stars.add(new Star(x, y, size, speed, color));
+        }
+    }
+
+    private void updateStarField() {
+        // Move stars from right to left (simulating forward movement)
+        for (Star star : stars) {
+            star.x -= star.speed;
+            
+            // If star goes off the left side, respawn it on the right side
+            if (star.x < -10) {
+                star.x = BOARD_WIDTH + randomizer.nextInt(100);
+                star.y = randomizer.nextInt(BOARD_HEIGHT);
+            }
+        }
+        
+        // Occasionally add new stars from the right
+        if (randomizer.nextInt(20) == 0) {
+            int y = randomizer.nextInt(BOARD_HEIGHT);
+            int size = randomizer.nextInt(3) + 1;
+            int speed = 1; // All new stars also move at speed 1
+            
+            Color color = Color.WHITE;
+            int colorChoice = randomizer.nextInt(10);
+            if (colorChoice < 7) {
+                color = Color.WHITE;
+            } else if (colorChoice < 9) {
+                color = new Color(200, 200, 255);
+            } else {
+                color = new Color(255, 255, 200);
+            }
+            
+            stars.add(new Star(BOARD_WIDTH + 10, y, size, speed, color));
+        }
+        
+        // Remove excess stars to prevent memory issues
+        if (stars.size() > 150) {
+            stars.remove(0);
+        }
+    }
+
+    private void restartGame() {
+        // Reset game state
+        inGame = true;
+        deaths = 0;
+        frame = 0;
+        message = "Game Over";
+
+        // Clear all game objects
+        enemies.clear();
+        powerups.clear();
+        explosions.clear();
+        shots.clear();
+        stars.clear();
+
+        // Reinitialize everything
+        gameInit();
+
+        // Restart timer if it was stopped
+        if (!timer.isRunning()) {
+            timer.start();
+        }
+
+        System.out.println("Game restarted!");
     }
 }

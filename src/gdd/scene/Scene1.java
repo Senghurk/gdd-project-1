@@ -6,7 +6,9 @@ import static gdd.Global.*;
 import gdd.SpawnDetails;
 import gdd.powerup.PowerUp;
 import gdd.powerup.SpeedUp;
+import gdd.powerup.MultiShotPowerUp;
 import gdd.sprite.Alien1;
+import gdd.sprite.Alien2;
 import gdd.sprite.Enemy;
 import gdd.sprite.Explosion;
 import gdd.sprite.Player;
@@ -115,6 +117,19 @@ public class Scene1 extends JPanel {
         spawnMap.put(501, new SpawnDetails("Alien1", BOARD_WIDTH - 50, 350));
         spawnMap.put(502, new SpawnDetails("Alien1", BOARD_WIDTH - 50, 400));
         spawnMap.put(503, new SpawnDetails("Alien1", BOARD_WIDTH - 50, 450));
+        
+        // Add Alien2 enemies and MultiShot powerup
+        spawnMap.put(250, new SpawnDetails("PowerUp-MultiShot", BOARD_WIDTH - 50, 250));
+        spawnMap.put(600, new SpawnDetails("Alien2", BOARD_WIDTH - 50, 150));
+        spawnMap.put(650, new SpawnDetails("Alien2", BOARD_WIDTH - 50, 350));
+        spawnMap.put(700, new SpawnDetails("Alien2", BOARD_WIDTH - 50, 250));
+        
+        // More varied spawns for extended gameplay
+        spawnMap.put(800, new SpawnDetails("Alien1", BOARD_WIDTH - 50, 100));
+        spawnMap.put(850, new SpawnDetails("Alien2", BOARD_WIDTH - 50, 200));
+        spawnMap.put(900, new SpawnDetails("PowerUp-SpeedUp", BOARD_WIDTH - 50, 300));
+        spawnMap.put(950, new SpawnDetails("Alien1", BOARD_WIDTH - 50, 400));
+        spawnMap.put(1000, new SpawnDetails("Alien2", BOARD_WIDTH - 50, 150));
     }
 
     private void initBoard() {
@@ -348,15 +363,17 @@ public class Scene1 extends JPanel {
                     Enemy enemy = new Alien1(sd.x, sd.y);
                     enemies.add(enemy);
                     break;
-                // Add more cases for different enemy types if needed
                 case "Alien2":
-                    // Enemy enemy2 = new Alien2(sd.x, sd.y);
-                    // enemies.add(enemy2);
+                    Enemy enemy2 = new Alien2(sd.x, sd.y);
+                    enemies.add(enemy2);
                     break;
                 case "PowerUp-SpeedUp":
-                    // Handle speed up item spawn
                     PowerUp speedUp = new SpeedUp(sd.x, sd.y);
                     powerups.add(speedUp);
+                    break;
+                case "PowerUp-MultiShot":
+                    PowerUp multiShot = new MultiShotPowerUp(sd.x, sd.y);
+                    powerups.add(multiShot);
                     break;
                 default:
                     System.out.println("Unknown enemy type: " + sd.type);
@@ -557,9 +574,19 @@ public class Scene1 extends JPanel {
                 if (key == KeyEvent.VK_SPACE) {
                     System.out.println("Shots: " + shots.size());
                     if (shots.size() < 4) {
-                        // Create a new shot and add it to the list
+                        // Create primary shot
                         Shot shot = new Shot(x, y);
                         shots.add(shot);
+                        
+                        // Create additional shots if player has multishot active
+                        if (player.hasMultishot()) {
+                            int extraShots = player.getExtraShots();
+                            for (int i = 1; i <= extraShots && shots.size() < 4; i++) {
+                                // Create shots with slight Y offset for spread effect
+                                Shot extraShot = new Shot(x, y + (i * 15) - (extraShots * 7));
+                                shots.add(extraShot);
+                            }
+                        }
                     }
                 }
             }

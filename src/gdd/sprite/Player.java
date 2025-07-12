@@ -14,6 +14,10 @@ public class Player extends Sprite {
     private static final int START_Y = 270; // Center vertically
     private int width;
     private int currentSpeed = 2;
+    
+    // MultiShot powerup variables
+    private int multishotFramesRemaining = 0;
+    private int extraShots = 0;
 
     private Rectangle bounds = new Rectangle(175,135,17,32);
 
@@ -104,6 +108,14 @@ public class Player extends Sprite {
         if (y >= BOARD_HEIGHT - 2 * width) {
             y = BOARD_HEIGHT - 2 * width;
         }
+        
+        // Update multishot timer
+        if (multishotFramesRemaining > 0) {
+            multishotFramesRemaining--;
+            if (multishotFramesRemaining == 0) {
+                extraShots = 0; // Reset extra shots when timer expires
+            }
+        }
     }
 
     public void act(int direction) {
@@ -133,5 +145,22 @@ public class Player extends Sprite {
         if (key == KeyEvent.VK_DOWN) {
             dx = 0;
         }
+    }
+    
+    public void activateMultishot(int duration, int shots) {
+        this.multishotFramesRemaining = duration;
+        this.extraShots = shots;
+    }
+    
+    public boolean hasMultishot() {
+        return multishotFramesRemaining > 0 && extraShots > 0;
+    }
+    
+    public int getExtraShots() {
+        return extraShots;
+    }
+    
+    public int getMultishotFramesRemaining() {
+        return multishotFramesRemaining;
     }
 }

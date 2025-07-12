@@ -25,9 +25,14 @@ public class Explosion extends Sprite {
         setImage(scaledImage);
     }
 
-    public void act(int direction) {
+    public void act() {
+        // Explosions typically don't move, so this can be empty or call visibleCountDown()
+        visibleCountDown();
+    }
 
-        // this.x += direction;
+    public void act(int direction) {
+        // Explosions don't move based on direction, just call act()
+        act();
     }
 
 

@@ -29,8 +29,11 @@ public class Enemy extends Sprite {
     }
 
     public void act(int direction) {
+        this.x -= Math.abs(direction); // Move leftward regardless of direction sign
+    }
 
-        this.x += direction;
+    public void act() {
+        act(1); // Default direction for autonomous movement
     }
 /* 
     public Bomb getBomb() {

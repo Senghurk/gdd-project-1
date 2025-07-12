@@ -163,4 +163,9 @@ public class Player extends Sprite {
     public int getMultishotFramesRemaining() {
         return multishotFramesRemaining;
     }
+    
+    public int getMaxShots() {
+        // Base limit is 4, but increase to 8 when multishot is active
+        return hasMultishot() ? 8 : 4;
+    }
 }

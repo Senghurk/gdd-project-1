@@ -47,6 +47,10 @@ public class Scene1 extends JPanel {
 
     private int direction = -1;
     private int deaths = 0;
+    private int score = 0;
+    private int lives = 3;
+    private int gameTimeSeconds = 0;
+    private int framesSinceLastSecond = 0;
 
     private boolean inGame = true;
     private String message = "Game Over";
@@ -130,6 +134,78 @@ public class Scene1 extends JPanel {
         spawnMap.put(900, new SpawnDetails("PowerUp-SpeedUp", BOARD_WIDTH - 50, 300));
         spawnMap.put(950, new SpawnDetails("Alien1", BOARD_WIDTH - 50, 400));
         spawnMap.put(1000, new SpawnDetails("Alien2", BOARD_WIDTH - 50, 150));
+        
+        // 5-minute gameplay (18000 frames at 60fps)
+        // Phase 1: Minutes 1-2 (frames 1000-7200) - Moderate difficulty
+        generatePhase1Spawns();
+        
+        // Phase 2: Minutes 2-4 (frames 7200-14400) - Increased difficulty  
+        generatePhase2Spawns();
+        
+        // Phase 3: Minutes 4-5 (frames 14400-18000) - High difficulty
+        generatePhase3Spawns();
+    }
+
+    private void generatePhase1Spawns() {
+        // Phase 1: Frames 1200-7200 (Minutes 1-2) - Moderate difficulty
+        for (int frame = 1200; frame <= 7200; frame += 120) { // Every 2 seconds
+            int y = 100 + randomizer.nextInt(400); // Random Y position
+            if (frame % 600 == 0) { // Every 10 seconds add powerup
+                String powerupType = randomizer.nextBoolean() ? "PowerUp-SpeedUp" : "PowerUp-MultiShot";
+                spawnMap.put(frame, new SpawnDetails(powerupType, BOARD_WIDTH - 50, y));
+            } else {
+                String enemyType = randomizer.nextInt(3) == 0 ? "Alien2" : "Alien1"; // 33% Alien2
+                spawnMap.put(frame, new SpawnDetails(enemyType, BOARD_WIDTH - 50, y));
+            }
+        }
+    }
+    
+    private void generatePhase2Spawns() {
+        // Phase 2: Frames 7200-14400 (Minutes 2-4) - Increased difficulty
+        for (int frame = 7200; frame <= 14400; frame += 90) { // Every 1.5 seconds
+            int y = 100 + randomizer.nextInt(400);
+            if (frame % 480 == 0) { // Every 8 seconds add powerup
+                String powerupType = randomizer.nextBoolean() ? "PowerUp-SpeedUp" : "PowerUp-MultiShot";
+                spawnMap.put(frame, new SpawnDetails(powerupType, BOARD_WIDTH - 50, y));
+            } else {
+                String enemyType = randomizer.nextInt(2) == 0 ? "Alien2" : "Alien1"; // 50% Alien2
+                spawnMap.put(frame, new SpawnDetails(enemyType, BOARD_WIDTH - 50, y));
+                
+                // Sometimes spawn double enemies
+                if (randomizer.nextInt(4) == 0) {
+                    int y2 = 100 + randomizer.nextInt(400);
+                    spawnMap.put(frame + 5, new SpawnDetails(enemyType, BOARD_WIDTH - 50, y2));
+                }
+            }
+        }
+    }
+    
+    private void generatePhase3Spawns() {
+        // Phase 3: Frames 14400-18000 (Minutes 4-5) - High difficulty
+        for (int frame = 14400; frame <= 18000; frame += 60) { // Every 1 second
+            int y = 100 + randomizer.nextInt(400);
+            if (frame % 360 == 0) { // Every 6 seconds add powerup
+                String powerupType = randomizer.nextBoolean() ? "PowerUp-SpeedUp" : "PowerUp-MultiShot";
+                spawnMap.put(frame, new SpawnDetails(powerupType, BOARD_WIDTH - 50, y));
+            } else {
+                String enemyType = randomizer.nextInt(3) < 2 ? "Alien2" : "Alien1"; // 66% Alien2
+                spawnMap.put(frame, new SpawnDetails(enemyType, BOARD_WIDTH - 50, y));
+                
+                // Frequently spawn multiple enemies
+                if (randomizer.nextInt(3) == 0) {
+                    int y2 = 100 + randomizer.nextInt(400);
+                    spawnMap.put(frame + 10, new SpawnDetails(enemyType, BOARD_WIDTH - 50, y2));
+                    
+                    if (randomizer.nextBoolean()) {
+                        int y3 = 100 + randomizer.nextInt(400);
+                        spawnMap.put(frame + 20, new SpawnDetails("Alien2", BOARD_WIDTH - 50, y3));
+                    }
+                }
+            }
+        }
+        
+        // Victory condition check at 5 minutes
+        spawnMap.put(18000, new SpawnDetails("VICTORY", 0, 0));
     }
 
     private void initBoard() {
@@ -283,6 +359,43 @@ public class Scene1 extends JPanel {
         explosions.removeAll(toRemove);
     }
 
+    private void drawDashboard(Graphics g) {
+        // Dashboard background
+        g.setColor(new Color(0, 0, 0, 150)); // Semi-transparent black
+        g.fillRect(0, 0, BOARD_WIDTH, 60);
+        
+        g.setColor(Color.white);
+        g.setFont(g.getFont().deriveFont(14f));
+        
+        // Score
+        g.drawString("Score: " + score, 10, 20);
+        
+        // Lives
+        g.drawString("Lives: " + lives, 10, 40);
+        
+        // Time
+        int minutes = gameTimeSeconds / 60;
+        int seconds = gameTimeSeconds % 60;
+        g.drawString(String.format("Time: %d:%02d", minutes, seconds), 150, 20);
+        
+        // Shots info
+        int maxShots = player.getMaxShots();
+        g.drawString("Shots: " + shots.size() + "/" + maxShots, 150, 40);
+        
+        // Powerup status
+        if (player.hasMultishot()) {
+            int remainingSeconds = player.getMultishotFramesRemaining() / 60;
+            g.setColor(Color.yellow);
+            g.drawString("MULTISHOT: " + remainingSeconds + "s", 300, 20);
+        }
+        
+        // Speed status
+        if (player.getSpeed() > 2) {
+            g.setColor(Color.cyan);
+            g.drawString("SPEED BOOST: " + player.getSpeed(), 300, 40);
+        }
+    }
+
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
@@ -309,6 +422,7 @@ public class Scene1 extends JPanel {
             drawPlayer(g);
             drawShot(g);
             drawBombing(g); // Draw enemy bombs
+            drawDashboard(g); // Draw dashboard on top
 
         } else {
 
@@ -350,6 +464,13 @@ public class Scene1 extends JPanel {
 
     private void update() {
 
+        // Update game timer
+        framesSinceLastSecond++;
+        if (framesSinceLastSecond >= 60) { // 60 FPS
+            gameTimeSeconds++;
+            framesSinceLastSecond = 0;
+        }
+
         // Update background stars
         updateStarField();
 
@@ -374,6 +495,11 @@ public class Scene1 extends JPanel {
                 case "PowerUp-MultiShot":
                     PowerUp multiShot = new MultiShotPowerUp(sd.x, sd.y);
                     powerups.add(multiShot);
+                    break;
+                case "VICTORY":
+                    // Player survived 5 minutes!
+                    inGame = false;
+                    message = "Stage 1 Complete! You survived 5 minutes!";
                     break;
                 default:
                     System.out.println("Unknown enemy type: " + sd.type);
@@ -428,6 +554,14 @@ public class Scene1 extends JPanel {
                         enemy.setDying(true);
                         explosions.add(new Explosion(enemy.getX(), enemy.getY()));
                         deaths++;
+                        
+                        // Add score based on enemy type
+                        if (enemy instanceof Alien2) {
+                            score += 200; // Alien2 worth more points
+                        } else {
+                            score += 100; // Alien1 base points
+                        }
+                        
                         shot.die();
                         shotsToRemove.add(shot);
                         break; // Exit inner loop since shot is destroyed
@@ -572,8 +706,9 @@ public class Scene1 extends JPanel {
                 int y = player.getY();
 
                 if (key == KeyEvent.VK_SPACE) {
-                    System.out.println("Shots: " + shots.size());
-                    if (shots.size() < 4) {
+                    int maxShots = player.getMaxShots();
+                    System.out.println("Shots: " + shots.size() + "/" + maxShots);
+                    if (shots.size() < maxShots) {
                         // Create primary shot
                         Shot shot = new Shot(x, y);
                         shots.add(shot);
@@ -581,7 +716,7 @@ public class Scene1 extends JPanel {
                         // Create additional shots if player has multishot active
                         if (player.hasMultishot()) {
                             int extraShots = player.getExtraShots();
-                            for (int i = 1; i <= extraShots && shots.size() < 4; i++) {
+                            for (int i = 1; i <= extraShots && shots.size() < maxShots; i++) {
                                 // Create shots with slight Y offset for spread effect
                                 Shot extraShot = new Shot(x, y + (i * 15) - (extraShots * 7));
                                 shots.add(extraShot);

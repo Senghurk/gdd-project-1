@@ -6,16 +6,20 @@ Focus on completing Stage 1 requirements with 5-minute gameplay before moving to
 ## Current Status
 - ✅ Basic side-scrolling mechanics working
 - ✅ Player movement, shooting, enemies spawning
-- ❌ Team member names on title screen
-- ❌ 5-minute gameplay content
-- ❌ Proper stage transition system
+- ✅ Team member names on title screen
+- ✅ Volume control system
+- ✅ Alien2 enemy type and MultiShot powerup
+- ❌ Optimized game pacing (bullets too slow)
+- ❌ Dynamic bullet limits for powerups
+- ❌ 5-minute gameplay content with difficulty scaling
+- ❌ Dashboard and lives system
 
-## Stage 1 Immediate Tasks
+## Stage 1 Critical Issues to Fix
 
-### 1. Title Screen Enhancement
-- **Add team member names** to TitleScene.java
-- Display prominently on title screen
-- Maintain current "Press SPACE to Start" functionality
+### 1. Game Pacing Optimization
+- **Bullet speed too slow** - increase velocity for faster gameplay
+- **Bullet limit issues** - multishot hits 4-bullet limit too quickly
+- **Solution**: Dynamic bullet limits based on active powerups
 
 ### 2. Aspect Ratio & Dimensions
 - **Current**: 716x700 (nearly square - too much vertical space)

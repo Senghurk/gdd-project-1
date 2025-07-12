@@ -6,24 +6,29 @@
 - [x] Side-scroll gameplay (basic implementation)
 - [x] Extended from in-class codebase
 - [x] Basic enemy type (Alien1)
+- [x] Second enemy type (Alien2) - faster and more aggressive
 - [x] Enemy bombs in separated list
 - [x] Speed up power-up (basic implementation)
+- [x] Multi-shot power-up (4 shots, 15 second duration)
 - [x] Player shooting mechanics
+- [x] Title Scene with team member names
+- [x] Volume control system
+- [x] New game assets (alien2.png, powerup-multishot.png)
 
-### 🚧 In Progress - Stage 1 Focus
-- [ ] **Title Scene with team member names**
-- [ ] **Stage 1: 5-minute gameplay content**
-- [ ] **Proper stage transition system**
+### 🚧 In Progress - Stage 1 Critical Issues
+- [ ] **Bullet speed optimization** (current pacing too slow)
+- [ ] **Dynamic bullet limits** (multishot needs higher limits)
+- [ ] **5-minute gameplay loop** with incremental difficulty
+- [ ] **Dashboard system** (score, lives, powerup status)
+- [ ] **Lives/health system**
 
 ### ❌ Pending - Future Stages
 - [ ] Second stage (Stage 2)
 - [ ] Boss fight (final stage)
-- [ ] Second enemy type
 - [ ] Sprite animations (pure drawing/clipping)
-- [ ] Multi-shot power-up (4 steps)
 - [ ] Weapon upgrade (3-way shots) - Optional
-- [ ] Dashboard with status (Score, Speed, Shots upgrade)
 - [ ] CSV loading for spawn patterns
+- [ ] Proper stage transition system
 
 ## Detailed Breakdown
 

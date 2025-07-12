@@ -82,7 +82,7 @@ public class Shot extends Sprite {
     }
 
     public void act() {
-        this.x += 4; // Move shot rightward instead of upward
+        this.x += 8; // Increased speed for faster pacing (was 4)
     }
 
     public void act(int direction) {

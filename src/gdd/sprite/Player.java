@@ -19,6 +19,7 @@ public class Player extends Sprite {
     private int multishotFramesRemaining = 0;
     private int extraShots = 0;
     private int autoFireCooldown = 0;
+    private int invincibilityFrames = 0;
 
     private Rectangle bounds = new Rectangle(175,135,17,32);
 
@@ -122,6 +123,11 @@ public class Player extends Sprite {
         if (autoFireCooldown > 0) {
             autoFireCooldown--;
         }
+        
+        // Update invincibility frames
+        if (invincibilityFrames > 0) {
+            invincibilityFrames--;
+        }
     }
 
     public void act(int direction) {
@@ -180,6 +186,16 @@ public class Player extends Sprite {
     }
     
     public void triggerAutoFire() {
-        autoFireCooldown = 8; // 8 frames between auto-shots (fast!)
+        autoFireCooldown = 15; // 15 frames between auto-shots (more reasonable)
+    }
+    
+    public boolean isInvincible() {
+        return invincibilityFrames > 0;
+    }
+    
+    public void takeDamage() {
+        if (!isInvincible()) {
+            invincibilityFrames = 120; // 2 seconds of invincibility at 60 FPS
+        }
     }
 }

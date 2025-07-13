@@ -8,7 +8,7 @@ import javax.swing.ImageIcon;
 
 public class Alien2 extends Enemy {
 
-    private Bomb bomb;
+    private EnemyBomb bomb;
 
     public Alien2(int x, int y) {
         super(x, y);
@@ -20,7 +20,7 @@ public class Alien2 extends Enemy {
         this.x = x;
         this.y = y;
 
-        bomb = new Bomb(x, y);
+        bomb = new EnemyBomb(x, y, 3);
 
         var ii = new ImageIcon(IMG_ENEMY2);
 
@@ -38,47 +38,7 @@ public class Alien2 extends Enemy {
         act(1);
     }
 
-    public Bomb getBomb() {
+    public EnemyBomb getBomb() {
         return bomb;
-    }
-
-    public class Bomb extends Sprite {
-
-        private boolean destroyed;
-
-        public Bomb(int x, int y) {
-            initBomb(x, y);
-        }
-
-        private void initBomb(int x, int y) {
-
-            setDestroyed(true);
-
-            this.x = x;
-            this.y = y;
-
-            var bombImg = "src/images/bomb.png";
-            var ii = new ImageIcon(bombImg);
-            
-            setImage(ii.getImage());
-        }
-
-        public void setDestroyed(boolean destroyed) {
-            this.destroyed = destroyed;
-        }
-
-        public boolean isDestroyed() {
-            return destroyed;
-        }
-
-        public void act() {
-            if (!destroyed) {
-                this.x -= 3; // Faster bomb speed than Alien1
-            }
-        }
-
-        public void act(int direction) {
-            act();
-        }
     }
 }

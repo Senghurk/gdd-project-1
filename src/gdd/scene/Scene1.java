@@ -13,10 +13,13 @@ import gdd.sprite.Enemy;
 import gdd.sprite.Explosion;
 import gdd.sprite.Player;
 import gdd.sprite.Shot;
+import gdd.sprite.EnemyBomb;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -151,8 +154,8 @@ public class Scene1 extends JPanel {
     }
 
     private void generatePhase1Spawns() {
-        // Phase 1: Frames 1200-7200 (Minutes 1-2) - Moderate difficulty
-        for (int frame = 1200; frame <= 7200; frame += 80) { // Every 1.3 seconds (tighter)
+        // Phase 1: Frames 0-5400 (0-90 seconds) - Moderate difficulty
+        for (int frame = 1200; frame <= 5400; frame += 80) { // Every 1.3 seconds (tighter)
             int y = 100 + randomizer.nextInt(400); // Random Y position
             if (frame % 480 == 0) { // Every 8 seconds add powerup
                 String powerupType = randomizer.nextBoolean() ? "PowerUp-SpeedUp" : "PowerUp-MultiShot";
@@ -171,8 +174,8 @@ public class Scene1 extends JPanel {
     }
     
     private void generatePhase2Spawns() {
-        // Phase 2: Frames 7200-14400 (Minutes 2-4) - Increased difficulty
-        for (int frame = 7200; frame <= 14400; frame += 60) { // Every 1 second (much tighter)
+        // Phase 2: Frames 5400-12600 (90-210 seconds) - Increased difficulty
+        for (int frame = 5400; frame <= 12600; frame += 60) { // Every 1 second (much tighter)
             int y = 100 + randomizer.nextInt(400);
             if (frame % 420 == 0) { // Every 7 seconds add powerup
                 String powerupType = randomizer.nextBoolean() ? "PowerUp-SpeedUp" : "PowerUp-MultiShot";
@@ -197,8 +200,8 @@ public class Scene1 extends JPanel {
     }
     
     private void generatePhase3Spawns() {
-        // Phase 3: Frames 14400-18000 (Minutes 4-5) - High difficulty
-        for (int frame = 14400; frame <= 18000; frame += 45) { // Every 0.75 seconds (intense)
+        // Phase 3: Frames 12600-18000 (210-300 seconds) - High difficulty
+        for (int frame = 12600; frame <= 18000; frame += 45) { // Every 0.75 seconds (intense)
             int y = 100 + randomizer.nextInt(400);
             if (frame % 360 == 0) { // Every 6 seconds add powerup
                 String powerupType = randomizer.nextBoolean() ? "PowerUp-SpeedUp" : "PowerUp-MultiShot";
@@ -234,7 +237,7 @@ public class Scene1 extends JPanel {
         requestFocusInWindow();
         setBackground(Color.black);
 
-        timer = new Timer(1000 / 60, new GameCycle());
+        timer = new Timer(16, new GameCycle()); // Exactly 16ms for 60fps (more precise)
         timer.start();
 
         gameInit();
@@ -274,15 +277,13 @@ public class Scene1 extends JPanel {
     }
 
     private void drawStarField(Graphics g) {
-        // Draw the scrolling star field
+        // Draw the scrolling star field (optimized)
         for (Star star : stars) {
             g.setColor(star.color);
-            g.fillOval(star.x, star.y, star.size, star.size);
-            
-            // Add a subtle glow effect for larger stars
-            if (star.size > 1) {
-                g.setColor(new Color(star.color.getRed(), star.color.getGreen(), star.color.getBlue(), 50));
-                g.fillOval(star.x - 1, star.y - 1, star.size + 2, star.size + 2);
+            if (star.size == 1) {
+                g.drawLine(star.x, star.y, star.x, star.y); // Faster for single pixels
+            } else {
+                g.fillOval(star.x, star.y, star.size, star.size);
             }
         }
     }
@@ -320,10 +321,11 @@ public class Scene1 extends JPanel {
     }
 
     private void drawPlayer(Graphics g) {
-
         if (player.isVisible()) {
-
-            g.drawImage(player.getImage(), player.getX(), player.getY(), this);
+            // Blink effect during invincibility
+            if (!player.isInvincible() || (frame % 8 < 4)) {
+                g.drawImage(player.getImage(), player.getX(), player.getY(), this);
+            }
         }
 
         if (player.isDying()) {
@@ -344,21 +346,16 @@ public class Scene1 extends JPanel {
     }
 
     private void drawBombing(Graphics g) {
-
         for (Enemy e : enemies) {
-            // Both Alien1 and Alien2 have bombs
+            EnemyBomb bomb = null;
             if (e instanceof Alien1) {
-                Alien1 alien = (Alien1) e;
-                Alien1.Bomb b = alien.getBomb();
-                if (!b.isDestroyed()) {
-                    g.drawImage(b.getImage(), b.getX(), b.getY(), this);
-                }
+                bomb = ((Alien1) e).getBomb();
             } else if (e instanceof Alien2) {
-                Alien2 alien = (Alien2) e;
-                Alien2.Bomb b = alien.getBomb();
-                if (!b.isDestroyed()) {
-                    g.drawImage(b.getImage(), b.getX(), b.getY(), this);
-                }
+                bomb = ((Alien2) e).getBomb();
+            }
+            
+            if (bomb != null && !bomb.isDestroyed()) {
+                g.drawImage(bomb.getImage(), bomb.getX(), bomb.getY(), this);
             }
         }
     }
@@ -439,6 +436,14 @@ public class Scene1 extends JPanel {
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
+        
+        // Enable rendering hints for better performance
+        if (g instanceof Graphics2D) {
+            Graphics2D g2d = (Graphics2D) g;
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+            g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
+            g2d.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_SPEED);
+        }
 
         doDrawing(g);
     }
@@ -560,21 +565,19 @@ public class Scene1 extends JPanel {
         // player
         player.act();
         
-        // Auto-fire when multishot is active
-        if (player.canAutoFire() && shots.size() < player.getMaxShots()) {
+        // Auto-fire when multishot is active (controlled rate)
+        if (player.canAutoFire() && shots.size() < player.getMaxShots() - 2) {
             int x = player.getX();
             int y = player.getY();
             
-            // Create auto-fire shot
+            // Create auto-fire shot with proper spacing
             Shot autoShot = new Shot(x, y);
             shots.add(autoShot);
             
-            // Create additional spread shots
-            if (player.hasMultishot() && shots.size() < player.getMaxShots() - 2) {
-                Shot spreadShot1 = new Shot(x, y - 20);
-                Shot spreadShot2 = new Shot(x, y + 20);
-                shots.add(spreadShot1);
-                shots.add(spreadShot2);
+            // Create one additional spread shot only
+            if (player.hasMultishot() && shots.size() < player.getMaxShots()) {
+                Shot spreadShot = new Shot(x, y + 25);
+                shots.add(spreadShot);
             }
             
             player.triggerAutoFire();
@@ -594,10 +597,9 @@ public class Scene1 extends JPanel {
         for (Enemy enemy : enemies) {
             if (enemy.isVisible()) {
                 enemy.act(direction);
-                // Check if enemy has gone off the left side of the screen
+                // Remove enemies that have gone off the left side of the screen
                 if (enemy.getX() < -50) { // Give some buffer for image width
-                    inGame = false;
-                    message = "Invasion!";
+                    enemy.die(); // Mark enemy as invisible so it gets cleaned up
                 }
             }
         }
@@ -699,7 +701,7 @@ public class Scene1 extends JPanel {
             // Both Alien1 and Alien2 can shoot bombs
             if (enemy instanceof Alien1) {
                 Alien1 alien = (Alien1) enemy;
-                Alien1.Bomb bomb = alien.getBomb();
+                EnemyBomb bomb = alien.getBomb();
 
                 if (canShoot && chance == CHANCE && enemy.isVisible() && bomb.isDestroyed()) {
 
@@ -713,7 +715,7 @@ public class Scene1 extends JPanel {
                 int playerX = player.getX();
                 int playerY = player.getY();
 
-                if (player.isVisible() && !bomb.isDestroyed()
+                if (player.isVisible() && !player.isInvincible() && !bomb.isDestroyed()
                         && bombX >= (playerX)
                         && bombX <= (playerX + PLAYER_WIDTH)
                         && bombY >= (playerY)
@@ -721,6 +723,7 @@ public class Scene1 extends JPanel {
 
                     bomb.setDestroyed(true);
                     explosions.add(new Explosion(playerX, playerY));
+                    player.takeDamage();
                     
                     // Decrement lives instead of instant death
                     lives--;
@@ -745,7 +748,7 @@ public class Scene1 extends JPanel {
             // Handle Alien2 bombs
             if (enemy instanceof Alien2) {
                 Alien2 alien = (Alien2) enemy;
-                Alien2.Bomb bomb = alien.getBomb();
+                EnemyBomb bomb = alien.getBomb();
 
                 if (canShoot && chance == CHANCE && enemy.isVisible() && bomb.isDestroyed()) {
 
@@ -759,7 +762,7 @@ public class Scene1 extends JPanel {
                 int playerX = player.getX();
                 int playerY = player.getY();
 
-                if (player.isVisible() && !bomb.isDestroyed()
+                if (player.isVisible() && !player.isInvincible() && !bomb.isDestroyed()
                         && bombX >= (playerX)
                         && bombX <= (playerX + PLAYER_WIDTH)
                         && bombY >= (playerY)
@@ -767,6 +770,7 @@ public class Scene1 extends JPanel {
 
                     bomb.setDestroyed(true);
                     explosions.add(new Explosion(playerX, playerY));
+                    player.takeDamage();
                     
                     // Decrement lives instead of instant death
                     lives--;
@@ -874,13 +878,7 @@ public class Scene1 extends JPanel {
                                 shots.add(extraShot);
                             }
                             
-                            // Add rapid-fire burst - create 3 more shots with slight delay
-                            if (shots.size() < maxShots - 2) {
-                                for (int burst = 0; burst < 3 && shots.size() < maxShots; burst++) {
-                                    Shot burstShot = new Shot(x + (burst * 8), y + (burst * 5) - 5);
-                                    shots.add(burstShot);
-                                }
-                            }
+                            // No rapid-fire burst - controlled by auto-fire system
                         }
                     }
                 }

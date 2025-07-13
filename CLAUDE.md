@@ -45,10 +45,12 @@ All game entities inherit from a common sprite base:
 - `src/gdd/sprite/Shot.java` - Player projectiles (speed: 8 pixels/frame)
 - `src/gdd/sprite/Explosion.java` - Visual explosion effects
 
-### Power-up System
+### Power-up System (Rebalanced)
 - `src/gdd/powerup/PowerUp.java` - Base power-up class
-- `src/gdd/powerup/SpeedUp.java` - Speed boost power-up implementation
-- `src/gdd/powerup/MultiShotPowerUp.java` - Multi-shot power-up (4 shots, 15 seconds duration)
+- `src/gdd/powerup/SpeedUp.java` - Speed boost power-up implementation (permanent +2 speed, capped at 14)
+- `src/gdd/powerup/MultiShotPowerUp.java` - Multi-shot power-up (4 shots, 10 seconds duration)
+- **Sparse Spawning**: Speed powerups are extremely rare (1/8 to 1/20 chance)
+- **Permanent Speed**: Speed boosts are permanent but capped at maximum of 14
 
 ### Supporting Classes
 - `src/gdd/AudioPlayer.java` - Sound effect and music playback
@@ -70,22 +72,25 @@ The game has been modified from traditional Space Invaders to use horizontal mov
 ### Spawn System
 Enemies and power-ups are spawned based on frame timing using `spawnMap` in Scene1. Features a 3-phase difficulty progression system:
 
-**Phase 1 (Minutes 1-2)**: Moderate difficulty
-- Spawn every 2 seconds
-- 33% Alien2, 67% Alien1
-- Powerups every 10 seconds
+**Phase 1 (0-90 seconds)**: Learning phase
+- Basic enemy spawning every 1.3 seconds
+- 33% Alien2, 67% Alien1 with sine wave movement patterns
+- Speed powerups very rarely (every 30 seconds, 1/8 chance)
+- Formation spawning: V-formations occasionally
 
-**Phase 2 (Minutes 2-4)**: Increased difficulty  
-- Spawn every 1.5 seconds
-- 50% Alien2, 50% Alien1
-- Powerups every 8 seconds
-- 25% chance of double spawns
+**Phase 2 (90-210 seconds)**: Wave-based combat  
+- Regular spawning every 1 second
+- 50% Alien2, 50% Alien1 with complex movement patterns
+- Powerups every 20 seconds: Multishot common, speed extremely rare (1/10 chance)
+- Formation types: Line formations, diamond formations
+- **Special Wave Events**: SWARM, ELITE, and MIXED waves
 
-**Phase 3 (Minutes 4-5)**: High difficulty
-- Spawn every 1 second
-- 66% Alien2, 33% Alien1
-- Powerups every 6 seconds
-- 33% chance of double spawns + 50% chance of triple spawns
+**Phase 3 (210-300 seconds)**: Intense finale
+- Rapid spawning every 0.75 seconds  
+- 75% Alien2, 25% Alien1
+- Multishot powerups prioritized, speed ultra-rare (1/20 chance)
+- Elite formations: Swarm attacks, pincer movements
+- **Special Wave Events**: ELITE, SWARM, and FINAL boss waves
 
 ### Audio System
 - Background music for title screen and gameplay (50% volume by default)
@@ -101,38 +106,50 @@ Enemies and power-ups are spawned based on frame timing using `spawnMap` in Scen
 - `src/audio/` - Sound files (WAV and MP3 formats)
 
 ## Game Controls
-- Arrow keys: Move player up/down
-- SPACE: Fire shots (dynamic limit: 4 normal, 8 with multishot)
+- Arrow keys: Move player up/down (default speed: 8)
+- SPACE: Fire shots (dynamic limit: 6 normal, 15 with multishot)
 - R: Restart game when game over
 - SPACE on title screen: Start game
 - +/- keys on title screen: Volume control
 
 ## Dashboard Features
 - Score tracking (Alien1: 100pts, Alien2: 200pts)
-- Lives system (starts with 3 lives)
+- Lives system (starts with 3 lives) with 2-second invincibility frames
 - Game timer (5-minute gameplay loop)
 - Shot counter with dynamic limits
-- Active powerup status display
+- **Enhanced status display**:
+  - Active powerup status with countdown timers
+  - Current phase indicator (Safe/Danger/WAR!)
+  - Wave notifications during special events
+  - Current speed indicator when above default
 
 ## Victory/Completion Conditions
 - **Stage 1 Complete**: Survive for exactly 5 minutes (18,000 frames at 60 FPS)
 - **Game Over**: Lives reach 0 (collision system not yet implemented)
 - **Restart**: Press 'R' key when game ends
 
-## Performance Optimizations
-- Bullet speed increased to 8 pixels/frame for faster pacing
-- Dynamic bullet limits (4 normal, 8 with multishot powerup)
+## Performance Optimizations  
+- Precise 16ms timer for stable 60fps gameplay
+- Bullet speed increased to 12 pixels/frame for intense action
+- Dynamic bullet limits (6 normal, 15 with multishot powerup)
 - Efficient sprite collision detection using rectangle intersection
-- Star field background with optimized rendering
+- **Star field background**: Optimized rendering with reduced glow effects
+- **Rendering hints**: Speed-optimized graphics for smooth performance
 
 ## Team Information
 - Mock team data displayed on title screen (3 members with IDs)
 - Can be easily modified in `TitleScene.java`
 
 ## Important Notes
-- The game uses a 60 FPS timer for smooth animation
-- Collision detection uses rectangle-based collision for all sprites
-- Game state is managed through boolean flags (`inGame`, visibility states)
-- All constants are centralized in `Global.java` for easy modification
-- The project structure follows standard Java package conventions
-- Powerup constants: `MULTISHOT_DURATION_FRAMES = 900`, `MULTISHOT_EXTRA_SHOTS = 3`
+- The game uses a precise 16ms timer for 60fps animation
+- **Enhanced enemy AI**: Sine wave patterns for Alien1, spiral movements for Alien2
+- **Wave system**: Special challenge events with unique enemy formations
+- **Sparse powerup spawning**: Speed powerups are extremely rare but permanent
+- **Default player speed**: Increased to 8 for better responsiveness
+- Collision detection uses rectangle-based collision with invincibility frames
+- Game state managed through boolean flags and frame counting
+- All constants centralized in `Global.java` for easy balancing
+- **Powerup constants**: 
+  - `MULTISHOT_DURATION_FRAMES = 600` (10 seconds)
+  - `SPEED_BOOST_AMOUNT = 2` (permanent speed increase)
+  - `MAX_PLAYER_SPEED = 14` (speed cap allows 3 speed boosts)

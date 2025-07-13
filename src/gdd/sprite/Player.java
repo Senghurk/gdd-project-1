@@ -13,13 +13,14 @@ public class Player extends Sprite {
     private static final int START_X = 50; // Move player to left side of screen
     private static final int START_Y = 270; // Center vertically
     private int width;
-    private int currentSpeed = 2;
+    private int currentSpeed = 8; // Increased default speed (2+6)
     
     // MultiShot powerup variables
     private int multishotFramesRemaining = 0;
     private int extraShots = 0;
     private int autoFireCooldown = 0;
     private int invincibilityFrames = 0;
+    
 
     private Rectangle bounds = new Rectangle(175,135,17,32);
 
@@ -128,6 +129,8 @@ public class Player extends Sprite {
         if (invincibilityFrames > 0) {
             invincibilityFrames--;
         }
+        
+        
     }
 
     public void act(int direction) {
@@ -198,4 +201,15 @@ public class Player extends Sprite {
             invincibilityFrames = 120; // 2 seconds of invincibility at 60 FPS
         }
     }
+    
+    // Speed boost methods (now permanent)
+    public void applySpeedBoost(int boostAmount) {
+        int newSpeed = Math.min(currentSpeed + boostAmount, MAX_PLAYER_SPEED);
+        currentSpeed = newSpeed;
+    }
+    
+    public boolean canReceiveSpeedBoost() {
+        return currentSpeed < MAX_PLAYER_SPEED; // Can get speed until hitting cap
+    }
+    
 }

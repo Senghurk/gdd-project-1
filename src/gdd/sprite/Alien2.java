@@ -9,9 +9,14 @@ import javax.swing.ImageIcon;
 public class Alien2 extends Enemy {
 
     private EnemyBomb bomb;
+    private int frameCounter = 0;
+    private int initialY;
+    private double phaseOffset;
 
     public Alien2(int x, int y) {
         super(x, y);
+        this.initialY = y;
+        this.phaseOffset = Math.random() * Math.PI * 2; // Random starting phase
         initEnemy(x, y);
     }
 
@@ -31,7 +36,19 @@ public class Alien2 extends Enemy {
     }
 
     public void act(int direction) {
-        this.x -= Math.abs(direction) * 2; // Move faster than Alien1
+        frameCounter++;
+        
+        // Faster leftward movement than Alien1
+        this.x -= Math.abs(direction) * 2;
+        
+        // More aggressive spiral/curved movement
+        double spiralOffset = Math.sin(frameCounter * 0.12 + phaseOffset) * 35; // Larger amplitude
+        double curveOffset = Math.cos(frameCounter * 0.06) * 15; // Secondary curve
+        this.y = (int)(initialY + spiralOffset + curveOffset);
+        
+        // Keep within screen bounds
+        if (this.y < 50) this.y = 50;
+        if (this.y > BOARD_HEIGHT - 100) this.y = BOARD_HEIGHT - 100;
     }
 
     public void act() {

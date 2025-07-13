@@ -9,9 +9,12 @@ import javax.swing.ImageIcon;
 public class Alien1 extends Enemy {
 
     private EnemyBomb bomb;
+    private int frameCounter = 0;
+    private int initialY;
 
     public Alien1(int x, int y) {
         super(x, y);
+        this.initialY = y;
         initEnemy(x, y); // Uncomment to enable bomb functionality
     }
 
@@ -32,7 +35,18 @@ public class Alien1 extends Enemy {
     }
 
     public void act(int direction) {
-        this.x -= Math.abs(direction); // Move alien leftward instead of downward
+        frameCounter++;
+        
+        // Basic leftward movement
+        this.x -= Math.abs(direction);
+        
+        // Add sine wave vertical movement (gentle bobbing)
+        double sineOffset = Math.sin(frameCounter * 0.08) * 20; // Small amplitude
+        this.y = (int)(initialY + sineOffset);
+        
+        // Keep within screen bounds
+        if (this.y < 50) this.y = 50;
+        if (this.y > BOARD_HEIGHT - 100) this.y = BOARD_HEIGHT - 100;
     }
 
     public void act() {

@@ -38,7 +38,11 @@ public class Global {
     public static final String IMG_POWERUP_SPEEDUP = "src/images/powerup-s.png";
     public static final String IMG_POWERUP_MULTISHOT = "src/images/powerup-multishot.png";
     
-    // MultiShot PowerUp constants
-    public static final int MULTISHOT_DURATION_FRAMES = 1200; // 20 seconds at 60 FPS
-    public static final int MULTISHOT_EXTRA_SHOTS = 5; // Additional shots per fire (6 total shots)
+    // Power-up constants (rebalanced for better gameplay)
+    public static final int MULTISHOT_DURATION_FRAMES = 600; // 10 seconds at 60 FPS
+    public static final int MULTISHOT_EXTRA_SHOTS = 3; // Additional shots per fire (4 total shots)
+    
+    // Speed PowerUp constants
+    public static final int SPEED_BOOST_AMOUNT = 2; // Speed increase amount
+    public static final int MAX_PLAYER_SPEED = 14; // Maximum speed cap (8 default + 3 boosts)
 }

@@ -18,6 +18,7 @@ public class Player extends Sprite {
     // MultiShot powerup variables
     private int multishotFramesRemaining = 0;
     private int extraShots = 0;
+    private int autoFireCooldown = 0;
 
     private Rectangle bounds = new Rectangle(175,135,17,32);
 
@@ -116,6 +117,11 @@ public class Player extends Sprite {
                 extraShots = 0; // Reset extra shots when timer expires
             }
         }
+        
+        // Update auto-fire cooldown
+        if (autoFireCooldown > 0) {
+            autoFireCooldown--;
+        }
     }
 
     public void act(int direction) {
@@ -165,7 +171,15 @@ public class Player extends Sprite {
     }
     
     public int getMaxShots() {
-        // Base limit is 4, but increase to 8 when multishot is active
-        return hasMultishot() ? 8 : 4;
+        // Base limit is 6, but increase to 15 when multishot is active
+        return hasMultishot() ? 15 : 6;
+    }
+    
+    public boolean canAutoFire() {
+        return hasMultishot() && autoFireCooldown <= 0;
+    }
+    
+    public void triggerAutoFire() {
+        autoFireCooldown = 8; // 8 frames between auto-shots (fast!)
     }
 }

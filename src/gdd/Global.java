@@ -39,6 +39,6 @@ public class Global {
     public static final String IMG_POWERUP_MULTISHOT = "src/images/powerup-multishot.png";
     
     // MultiShot PowerUp constants
-    public static final int MULTISHOT_DURATION_FRAMES = 900; // 15 seconds at 60 FPS
-    public static final int MULTISHOT_EXTRA_SHOTS = 3; // Additional shots per fire (4 total shots)
+    public static final int MULTISHOT_DURATION_FRAMES = 1200; // 20 seconds at 60 FPS
+    public static final int MULTISHOT_EXTRA_SHOTS = 5; // Additional shots per fire (6 total shots)
 }

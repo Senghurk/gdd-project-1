@@ -6,16 +6,18 @@ import java.awt.image.BufferedImage;
 import java.awt.geom.AffineTransform;
 import javax.swing.ImageIcon;
 
-public class Alien1 extends Enemy {
+public class Alien2 extends Enemy {
 
     private EnemyBomb bomb;
     private int frameCounter = 0;
     private int initialY;
+    private double phaseOffset;
 
-    public Alien1(int x, int y) {
+    public Alien2(int x, int y) {
         super(x, y);
         this.initialY = y;
-        initEnemy(x, y); // Uncomment to enable bomb functionality
+        this.phaseOffset = Math.random() * Math.PI * 2; // Random starting phase
+        initEnemy(x, y);
     }
 
     private void initEnemy(int x, int y) {
@@ -23,11 +25,10 @@ public class Alien1 extends Enemy {
         this.x = x;
         this.y = y;
 
-        bomb = new EnemyBomb(x, y, 2);
+        bomb = new EnemyBomb(x, y, 3);
 
-        var ii = new ImageIcon(IMG_ENEMY);
+        var ii = new ImageIcon(IMG_ENEMY2);
 
-        // Scale the image to use the global scaling factor
         var scaledImage = ii.getImage().getScaledInstance(ii.getIconWidth() * SCALE_FACTOR,
                 ii.getIconHeight() * SCALE_FACTOR,
                 java.awt.Image.SCALE_SMOOTH);
@@ -37,12 +38,13 @@ public class Alien1 extends Enemy {
     public void act(int direction) {
         frameCounter++;
         
-        // Basic leftward movement
-        this.x -= Math.abs(direction);
+        // Faster leftward movement than Alien1
+        this.x -= Math.abs(direction) * 2;
         
-        // Add sine wave vertical movement (gentle bobbing)
-        double sineOffset = Math.sin(frameCounter * 0.08) * 20; // Small amplitude
-        this.y = (int)(initialY + sineOffset);
+        // More aggressive spiral/curved movement
+        double spiralOffset = Math.sin(frameCounter * 0.12 + phaseOffset) * 35; // Larger amplitude
+        double curveOffset = Math.cos(frameCounter * 0.06) * 15; // Secondary curve
+        this.y = (int)(initialY + spiralOffset + curveOffset);
         
         // Keep within screen bounds
         if (this.y < 50) this.y = 50;
@@ -50,11 +52,10 @@ public class Alien1 extends Enemy {
     }
 
     public void act() {
-        act(1); // Default direction for autonomous movement
+        act(1);
     }
 
     public EnemyBomb getBomb() {
         return bomb;
     }
-
 }

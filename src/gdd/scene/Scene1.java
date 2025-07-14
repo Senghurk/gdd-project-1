@@ -6,15 +6,20 @@ import static gdd.Global.*;
 import gdd.SpawnDetails;
 import gdd.powerup.PowerUp;
 import gdd.powerup.SpeedUp;
+import gdd.powerup.MultiShotPowerUp;
 import gdd.sprite.Alien1;
+import gdd.sprite.Alien2;
 import gdd.sprite.Enemy;
 import gdd.sprite.Explosion;
 import gdd.sprite.Player;
 import gdd.sprite.Shot;
+import gdd.sprite.EnemyBomb;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -45,6 +50,21 @@ public class Scene1 extends JPanel {
 
     private int direction = -1;
     private int deaths = 0;
+    private int score = 0;
+    private int lives = 3;
+    private int gameTimeSeconds = 0;
+    private int framesSinceLastSecond = 0;
+    
+    // Phase-based enemy behavior
+    private int currentPhase = 1;
+    private int lastPhaseChangeTime = 0;
+    
+    // Wave system
+    private boolean waveActive = false;
+    private int waveEndFrame = 0;
+    private String currentWaveType = "";
+    private int enemiesInCurrentWave = 0;
+    
 
     private boolean inGame = true;
     private String message = "Game Over";
@@ -115,6 +135,148 @@ public class Scene1 extends JPanel {
         spawnMap.put(501, new SpawnDetails("Alien1", BOARD_WIDTH - 50, 350));
         spawnMap.put(502, new SpawnDetails("Alien1", BOARD_WIDTH - 50, 400));
         spawnMap.put(503, new SpawnDetails("Alien1", BOARD_WIDTH - 50, 450));
+        
+        // Add Alien2 enemies and MultiShot powerup
+        spawnMap.put(250, new SpawnDetails("PowerUp-MultiShot", BOARD_WIDTH - 50, 250));
+        spawnMap.put(600, new SpawnDetails("Alien2", BOARD_WIDTH - 50, 150));
+        spawnMap.put(650, new SpawnDetails("Alien2", BOARD_WIDTH - 50, 350));
+        spawnMap.put(700, new SpawnDetails("Alien2", BOARD_WIDTH - 50, 250));
+        
+        // More varied spawns for extended gameplay
+        spawnMap.put(800, new SpawnDetails("Alien1", BOARD_WIDTH - 50, 100));
+        spawnMap.put(850, new SpawnDetails("Alien2", BOARD_WIDTH - 50, 200));
+        spawnMap.put(900, new SpawnDetails("PowerUp-SpeedUp", BOARD_WIDTH - 50, 300));
+        spawnMap.put(950, new SpawnDetails("Alien1", BOARD_WIDTH - 50, 400));
+        spawnMap.put(1000, new SpawnDetails("Alien2", BOARD_WIDTH - 50, 150));
+        
+        // 5-minute gameplay (18000 frames at 60fps)
+        // Phase 1: Minutes 1-2 (frames 1000-7200) - Moderate difficulty
+        generatePhase1Spawns();
+        
+        // Phase 2: Minutes 2-4 (frames 7200-14400) - Increased difficulty  
+        generatePhase2Spawns();
+        
+        // Phase 3: Minutes 4-5 (frames 14400-18000) - High difficulty
+        generatePhase3Spawns();
+    }
+
+    private void generatePhase1Spawns() {
+        // Phase 1: Frames 0-5400 (0-90 seconds) - Moderate difficulty
+        for (int frame = 1200; frame <= 5400; frame += 80) { // Every 1.3 seconds (tighter)
+            int y = 100 + randomizer.nextInt(400); // Random Y position
+            if (frame % 1800 == 0) { // Every 30 seconds consider powerup (very sparse)
+                // Very rare speed powerup spawning
+                if (randomizer.nextInt(8) == 0) { // 1/8 chance when slot is available
+                    String powerupType = "PowerUp-SpeedUp";
+                    spawnMap.put(frame, new SpawnDetails(powerupType, BOARD_WIDTH - 50, y));
+                }
+            } else {
+                String enemyType = randomizer.nextInt(3) == 0 ? "Alien2" : "Alien1"; // 33% Alien2
+                spawnMap.put(frame, new SpawnDetails(enemyType, BOARD_WIDTH - 50, y));
+                
+                // Add formation spawns (V-formation)
+                if (randomizer.nextInt(5) == 0) {
+                    // Create V-formation with 3 enemies
+                    spawnMap.put(frame + 15, new SpawnDetails(enemyType, BOARD_WIDTH - 50, y - 40));
+                    spawnMap.put(frame + 25, new SpawnDetails(enemyType, BOARD_WIDTH - 50, y + 40));
+                    spawnMap.put(frame + 35, new SpawnDetails(enemyType, BOARD_WIDTH - 50, y)); // Leader slightly behind
+                }
+            }
+        }
+    }
+    
+    private void generatePhase2Spawns() {
+        // Phase 2: Frames 5400-12600 (90-210 seconds) - Wave-based difficulty
+        
+        // Add special wave events
+        spawnMap.put(6000, new SpawnDetails("WAVE_SWARM", 0, 0)); // 30 seconds in
+        spawnMap.put(8400, new SpawnDetails("WAVE_ELITE", 0, 0)); // 70 seconds in  
+        spawnMap.put(10800, new SpawnDetails("WAVE_MIXED", 0, 0)); // 110 seconds in
+        
+        for (int frame = 5400; frame <= 12600; frame += 60) { // Every 1 second (much tighter)
+            int y = 100 + randomizer.nextInt(400);
+            if (frame % 1200 == 0) { // Every 20 seconds consider powerup  
+                // Phase 2: Multishot more common, speed very rare
+                String powerupType = null;
+                if (randomizer.nextInt(3) == 0) { // 1/3 chance for any powerup
+                    if (randomizer.nextInt(10) == 0) { // 1/10 chance for speed (very rare)
+                        powerupType = "PowerUp-SpeedUp";
+                    } else {
+                        powerupType = "PowerUp-MultiShot"; // Much more common
+                    }
+                }
+                if (powerupType != null) {
+                    spawnMap.put(frame, new SpawnDetails(powerupType, BOARD_WIDTH - 50, y));
+                }
+            } else {
+                String enemyType = randomizer.nextInt(2) == 0 ? "Alien2" : "Alien1"; // 50% Alien2
+                spawnMap.put(frame, new SpawnDetails(enemyType, BOARD_WIDTH - 50, y));
+                
+                // Line formation spawns
+                if (randomizer.nextInt(4) == 0) {
+                    // Create horizontal line formation
+                    spawnMap.put(frame + 10, new SpawnDetails(enemyType, BOARD_WIDTH - 50, y - 50));
+                    spawnMap.put(frame + 20, new SpawnDetails(enemyType, BOARD_WIDTH - 50, y + 50));
+                }
+                
+                // Diamond formation occasionally  
+                if (randomizer.nextInt(7) == 0) {
+                    spawnMap.put(frame + 15, new SpawnDetails("Alien2", BOARD_WIDTH - 50, y - 30));
+                    spawnMap.put(frame + 25, new SpawnDetails("Alien2", BOARD_WIDTH - 50, y + 30));
+                    spawnMap.put(frame + 35, new SpawnDetails("Alien1", BOARD_WIDTH - 50, y)); // Center
+                    spawnMap.put(frame + 45, new SpawnDetails("Alien2", BOARD_WIDTH - 50, y)); // Rear
+                }
+            }
+        }
+    }
+    
+    private void generatePhase3Spawns() {
+        // Phase 3: Frames 12600-18000 (210-300 seconds) - Intense waves
+        
+        // Add intense wave events  
+        spawnMap.put(13200, new SpawnDetails("WAVE_ELITE", 0, 0)); // 30 seconds in
+        spawnMap.put(15000, new SpawnDetails("WAVE_SWARM", 0, 0)); // 80 seconds in
+        spawnMap.put(16800, new SpawnDetails("WAVE_FINAL", 0, 0)); // 130 seconds in
+        
+        for (int frame = 12600; frame <= 18000; frame += 45) { // Every 0.75 seconds (intense)
+            int y = 100 + randomizer.nextInt(400);
+            if (frame % 600 == 0) { // Every 10 seconds consider powerup
+                // Phase 3: Focus on multishot for intense combat, minimal speed
+                String powerupType = null;
+                if (randomizer.nextInt(2) == 0) { // 50% chance for powerup
+                    if (randomizer.nextInt(20) == 0) { // 1/20 chance for speed (extremely rare)
+                        powerupType = "PowerUp-SpeedUp";
+                    } else {
+                        powerupType = "PowerUp-MultiShot"; // Much more common
+                    }
+                }
+                if (powerupType != null) {
+                    spawnMap.put(frame, new SpawnDetails(powerupType, BOARD_WIDTH - 50, y));
+                }
+            } else {
+                String enemyType = randomizer.nextInt(4) < 3 ? "Alien2" : "Alien1"; // 75% Alien2
+                spawnMap.put(frame, new SpawnDetails(enemyType, BOARD_WIDTH - 50, y));
+                
+                // Phase 3: Aggressive swarm and elite formations
+                if (randomizer.nextInt(3) == 0) { 
+                    // Swarm formation - 4 enemies in close proximity
+                    spawnMap.put(frame + 8, new SpawnDetails("Alien2", BOARD_WIDTH - 50, y - 25));
+                    spawnMap.put(frame + 16, new SpawnDetails("Alien2", BOARD_WIDTH - 50, y + 25));
+                    spawnMap.put(frame + 24, new SpawnDetails("Alien1", BOARD_WIDTH - 50, y - 15));
+                    spawnMap.put(frame + 32, new SpawnDetails("Alien1", BOARD_WIDTH - 50, y + 15));
+                }
+                
+                // Elite pincer formation occasionally
+                if (randomizer.nextInt(8) == 0) {
+                    spawnMap.put(frame + 10, new SpawnDetails("Alien2", BOARD_WIDTH - 50, 100)); // Top pincer
+                    spawnMap.put(frame + 10, new SpawnDetails("Alien2", BOARD_WIDTH - 50, BOARD_HEIGHT - 150)); // Bottom pincer
+                    spawnMap.put(frame + 30, new SpawnDetails("Alien2", BOARD_WIDTH - 50, y)); // Center breakthrough
+                }
+            }
+        }
+        
+        // Remove old victory condition since we handle it in update()
+        // spawnMap.put(18000, new SpawnDetails("VICTORY", 0, 0));
     }
 
     private void initBoard() {
@@ -127,7 +289,7 @@ public class Scene1 extends JPanel {
         requestFocusInWindow();
         setBackground(Color.black);
 
-        timer = new Timer(1000 / 60, new GameCycle());
+        timer = new Timer(16, new GameCycle()); // Exactly 16ms for 60fps (more precise)
         timer.start();
 
         gameInit();
@@ -167,15 +329,13 @@ public class Scene1 extends JPanel {
     }
 
     private void drawStarField(Graphics g) {
-        // Draw the scrolling star field
+        // Draw the scrolling star field (optimized)
         for (Star star : stars) {
             g.setColor(star.color);
-            g.fillOval(star.x, star.y, star.size, star.size);
-            
-            // Add a subtle glow effect for larger stars
-            if (star.size > 1) {
-                g.setColor(new Color(star.color.getRed(), star.color.getGreen(), star.color.getBlue(), 50));
-                g.fillOval(star.x - 1, star.y - 1, star.size + 2, star.size + 2);
+            if (star.size == 1) {
+                g.drawLine(star.x, star.y, star.x, star.y); // Faster for single pixels
+            } else {
+                g.fillOval(star.x, star.y, star.size, star.size);
             }
         }
     }
@@ -213,10 +373,11 @@ public class Scene1 extends JPanel {
     }
 
     private void drawPlayer(Graphics g) {
-
         if (player.isVisible()) {
-
-            g.drawImage(player.getImage(), player.getX(), player.getY(), this);
+            // Blink effect during invincibility
+            if (!player.isInvincible() || (frame % 8 < 4)) {
+                g.drawImage(player.getImage(), player.getX(), player.getY(), this);
+            }
         }
 
         if (player.isDying()) {
@@ -237,15 +398,16 @@ public class Scene1 extends JPanel {
     }
 
     private void drawBombing(Graphics g) {
-
         for (Enemy e : enemies) {
-            // Only Alien1 has bombs
+            EnemyBomb bomb = null;
             if (e instanceof Alien1) {
-                Alien1 alien = (Alien1) e;
-                Alien1.Bomb b = alien.getBomb();
-                if (!b.isDestroyed()) {
-                    g.drawImage(b.getImage(), b.getX(), b.getY(), this);
-                }
+                bomb = ((Alien1) e).getBomb();
+            } else if (e instanceof Alien2) {
+                bomb = ((Alien2) e).getBomb();
+            }
+            
+            if (bomb != null && !bomb.isDestroyed()) {
+                g.drawImage(bomb.getImage(), bomb.getX(), bomb.getY(), this);
             }
         }
     }
@@ -268,9 +430,80 @@ public class Scene1 extends JPanel {
         explosions.removeAll(toRemove);
     }
 
+    private void drawDashboard(Graphics g) {
+        // Dashboard background
+        g.setColor(new Color(0, 0, 0, 150)); // Semi-transparent black
+        g.fillRect(0, 0, BOARD_WIDTH, 60);
+        
+        g.setColor(Color.white);
+        g.setFont(g.getFont().deriveFont(14f));
+        
+        // Score
+        g.drawString("Score: " + score, 10, 20);
+        
+        // Lives
+        g.drawString("Lives: " + lives, 10, 40);
+        
+        // Time
+        int minutes = gameTimeSeconds / 60;
+        int seconds = gameTimeSeconds % 60;
+        g.drawString(String.format("Time: %d:%02d", minutes, seconds), 150, 20);
+        
+        // Shots info
+        int maxShots = player.getMaxShots();
+        g.drawString("Shots: " + shots.size() + "/" + maxShots, 150, 40);
+        
+        // Powerup status
+        if (player.hasMultishot()) {
+            int remainingSeconds = player.getMultishotFramesRemaining() / 60;
+            g.setColor(Color.yellow);
+            g.drawString("🔥 MULTISHOT: " + remainingSeconds + "s", 300, 20);
+            g.setColor(Color.red);
+            g.drawString("AUTO-FIRE ACTIVE!", 300, 35);
+        }
+        
+        // Speed status  
+        if (player.getSpeed() > 8) { // Show if speed is above default
+            g.setColor(Color.cyan);
+            g.drawString("⚡ SPEED: " + player.getSpeed(), 300, 50);
+        }
+        
+        // Phase information
+        g.setColor(Color.orange);
+        String phaseText = "Phase " + currentPhase;
+        switch (currentPhase) {
+            case 1:
+                phaseText += " (Safe)";
+                break;
+            case 2:
+                phaseText += " (Danger)";
+                break;
+            case 3:
+                phaseText += " (WAR!)";
+                break;
+        }
+        g.drawString(phaseText, 450, 20);
+        
+        // Wave information
+        if (waveActive) {
+            g.setColor(Color.red);
+            int remainingSeconds = (waveEndFrame - frame) / 60;
+            g.drawString("🚨 " + currentWaveType + " WAVE: " + remainingSeconds + "s", 450, 40);
+        }
+        
+    }
+
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
+        
+        // Enable rendering hints for better performance
+        if (g instanceof Graphics2D) {
+            Graphics2D g2d = (Graphics2D) g;
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+            g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
+            g2d.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_SPEED);
+        }
 
         doDrawing(g);
     }
@@ -294,6 +527,7 @@ public class Scene1 extends JPanel {
             drawPlayer(g);
             drawShot(g);
             drawBombing(g); // Draw enemy bombs
+            drawDashboard(g); // Draw dashboard on top
 
         } else {
 
@@ -335,6 +569,19 @@ public class Scene1 extends JPanel {
 
     private void update() {
 
+        // Update game timer
+        framesSinceLastSecond++;
+        if (framesSinceLastSecond >= 60) { // 60 FPS
+            gameTimeSeconds++;
+            framesSinceLastSecond = 0;
+        }
+        
+        // Update phase-based enemy behavior
+        updateEnemyPhase();
+        
+        // Update wave system
+        updateWaveSystem();
+
         // Update background stars
         updateStarField();
 
@@ -348,15 +595,37 @@ public class Scene1 extends JPanel {
                     Enemy enemy = new Alien1(sd.x, sd.y);
                     enemies.add(enemy);
                     break;
-                // Add more cases for different enemy types if needed
                 case "Alien2":
-                    // Enemy enemy2 = new Alien2(sd.x, sd.y);
-                    // enemies.add(enemy2);
+                    Enemy enemy2 = new Alien2(sd.x, sd.y);
+                    enemies.add(enemy2);
                     break;
                 case "PowerUp-SpeedUp":
-                    // Handle speed up item spawn
-                    PowerUp speedUp = new SpeedUp(sd.x, sd.y);
-                    powerups.add(speedUp);
+                    // Only spawn speed if player can actually use it
+                    if (player.canReceiveSpeedBoost()) {
+                        PowerUp speedUp = new SpeedUp(sd.x, sd.y);
+                        powerups.add(speedUp);
+                    }
+                    break;
+                case "PowerUp-MultiShot":
+                    PowerUp multiShot = new MultiShotPowerUp(sd.x, sd.y);
+                    powerups.add(multiShot);
+                    break;
+                case "VICTORY":
+                    // Player survived 5 minutes!
+                    inGame = false;
+                    message = "Stage 1 Complete! You survived 5 minutes!";
+                    break;
+                case "WAVE_SWARM":
+                    startWave("SWARM", 360); // 6 second swarm wave
+                    break;
+                case "WAVE_ELITE":
+                    startWave("ELITE", 480); // 8 second elite wave
+                    break;
+                case "WAVE_MIXED":
+                    startWave("MIXED", 420); // 7 second mixed wave
+                    break;
+                case "WAVE_FINAL":
+                    startWave("FINAL", 600); // 10 second final wave
                     break;
                 default:
                     System.out.println("Unknown enemy type: " + sd.type);
@@ -364,14 +633,33 @@ public class Scene1 extends JPanel {
             }
         }
 
-        if (deaths == NUMBER_OF_ALIENS_TO_DESTROY) {
+        // Victory condition: Survive 5 minutes (300 seconds)
+        if (gameTimeSeconds >= 300) {
             inGame = false;
             timer.stop();
-            message = "Game won!";
+            message = "Stage 1 Complete! You survived 5 minutes!";
         }
 
         // player
         player.act();
+        
+        // Auto-fire when multishot is active (controlled rate)
+        if (player.canAutoFire() && shots.size() < player.getMaxShots() - 2) {
+            int x = player.getX();
+            int y = player.getY();
+            
+            // Create auto-fire shot with proper spacing
+            Shot autoShot = new Shot(x, y);
+            shots.add(autoShot);
+            
+            // Create one additional spread shot only
+            if (player.hasMultishot() && shots.size() < player.getMaxShots()) {
+                Shot spreadShot = new Shot(x, y + 25);
+                shots.add(spreadShot);
+            }
+            
+            player.triggerAutoFire();
+        }
 
         // Power-ups
         for (PowerUp powerup : powerups) {
@@ -387,10 +675,9 @@ public class Scene1 extends JPanel {
         for (Enemy enemy : enemies) {
             if (enemy.isVisible()) {
                 enemy.act(direction);
-                // Check if enemy has gone off the left side of the screen
+                // Remove enemies that have gone off the left side of the screen
                 if (enemy.getX() < -50) { // Give some buffer for image width
-                    inGame = false;
-                    message = "Invasion!";
+                    enemy.die(); // Mark enemy as invisible so it gets cleaned up
                 }
             }
         }
@@ -411,6 +698,14 @@ public class Scene1 extends JPanel {
                         enemy.setDying(true);
                         explosions.add(new Explosion(enemy.getX(), enemy.getY()));
                         deaths++;
+                        
+                        // Add score based on enemy type
+                        if (enemy instanceof Alien2) {
+                            score += 200; // Alien2 worth more points
+                        } else {
+                            score += 100; // Alien1 base points
+                        }
+                        
                         shot.die();
                         shotsToRemove.add(shot);
                         break; // Exit inner loop since shot is destroyed
@@ -458,14 +753,35 @@ public class Scene1 extends JPanel {
         // Bomb is with enemy, so it loops over enemies
         for (Enemy enemy : enemies) {
 
-            int chance = randomizer.nextInt(15);
+            // Phase-based shooting behavior
+            boolean canShoot = false;
+            int shootChance = 0;
             
-            // Only Alien1 has bombs, so check if it's an Alien1
+            switch (currentPhase) {
+                case 1:
+                    // Phase 1: No shooting (0-90 seconds)
+                    canShoot = false;
+                    break;
+                case 2:
+                    // Phase 2: Occasional shooting (90-210 seconds)
+                    canShoot = true;
+                    shootChance = 800; // Very rare shooting
+                    break;
+                case 3:
+                    // Phase 3: Regular shooting every 5 seconds (210-300 seconds)
+                    canShoot = true;
+                    shootChance = 300; // More frequent shooting
+                    break;
+            }
+            
+            int chance = randomizer.nextInt(shootChance > 0 ? shootChance : 1000);
+            
+            // Both Alien1 and Alien2 can shoot bombs
             if (enemy instanceof Alien1) {
                 Alien1 alien = (Alien1) enemy;
-                Alien1.Bomb bomb = alien.getBomb();
+                EnemyBomb bomb = alien.getBomb();
 
-                if (chance == CHANCE && enemy.isVisible() && bomb.isDestroyed()) {
+                if (canShoot && chance == CHANCE && enemy.isVisible() && bomb.isDestroyed()) {
 
                     bomb.setDestroyed(false);
                     bomb.setX(enemy.getX());
@@ -477,19 +793,72 @@ public class Scene1 extends JPanel {
                 int playerX = player.getX();
                 int playerY = player.getY();
 
-                if (player.isVisible() && !bomb.isDestroyed()
+                if (player.isVisible() && !player.isInvincible() && !bomb.isDestroyed()
                         && bombX >= (playerX)
                         && bombX <= (playerX + PLAYER_WIDTH)
                         && bombY >= (playerY)
                         && bombY <= (playerY + PLAYER_HEIGHT)) {
 
-                    var ii = new ImageIcon(IMG_EXPLOSION);
-                    player.setImage(ii.getImage());
-                    player.setDying(true);
                     bomb.setDestroyed(true);
                     explosions.add(new Explosion(playerX, playerY));
-                    inGame = false;
-                    message = "Game Over!";
+                    player.takeDamage();
+                    
+                    // Decrement lives instead of instant death
+                    lives--;
+                    if (lives <= 0) {
+                        var ii = new ImageIcon(IMG_EXPLOSION);
+                        player.setImage(ii.getImage());
+                        player.setDying(true);
+                        inGame = false;
+                        message = "Game Over!";
+                    }
+                }
+
+                if (!bomb.isDestroyed()) {
+                    bomb.act(); // Use bomb's act method for movement
+                    // For sideways gameplay, remove bombs that go off the left side
+                    if (bomb.getX() < 0) {
+                        bomb.setDestroyed(true);
+                    }
+                }
+            }
+            
+            // Handle Alien2 bombs
+            if (enemy instanceof Alien2) {
+                Alien2 alien = (Alien2) enemy;
+                EnemyBomb bomb = alien.getBomb();
+
+                if (canShoot && chance == CHANCE && enemy.isVisible() && bomb.isDestroyed()) {
+
+                    bomb.setDestroyed(false);
+                    bomb.setX(enemy.getX());
+                    bomb.setY(enemy.getY());
+                }
+
+                int bombX = bomb.getX();
+                int bombY = bomb.getY();
+                int playerX = player.getX();
+                int playerY = player.getY();
+
+                if (player.isVisible() && !player.isInvincible() && !bomb.isDestroyed()
+                        && bombX >= (playerX)
+                        && bombX <= (playerX + PLAYER_WIDTH)
+                        && bombY >= (playerY)
+                        && bombY <= (playerY + PLAYER_HEIGHT)) {
+
+                    bomb.setDestroyed(true);
+                    explosions.add(new Explosion(playerX, playerY));
+                    player.takeDamage();
+                    
+                    // Decrement lives instead of instant death
+                    lives--;
+                    if (lives <= 0) {
+                        var ii = new ImageIcon(IMG_EXPLOSION);
+                        player.setImage(ii.getImage());
+                        player.setDying(true);
+                        inGame = false;
+                        message = "Game Over!";
+                    }
                 }
 
                 if (!bomb.isDestroyed()) {
@@ -509,6 +878,81 @@ public class Scene1 extends JPanel {
         
         // Remove completed explosions
         explosions.removeIf(explosion -> !explosion.isVisible());
+    }
+    
+    private void updateEnemyPhase() {
+        // Phase 1: 0-90 seconds (no shooting)
+        if (gameTimeSeconds < 90) {
+            currentPhase = 1;
+        }
+        // Phase 2: 90-210 seconds (occasional shooting)
+        else if (gameTimeSeconds < 210) {
+            currentPhase = 2;
+        }
+        // Phase 3: 210-300 seconds (regular shooting every 5 seconds)
+        else {
+            currentPhase = 3;
+        }
+    }
+    
+    private void startWave(String waveType, int durationFrames) {
+        waveActive = true;
+        currentWaveType = waveType;
+        waveEndFrame = frame + durationFrames;
+        enemiesInCurrentWave = 0;
+        
+        // Spawn wave enemies immediately
+        spawnWaveEnemies(waveType);
+    }
+    
+    private void spawnWaveEnemies(String waveType) {
+        int centerY = BOARD_HEIGHT / 2;
+        
+        switch (waveType) {
+            case "SWARM":
+                // 6 weak enemies in tight formation
+                for (int i = 0; i < 6; i++) {
+                    int y = centerY - 60 + (i * 24);
+                    enemies.add(new Alien1(BOARD_WIDTH - 50, y));
+                    enemiesInCurrentWave++;
+                }
+                break;
+                
+            case "ELITE":
+                // 3 strong enemies spread out
+                enemies.add(new Alien2(BOARD_WIDTH - 50, centerY - 80));
+                enemies.add(new Alien2(BOARD_WIDTH - 50, centerY));
+                enemies.add(new Alien2(BOARD_WIDTH - 50, centerY + 80));
+                enemiesInCurrentWave += 3;
+                break;
+                
+            case "MIXED":
+                // 2 Alien2 flanking 3 Alien1
+                enemies.add(new Alien2(BOARD_WIDTH - 50, centerY - 100));
+                enemies.add(new Alien1(BOARD_WIDTH - 50, centerY - 40));
+                enemies.add(new Alien1(BOARD_WIDTH - 50, centerY));
+                enemies.add(new Alien1(BOARD_WIDTH - 50, centerY + 40));
+                enemies.add(new Alien2(BOARD_WIDTH - 50, centerY + 100));
+                enemiesInCurrentWave += 5;
+                break;
+                
+            case "FINAL":
+                // 4 Alien2 in diamond formation
+                enemies.add(new Alien2(BOARD_WIDTH - 50, centerY));        // Front
+                enemies.add(new Alien2(BOARD_WIDTH - 20, centerY - 60));   // Top
+                enemies.add(new Alien2(BOARD_WIDTH - 20, centerY + 60));   // Bottom
+                enemies.add(new Alien2(BOARD_WIDTH + 10, centerY));        // Rear
+                enemiesInCurrentWave += 4;
+                break;
+        }
+    }
+    
+    private void updateWaveSystem() {
+        if (waveActive && frame >= waveEndFrame) {
+            waveActive = false;
+            currentWaveType = "";
+            enemiesInCurrentWave = 0;
+        }
     }
 
     private void doGameCycle() {
@@ -555,11 +999,25 @@ public class Scene1 extends JPanel {
                 int y = player.getY();
 
                 if (key == KeyEvent.VK_SPACE) {
-                    System.out.println("Shots: " + shots.size());
-                    if (shots.size() < 4) {
-                        // Create a new shot and add it to the list
+                    int maxShots = player.getMaxShots();
+                    System.out.println("Shots: " + shots.size() + "/" + maxShots);
+                    if (shots.size() < maxShots) {
+                        // Create primary shot
                         Shot shot = new Shot(x, y);
                         shots.add(shot);
+                        
+                        // Create additional shots if player has multishot active
+                        if (player.hasMultishot()) {
+                            int extraShots = player.getExtraShots();
+                            for (int i = 1; i <= extraShots && shots.size() < maxShots; i++) {
+                                // Create shots with spread pattern
+                                int spreadY = y + (i * 25) - (extraShots * 12); // Wider spread
+                                Shot extraShot = new Shot(x, spreadY);
+                                shots.add(extraShot);
+                            }
+                            
+                            // No rapid-fire burst - controlled by auto-fire system
+                        }
                     }
                 }
             }
@@ -632,6 +1090,14 @@ public class Scene1 extends JPanel {
         deaths = 0;
         frame = 0;
         message = "Game Over";
+        
+        // Reset phase system
+        currentPhase = 1;
+        lastPhaseChangeTime = 0;
+        gameTimeSeconds = 0;
+        framesSinceLastSecond = 0;
+        score = 0;
+        lives = 3;
 
         // Clear all game objects
         enemies.clear();

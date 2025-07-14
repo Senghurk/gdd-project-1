@@ -13,7 +13,14 @@ public class Player extends Sprite {
     private static final int START_X = 50; // Move player to left side of screen
     private static final int START_Y = 270; // Center vertically
     private int width;
-    private int currentSpeed = 2;
+    private int currentSpeed = 8; // Increased default speed (2+6)
+    
+    // MultiShot powerup variables
+    private int multishotFramesRemaining = 0;
+    private int extraShots = 0;
+    private int autoFireCooldown = 0;
+    private int invincibilityFrames = 0;
+    
 
     private Rectangle bounds = new Rectangle(175,135,17,32);
 
@@ -104,6 +111,26 @@ public class Player extends Sprite {
         if (y >= BOARD_HEIGHT - 2 * width) {
             y = BOARD_HEIGHT - 2 * width;
         }
+        
+        // Update multishot timer
+        if (multishotFramesRemaining > 0) {
+            multishotFramesRemaining--;
+            if (multishotFramesRemaining == 0) {
+                extraShots = 0; // Reset extra shots when timer expires
+            }
+        }
+        
+        // Update auto-fire cooldown
+        if (autoFireCooldown > 0) {
+            autoFireCooldown--;
+        }
+        
+        // Update invincibility frames
+        if (invincibilityFrames > 0) {
+            invincibilityFrames--;
+        }
+        
+        
     }
 
     public void act(int direction) {
@@ -134,4 +161,55 @@ public class Player extends Sprite {
             dx = 0;
         }
     }
+    
+    public void activateMultishot(int duration, int shots) {
+        this.multishotFramesRemaining = duration;
+        this.extraShots = shots;
+    }
+    
+    public boolean hasMultishot() {
+        return multishotFramesRemaining > 0 && extraShots > 0;
+    }
+    
+    public int getExtraShots() {
+        return extraShots;
+    }
+    
+    public int getMultishotFramesRemaining() {
+        return multishotFramesRemaining;
+    }
+    
+    public int getMaxShots() {
+        // Base limit is 6, but increase to 15 when multishot is active
+        return hasMultishot() ? 15 : 6;
+    }
+    
+    public boolean canAutoFire() {
+        return hasMultishot() && autoFireCooldown <= 0;
+    }
+    
+    public void triggerAutoFire() {
+        autoFireCooldown = 15; // 15 frames between auto-shots (more reasonable)
+    }
+    
+    public boolean isInvincible() {
+        return invincibilityFrames > 0;
+    }
+    
+    public void takeDamage() {
+        if (!isInvincible()) {
+            invincibilityFrames = 120; // 2 seconds of invincibility at 60 FPS
+        }
+    }
+    
+    // Speed boost methods (now permanent)
+    public void applySpeedBoost(int boostAmount) {
+        int newSpeed = Math.min(currentSpeed + boostAmount, MAX_PLAYER_SPEED);
+        currentSpeed = newSpeed;
+    }
+    
+    public boolean canReceiveSpeedBoost() {
+        return currentSpeed < MAX_PLAYER_SPEED; // Can get speed until hitting cap
+    }
+    
 }

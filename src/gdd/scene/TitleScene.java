@@ -24,6 +24,7 @@ public class TitleScene extends JPanel {
     private final Dimension d = new Dimension(BOARD_WIDTH, BOARD_HEIGHT);
     private Timer timer;
     private Game game;
+    private float currentVolume = 0.5f; // Track current volume
 
     public TitleScene(Game game) {
         this.game = game;
@@ -107,9 +108,31 @@ public class TitleScene extends JPanel {
         // int y = (d.height + stringHeight) / 2;
         g.drawString(text, x, 600);
 
+        g.setColor(Color.white);
+        g.setFont(g.getFont().deriveFont(16f));
+        g.drawString("Team Members:", (d.width - g.getFontMetrics().stringWidth("Team Members:")) / 2, 500);
+        
+        g.setFont(g.getFont().deriveFont(14f));
+        String[] teamMembers = {
+            "Alice Johnson - ID: 2024001",
+            "Bob Smith - ID: 2024002", 
+            "Charlie Davis - ID: 2024003"
+        };
+        
+        for (int i = 0; i < teamMembers.length; i++) {
+            int memberX = (d.width - g.getFontMetrics().stringWidth(teamMembers[i])) / 2;
+            g.drawString(teamMembers[i], memberX, 530 + (i * 20));
+        }
+        
+        // Volume control instructions
+        g.setColor(Color.cyan);
+        g.setFont(g.getFont().deriveFont(12f));
+        g.drawString("Volume Controls: + / - keys", 10, 620);
+        g.drawString("Current Volume: " + Math.round(currentVolume * 100) + "%", 10, 640);
+        
         g.setColor(Color.gray);
         g.setFont(g.getFont().deriveFont(10f));
-        g.drawString("Game by Chayapol", 10, 650);
+        g.drawString("Game by Chayapol", 10, 670);
 
         Toolkit.getDefaultToolkit().sync();
     }
@@ -145,6 +168,18 @@ public class TitleScene extends JPanel {
             if (key == KeyEvent.VK_SPACE) {
                 // Load the next scene
                 game.loadScene2();
+            } else if (key == KeyEvent.VK_PLUS || key == KeyEvent.VK_EQUALS) {
+                // Increase volume
+                currentVolume = Math.min(1.0f, currentVolume + 0.1f);
+                if (audioPlayer != null) {
+                    audioPlayer.setVolume(currentVolume);
+                }
+            } else if (key == KeyEvent.VK_MINUS) {
+                // Decrease volume
+                currentVolume = Math.max(0.0f, currentVolume - 0.1f);
+                if (audioPlayer != null) {
+                    audioPlayer.setVolume(currentVolume);
+                }
             }
 
         }

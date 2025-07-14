@@ -30,9 +30,19 @@ public class Global {
 
     // Images
     public static final String IMG_ENEMY = "src/images/alien.png";
+    public static final String IMG_ENEMY2 = "src/images/alien2.png";
     public static final String IMG_PLAYER = "src/images/player.png";
     public static final String IMG_SHOT = "src/images/shot.png";
     public static final String IMG_EXPLOSION = "src/images/explosion.png";
     public static final String IMG_TITLE = "src/images/title.png";
     public static final String IMG_POWERUP_SPEEDUP = "src/images/powerup-s.png";
+    public static final String IMG_POWERUP_MULTISHOT = "src/images/powerup-multishot.png";
+    
+    // Power-up constants (rebalanced for better gameplay)
+    public static final int MULTISHOT_DURATION_FRAMES = 600; // 10 seconds at 60 FPS
+    public static final int MULTISHOT_EXTRA_SHOTS = 3; // Additional shots per fire (4 total shots)
+    
+    // Speed PowerUp constants
+    public static final int SPEED_BOOST_AMOUNT = 2; // Speed increase amount
+    public static final int MAX_PLAYER_SPEED = 14; // Maximum speed cap (8 default + 3 boosts)
 }

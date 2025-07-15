@@ -45,4 +45,9 @@ public class Global {
     // Speed PowerUp constants
     public static final int SPEED_BOOST_AMOUNT = 2; // Speed increase amount
     public static final int MAX_PLAYER_SPEED = 14; // Maximum speed cap (8 default + 3 boosts)
+    
+    // NEW: Shooting mode constants
+    public static final int SINGLE_SHOT_LIMIT = 1; // Default shot limit before SpeedUp collection
+    public static final int NORMAL_SHOT_LIMIT = 6; // Normal shot limit after SpeedUp collection
+    public static final int MULTISHOT_SHOT_LIMIT = 15; // Enhanced shot limit with multishot active
 }

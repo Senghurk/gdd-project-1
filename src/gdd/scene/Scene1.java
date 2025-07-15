@@ -453,19 +453,29 @@ public class Scene1 extends JPanel {
         int maxShots = player.getMaxShots();
         g.drawString("Shots: " + shots.size() + "/" + maxShots, 150, 40);
         
+        // UPDATED: Show SpeedUp collection status
+        g.setColor(Color.yellow);
+        if (player.hasCollectedSpeedUp()) {
+            g.drawString("✓ Multi-Shot Unlocked", 300, 20);
+        } else {
+            g.setColor(Color.red);
+            g.drawString("✗ Single Shot Only", 300, 20);
+        }
+        
         // Powerup status
+        g.setColor(Color.white);
         if (player.hasMultishot()) {
             int remainingSeconds = player.getMultishotFramesRemaining() / 60;
             g.setColor(Color.yellow);
-            g.drawString("🔥 MULTISHOT: " + remainingSeconds + "s", 300, 20);
+            g.drawString("🔥 MULTISHOT: " + remainingSeconds + "s", 300, 35);
             g.setColor(Color.red);
-            g.drawString("AUTO-FIRE ACTIVE!", 300, 35);
+            g.drawString("AUTO-FIRE ACTIVE!", 300, 50);
         }
         
         // Speed status  
         if (player.getSpeed() > 8) { // Show if speed is above default
             g.setColor(Color.cyan);
-            g.drawString("⚡ SPEED: " + player.getSpeed(), 300, 50);
+            g.drawString("⚡ SPEED: " + player.getSpeed(), 450, 40);
         }
         
         // Phase information
@@ -482,13 +492,13 @@ public class Scene1 extends JPanel {
                 phaseText += " (WAR!)";
                 break;
         }
-        g.drawString(phaseText, 450, 20);
+        g.drawString(phaseText, 550, 20);
         
         // Wave information
         if (waveActive) {
             g.setColor(Color.red);
             int remainingSeconds = (waveEndFrame - frame) / 60;
-            g.drawString("🚨 " + currentWaveType + " WAVE: " + remainingSeconds + "s", 450, 40);
+            g.drawString("🚨 " + currentWaveType + " WAVE: " + remainingSeconds + "s", 550, 40);
         }
         
     }
@@ -643,7 +653,7 @@ public class Scene1 extends JPanel {
         // player
         player.act();
         
-        // Auto-fire when multishot is active (controlled rate)
+        // UPDATED: Auto-fire only works if player has collected SpeedUp
         if (player.canAutoFire() && shots.size() < player.getMaxShots() - 2) {
             int x = player.getX();
             int y = player.getY();
@@ -998,6 +1008,7 @@ public class Scene1 extends JPanel {
                 int x = player.getX();
                 int y = player.getY();
 
+                // UPDATED: Modified shooting logic to respect single-shot limitation
                 if (key == KeyEvent.VK_SPACE) {
                     int maxShots = player.getMaxShots();
                     System.out.println("Shots: " + shots.size() + "/" + maxShots);
@@ -1006,8 +1017,8 @@ public class Scene1 extends JPanel {
                         Shot shot = new Shot(x, y);
                         shots.add(shot);
                         
-                        // Create additional shots if player has multishot active
-                        if (player.hasMultishot()) {
+                        // Only create additional shots if player can shoot multiple AND has multishot
+                        if (player.canShootMultiple() && player.hasMultishot()) {
                             int extraShots = player.getExtraShots();
                             for (int i = 1; i <= extraShots && shots.size() < maxShots; i++) {
                                 // Create shots with spread pattern

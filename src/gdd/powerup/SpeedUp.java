@@ -33,9 +33,14 @@ public class SpeedUp extends PowerUp {
         }
     }
 
+    // UPDATED: Modified to enable multiple shots capability
     public void upgrade(Player player) {
-        // Apply permanent speed boost with cap
+        // Enable multiple shots capability (main feature)
+        player.enableMultipleShots();
+        
+        // Also apply speed boost as secondary benefit
         player.applySpeedBoost(SPEED_BOOST_AMOUNT);
+        
         this.die(); // Remove the power-up after use
     }
 

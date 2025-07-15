@@ -1,11 +1,11 @@
 package gdd.sprite;
 
 import static gdd.Global.*;
+import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.event.KeyEvent;
-import java.awt.Graphics2D;
-import java.awt.image.BufferedImage;
 import java.awt.geom.AffineTransform;
+import java.awt.image.BufferedImage;
 import javax.swing.ImageIcon;
 
 public class Player extends Sprite {
@@ -20,6 +20,9 @@ public class Player extends Sprite {
     private int extraShots = 0;
     private int autoFireCooldown = 0;
     private int invincibilityFrames = 0;
+    
+    // NEW: Track if player has collected SpeedUp powerup
+    private boolean hasCollectedSpeedUp = false;
     
 
     private Rectangle bounds = new Rectangle(175,135,17,32);
@@ -179,13 +182,19 @@ public class Player extends Sprite {
         return multishotFramesRemaining;
     }
     
+    // UPDATED: Modified to respect single-shot limitation
     public int getMaxShots() {
-        // Base limit is 6, but increase to 15 when multishot is active
+        // Only allow 1 shot until SpeedUp is collected
+        if (!hasCollectedSpeedUp) {
+            return 1;
+        }
+        // After collecting SpeedUp, allow normal shot limits
         return hasMultishot() ? 15 : 6;
     }
     
+    // UPDATED: Auto-fire only works if player has collected SpeedUp
     public boolean canAutoFire() {
-        return hasMultishot() && autoFireCooldown <= 0;
+        return hasCollectedSpeedUp && hasMultishot() && autoFireCooldown <= 0;
     }
     
     public void triggerAutoFire() {
@@ -210,6 +219,19 @@ public class Player extends Sprite {
     
     public boolean canReceiveSpeedBoost() {
         return currentSpeed < MAX_PLAYER_SPEED; // Can get speed until hitting cap
+    }
+    
+    // NEW: Methods to handle SpeedUp powerup collection
+    public void enableMultipleShots() {
+        this.hasCollectedSpeedUp = true;
+    }
+    
+    public boolean canShootMultiple() {
+        return hasCollectedSpeedUp;
+    }
+    
+    public boolean hasCollectedSpeedUp() {
+        return hasCollectedSpeedUp;
     }
     
 }

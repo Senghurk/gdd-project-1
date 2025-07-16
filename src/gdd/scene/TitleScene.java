@@ -92,7 +92,11 @@ public class TitleScene extends JPanel {
         g.setColor(Color.black);
         g.fillRect(0, 0, d.width, d.height);
 
-        g.drawImage(image, 0, -80, d.width, d.height, this);
+        int imageWidth = (int)(BOARD_WIDTH * 0.8); // Make image 80% of board width
+        int imageHeight = (int)(BOARD_HEIGHT * 0.6); // Make image 60% of board height
+        int imageX = (BOARD_WIDTH - imageWidth) / 2; // Center horizontally
+        int imageY = 50; // Position from top
+        g.drawImage(image, imageX, imageY, imageWidth, imageHeight, null);
 
         if (frame % 60 < 30) {
             g.setColor(Color.red);
@@ -110,18 +114,18 @@ public class TitleScene extends JPanel {
 
         g.setColor(Color.white);
         g.setFont(g.getFont().deriveFont(16f));
-        g.drawString("Team Members:", (d.width - g.getFontMetrics().stringWidth("Team Members:")) / 2, 500);
+        g.drawString("Team Members:", (d.width - g.getFontMetrics().stringWidth("Team Members:")) / 2, 450);
         
         g.setFont(g.getFont().deriveFont(14f));
         String[] teamMembers = {
-            "Alice Johnson - ID: 2024001",
+            "Khaing Thin Zar Sein - ID: 6530381",
             "Bob Smith - ID: 2024002", 
             "Charlie Davis - ID: 2024003"
         };
         
         for (int i = 0; i < teamMembers.length; i++) {
             int memberX = (d.width - g.getFontMetrics().stringWidth(teamMembers[i])) / 2;
-            g.drawString(teamMembers[i], memberX, 530 + (i * 20));
+            g.drawString(teamMembers[i], memberX, 480 + (i * 20));
         }
         
         // Volume control instructions
@@ -132,7 +136,7 @@ public class TitleScene extends JPanel {
         
         g.setColor(Color.gray);
         g.setFont(g.getFont().deriveFont(10f));
-        g.drawString("Game by Chayapol", 10, 670);
+        g.drawString("Game by UbiRiotHoyoverse", 10, 670);
 
         Toolkit.getDefaultToolkit().sync();
     }
@@ -167,7 +171,7 @@ public class TitleScene extends JPanel {
             int key = e.getKeyCode();
             if (key == KeyEvent.VK_SPACE) {
                 // Load the next scene
-                game.loadScene2();
+                game.loadScene1();
             } else if (key == KeyEvent.VK_PLUS || key == KeyEvent.VK_EQUALS) {
                 // Increase volume
                 currentVolume = Math.min(1.0f, currentVolume + 0.1f);

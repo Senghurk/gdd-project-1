@@ -15,5 +15,15 @@ abstract public class PowerUp extends Sprite {
         this.y = y;
     }
 
+    public void act() {
+        // Move from right to left like other powerups
+        this.x -= 2; // Move left by 2 pixels each frame
+        
+        // Remove power-up if it goes off the left side of the screen
+        if (this.x < -50) {
+            this.die();
+        }
+    }
+
     abstract public void upgrade(Player player);
 }

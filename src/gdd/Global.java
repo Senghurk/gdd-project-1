@@ -36,18 +36,22 @@ public class Global {
     public static final String IMG_EXPLOSION = "src/images/explosion.png";
     public static final String IMG_TITLE = "src/images/title.png";
     public static final String IMG_POWERUP_SPEEDUP = "src/images/powerup-s.png";
-    public static final String IMG_POWERUP_MULTISHOT = "src/images/powerup-multishot.png";
+    public static final String IMG_POWERUP_ADDBULLET = "src/images/powerup_bullet.png";
+    public static final String IMG_POWERUP_MULTISHOT = "src/images/powerup_autoshot.png";
     
     // Power-up constants (rebalanced for better gameplay)
     public static final int MULTISHOT_DURATION_FRAMES = 600; // 10 seconds at 60 FPS
     public static final int MULTISHOT_EXTRA_SHOTS = 3; // Additional shots per fire (4 total shots)
     
     // Speed PowerUp constants
-    public static final int SPEED_BOOST_AMOUNT = 2; // Speed increase amount
-    public static final int MAX_PLAYER_SPEED = 14; // Maximum speed cap (8 default + 3 boosts)
+    public static final int INITIAL_PLAYER_SPEED = 3;
+    public static final int SPEED_BOOST_AMOUNT = 2; // Speed increase per powerup
+    public static final int MAX_PLAYER_SPEED = 11; // Maximum speed (3 + 4*2)
+    public static final int TOTAL_SPEED_POWERUPS = 4; // Total speed powerups in game
     
-    // NEW: Shooting mode constants
-    public static final int SINGLE_SHOT_LIMIT = 1; // Default shot limit before SpeedUp collection
-    public static final int NORMAL_SHOT_LIMIT = 6; // Normal shot limit after SpeedUp collection
-    public static final int MULTISHOT_SHOT_LIMIT = 15; // Enhanced shot limit with multishot active
+    // Bullet Count PowerUp constants
+    public static final int INITIAL_BULLET_COUNT = 1;
+    public static final int BULLET_COUNT_INCREASE = 1; // Bullet increase per powerup
+    public static final int MAX_BULLET_COUNT = 5; // Maximum bullets (1 + 4*1)
+    public static final int TOTAL_BULLET_POWERUPS = 4; // Total bullet powerups in game
 }

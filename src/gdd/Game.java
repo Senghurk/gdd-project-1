@@ -38,15 +38,15 @@ public class Game extends JFrame  {
     }
 
     public void loadScene1() {
-        // ....
-    }
-
-    public void loadScene2() {
         getContentPane().removeAll();
         add(scene1);
         titleScene.stop();
         scene1.start();
         revalidate();
         repaint();
+    }
+
+    public void loadScene2() {
+        
     }
 }

@@ -2,7 +2,17 @@ package gdd.scene;
 
 import static gdd.Global.*;
 import gdd.SpawnDetails;
+import gdd.sprite.Alien1;
+import gdd.sprite.Alien2;
+import gdd.sprite.Enemy;
+import gdd.powerup.PowerUp;
+import gdd.powerup.SpeedUp;
+import gdd.powerup.AddBulletPowerUp;
+import gdd.powerup.MultiShotPowerUp;
+import gdd.sprite.Player;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Random;
 
 public class SpawnManager {
@@ -10,9 +20,159 @@ public class SpawnManager {
     private HashMap<Integer, SpawnDetails> spawnMap;
     private Random randomizer;
     
+    // Wave system state
+    private boolean waveActive = false;
+    private int waveEndFrame = 0;
+    private String currentWaveType = "";
+    private int enemiesInCurrentWave = 0;
+    
     public SpawnManager(HashMap<Integer, SpawnDetails> spawnMap, Random randomizer) {
         this.spawnMap = spawnMap;
         this.randomizer = randomizer;
+    }
+    
+    public SpawnResult spawnEnemies(int frame, Player player) {
+        SpawnResult result = new SpawnResult();
+        
+        // Update wave system
+        updateWaveSystem(frame);
+        
+        // Check enemy spawn
+        SpawnDetails sd = spawnMap.get(frame);
+        if (sd != null) {
+            handleSpawnDetails(sd, result, player, frame);
+        }
+        
+        return result;
+    }
+    
+    private void handleSpawnDetails(SpawnDetails sd, SpawnResult result, Player player, int frame) {
+        switch (sd.type) {
+            case "Alien1":
+                Enemy enemy = new Alien1(sd.x, sd.y);
+                result.enemies.add(enemy);
+                break;
+            case "Alien2":
+                Enemy enemy2 = new Alien2(sd.x, sd.y);
+                result.enemies.add(enemy2);
+                break;
+            case "PowerUp-SpeedUp":
+                // Only spawn speed if player can actually use it
+                if (player.getCurrentSpeed() < player.getMaxSpeed()) {
+                    PowerUp speedUp = new SpeedUp(sd.x, sd.y);
+                    result.powerups.add(speedUp);
+                }
+                break;
+            case "PowerUp-AddBullet":
+                // Only spawn bullet powerup if player can actually use it
+                if (player.getCurrentBulletCount() < player.getMaxBulletCount()) {
+                    PowerUp addBullet = new AddBulletPowerUp(sd.x, sd.y);
+                    result.powerups.add(addBullet);
+                }
+                break;
+            case "PowerUp-MultiShot":
+                PowerUp multiShot = new MultiShotPowerUp(sd.x, sd.y);
+                result.powerups.add(multiShot);
+                break;
+            case "VICTORY":
+                // Player survived 5 minutes!
+                result.gameOver = true;
+                result.victoryMessage = "Stage 1 Complete! You survived 5 minutes!";
+                break;
+            case "WAVE_SWARM":
+                startWave("SWARM", 360, frame, result); // 6 second swarm wave
+                break;
+            case "WAVE_ELITE":
+                startWave("ELITE", 480, frame, result); // 8 second elite wave
+                break;
+            case "WAVE_MIXED":
+                startWave("MIXED", 420, frame, result); // 7 second mixed wave
+                break;
+            case "WAVE_FINAL":
+                startWave("FINAL", 600, frame, result); // 10 second final wave
+                break;
+            default:
+                System.out.println("Unknown enemy type: " + sd.type);
+                break;
+        }
+    }
+    
+    private void startWave(String waveType, int durationFrames, int currentFrame, SpawnResult result) {
+        waveActive = true;
+        currentWaveType = waveType;
+        waveEndFrame = currentFrame + durationFrames;
+        enemiesInCurrentWave = 0;
+        
+        // Spawn wave enemies immediately
+        spawnWaveEnemies(waveType, result);
+        
+        // Set wave info in result
+        result.waveActive = true;
+        result.waveType = waveType;
+        result.waveEndFrame = waveEndFrame;
+    }
+    
+    private void spawnWaveEnemies(String waveType, SpawnResult result) {
+        int centerY = BOARD_HEIGHT / 2;
+        
+        switch (waveType) {
+            case "SWARM":
+                // 6 weak enemies in tight formation
+                for (int i = 0; i < 6; i++) {
+                    int y = centerY - 60 + (i * 24);
+                    result.enemies.add(new Alien1(BOARD_WIDTH - 50, y));
+                    enemiesInCurrentWave++;
+                }
+                break;
+                
+            case "ELITE":
+                // 3 strong enemies spread out
+                result.enemies.add(new Alien2(BOARD_WIDTH - 50, centerY - 80));
+                result.enemies.add(new Alien2(BOARD_WIDTH - 50, centerY));
+                result.enemies.add(new Alien2(BOARD_WIDTH - 50, centerY + 80));
+                enemiesInCurrentWave += 3;
+                break;
+                
+            case "MIXED":
+                // 2 Alien2 flanking 3 Alien1
+                result.enemies.add(new Alien2(BOARD_WIDTH - 50, centerY - 100));
+                result.enemies.add(new Alien1(BOARD_WIDTH - 50, centerY - 40));
+                result.enemies.add(new Alien1(BOARD_WIDTH - 50, centerY));
+                result.enemies.add(new Alien1(BOARD_WIDTH - 50, centerY + 40));
+                result.enemies.add(new Alien2(BOARD_WIDTH - 50, centerY + 100));
+                enemiesInCurrentWave += 5;
+                break;
+                
+            case "FINAL":
+                // 4 Alien2 in diamond formation
+                result.enemies.add(new Alien2(BOARD_WIDTH - 50, centerY));        // Front
+                result.enemies.add(new Alien2(BOARD_WIDTH - 20, centerY - 60));   // Top
+                result.enemies.add(new Alien2(BOARD_WIDTH - 20, centerY + 60));   // Bottom
+                result.enemies.add(new Alien2(BOARD_WIDTH + 10, centerY));        // Rear
+                enemiesInCurrentWave += 4;
+                break;
+        }
+    }
+    
+    private void updateWaveSystem(int currentFrame) {
+        if (waveActive && currentFrame >= waveEndFrame) {
+            waveActive = false;
+            currentWaveType = "";
+            enemiesInCurrentWave = 0;
+        }
+    }
+    
+    // Getter methods for wave state
+    public boolean isWaveActive() {
+        return waveActive;
+    }
+    
+    public String getCurrentWaveType() {
+        return currentWaveType;
+    }
+    
+    public int getWaveEndFrame() {
+        return waveEndFrame;
     }
     
     public void loadSpawnDetails() {
@@ -178,5 +338,16 @@ public class SpawnManager {
         
         // Remove old victory condition since we handle it in update()
         // spawnMap.put(18000, new SpawnDetails("VICTORY", 0, 0));
+    }
+
+    // Result class to hold spawn results
+    public static class SpawnResult {
+        public List<Enemy> enemies = new ArrayList<>();
+        public List<PowerUp> powerups = new ArrayList<>();
+        public boolean gameOver = false;
+        public String victoryMessage = "";
+        public boolean waveActive = false;
+        public String waveType = "";
+        public int waveEndFrame = 0;
     }
 } 

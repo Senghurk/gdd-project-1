@@ -53,12 +53,6 @@ public class Scene1 extends JPanel {
     
     // Phase-based enemy behavior
     private int currentPhase = 1;
-    
-    // Wave system
-    private boolean waveActive = false;
-    private int waveEndFrame = 0;
-    private String currentWaveType = "";
-    private int enemiesInCurrentWave = 0;
 
     private boolean inGame = true;
     private String message = "Game Over";
@@ -87,9 +81,11 @@ public class Scene1 extends JPanel {
 
     private HashMap<Integer, SpawnDetails> spawnMap = new HashMap<>();
     private AudioPlayer audioPlayer;
+    private SpawnManager spawnManager;
 
     public Scene1(Game game) {
         this.game = game;
+        this.spawnManager = new SpawnManager(spawnMap, randomizer);
         loadSpawnDetails();
     }
 
@@ -106,20 +102,9 @@ public class Scene1 extends JPanel {
 
     private void loadSpawnDetails() {
         // Use SpawnManager to handle all spawning logic
-        SpawnManager spawnManager = new SpawnManager(spawnMap, randomizer);
         spawnManager.loadSpawnDetails();
     }
     
-
-
-
-    
-
-    
-
-
-
-
     public void start() {
         addKeyListener(new TAdapter());
         setFocusable(true);
@@ -316,11 +301,7 @@ public class Scene1 extends JPanel {
         g.drawString(phaseText, 550, 20);
         
         // Wave information
-        if (waveActive) {
-            g.setColor(Color.red);
-            int remainingSeconds = (waveEndFrame - frame) / 60;
-            g.drawString("🚨 " + currentWaveType + " WAVE: " + remainingSeconds + "s", 550, 40);
-        }
+        // The wave system is now managed by SpawnManager, so we don't need to draw wave info here.
         
     }
 
@@ -407,65 +388,23 @@ public class Scene1 extends JPanel {
         
         // Update phase-based enemy behavior
         updateEnemyPhase();
-        
-        // Update wave system
-        updateWaveSystem();
 
         // Update background stars
         updateStarField();
 
-        // Check enemy spawn
-        SpawnDetails sd = spawnMap.get(frame);
-        if (sd != null) {
-            // Create a new enemy based on the spawn details
-            switch (sd.type) {
-                case "Alien1":
-                    Enemy enemy = new Alien1(sd.x, sd.y);
-                    enemies.add(enemy);
-                    break;
-                case "Alien2":
-                    Enemy enemy2 = new Alien2(sd.x, sd.y);
-                    enemies.add(enemy2);
-                    break;
-                case "PowerUp-SpeedUp":
-                    // Only spawn speed if player can actually use it
-                    if (player.getCurrentSpeed() < player.getMaxSpeed()) {
-                        PowerUp speedUp = new SpeedUp(sd.x, sd.y);
-                        powerups.add(speedUp);
-                    }
-                    break;
-                case "PowerUp-AddBullet":
-                    // Only spawn bullet powerup if player can actually use it
-                    if (player.getCurrentBulletCount() < player.getMaxBulletCount()) {
-                        PowerUp addBullet = new AddBulletPowerUp(sd.x, sd.y);
-                        powerups.add(addBullet);
-                    }
-                    break;
-                case "PowerUp-MultiShot":
-                    PowerUp multiShot = new MultiShotPowerUp(sd.x, sd.y);
-                    powerups.add(multiShot);
-                    break;
-                case "VICTORY":
-                    // Player survived 5 minutes!
-                    inGame = false;
-                    message = "Stage 1 Complete! You survived 5 minutes!";
-                    break;
-                case "WAVE_SWARM":
-                    startWave("SWARM", 360); // 6 second swarm wave
-                    break;
-                case "WAVE_ELITE":
-                    startWave("ELITE", 480); // 8 second elite wave
-                    break;
-                case "WAVE_MIXED":
-                    startWave("MIXED", 420); // 7 second mixed wave
-                    break;
-                case "WAVE_FINAL":
-                    startWave("FINAL", 600); // 10 second final wave
-                    break;
-                default:
-                    System.out.println("Unknown enemy type: " + sd.type);
-                    break;
-            }
+        // Handle spawning through SpawnManager
+        SpawnManager.SpawnResult spawnResult = spawnManager.spawnEnemies(frame, player);
+        
+        // Add spawned enemies to the game
+        enemies.addAll(spawnResult.enemies);
+        
+        // Add spawned powerups to the game
+        powerups.addAll(spawnResult.powerups);
+        
+        // Handle victory condition
+        if (spawnResult.gameOver) {
+            inGame = false;
+            message = spawnResult.victoryMessage;
         }
 
         // Victory condition: Survive 5 minutes (300 seconds)
@@ -696,66 +635,6 @@ public class Scene1 extends JPanel {
         // Phase 3: 210-300 seconds (regular shooting every 5 seconds)
         else {
             currentPhase = 3;
-        }
-    }
-    
-    private void startWave(String waveType, int durationFrames) {
-        waveActive = true;
-        currentWaveType = waveType;
-        waveEndFrame = frame + durationFrames;
-        enemiesInCurrentWave = 0;
-        
-        // Spawn wave enemies immediately
-        spawnWaveEnemies(waveType);
-    }
-    
-    private void spawnWaveEnemies(String waveType) {
-        int centerY = BOARD_HEIGHT / 2;
-        
-        switch (waveType) {
-            case "SWARM":
-                // 6 weak enemies in tight formation
-                for (int i = 0; i < 6; i++) {
-                    int y = centerY - 60 + (i * 24);
-                    enemies.add(new Alien1(BOARD_WIDTH - 50, y));
-                    enemiesInCurrentWave++;
-                }
-                break;
-                
-            case "ELITE":
-                // 3 strong enemies spread out
-                enemies.add(new Alien2(BOARD_WIDTH - 50, centerY - 80));
-                enemies.add(new Alien2(BOARD_WIDTH - 50, centerY));
-                enemies.add(new Alien2(BOARD_WIDTH - 50, centerY + 80));
-                enemiesInCurrentWave += 3;
-                break;
-                
-            case "MIXED":
-                // 2 Alien2 flanking 3 Alien1
-                enemies.add(new Alien2(BOARD_WIDTH - 50, centerY - 100));
-                enemies.add(new Alien1(BOARD_WIDTH - 50, centerY - 40));
-                enemies.add(new Alien1(BOARD_WIDTH - 50, centerY));
-                enemies.add(new Alien1(BOARD_WIDTH - 50, centerY + 40));
-                enemies.add(new Alien2(BOARD_WIDTH - 50, centerY + 100));
-                enemiesInCurrentWave += 5;
-                break;
-                
-            case "FINAL":
-                // 4 Alien2 in diamond formation
-                enemies.add(new Alien2(BOARD_WIDTH - 50, centerY));        // Front
-                enemies.add(new Alien2(BOARD_WIDTH - 20, centerY - 60));   // Top
-                enemies.add(new Alien2(BOARD_WIDTH - 20, centerY + 60));   // Bottom
-                enemies.add(new Alien2(BOARD_WIDTH + 10, centerY));        // Rear
-                enemiesInCurrentWave += 4;
-                break;
-        }
-    }
-    
-    private void updateWaveSystem() {
-        if (waveActive && frame >= waveEndFrame) {
-            waveActive = false;
-            currentWaveType = "";
-            enemiesInCurrentWave = 0;
         }
     }
 

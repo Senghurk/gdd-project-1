@@ -8,6 +8,12 @@ public class EnemyBomb extends Sprite {
     private int speed;
 
     public EnemyBomb(int x, int y, int speed) {
+        // Set fixed collision bounds for enemy bombs
+        setCollisionBounds(8, 8); // Small collision box for bombs
+        initBomb(x, y, speed);
+    }
+    
+    private void initBomb(int x, int y, int speed) {
         this.x = x;
         this.y = y;
         this.speed = speed;

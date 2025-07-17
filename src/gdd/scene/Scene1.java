@@ -5,10 +5,6 @@ import gdd.Game;
 import static gdd.Global.*;
 import gdd.SpawnDetails;
 import gdd.powerup.PowerUp;
-import gdd.powerup.SpeedUp;
-import gdd.powerup.AddBulletPowerUp;
-import gdd.powerup.MultiShotPowerUp;
-import gdd.scene.SpawnManager;
 import gdd.sprite.Alien1;
 import gdd.sprite.Alien2;
 import gdd.sprite.Enemy;
@@ -244,6 +240,24 @@ public class Scene1 extends JPanel {
         explosions.removeAll(toRemove);
     }
 
+    private void drawLevelText(Graphics g) {
+        // Only draw during first 3 seconds (180 frames)
+        if (frame <= 180) {
+            // Flicker every 20 frames
+            if ((frame / 20) % 2 == 0) {
+                g.setColor(Color.WHITE);
+                g.setFont(new Font("Arial", Font.BOLD, 36));
+                
+                // Get text dimensions for centering
+                String levelText = "Level 1";
+                int textWidth = g.getFontMetrics().stringWidth(levelText);
+                
+                // Position text in upper middle, below dashboard
+                g.drawString(levelText, (BOARD_WIDTH - textWidth) / 2, 100);
+            }
+        }
+    }
+
     private void drawDashboard(Graphics g) {
         // Dashboard background
         g.setColor(new Color(0, 0, 0, 150)); // Semi-transparent black
@@ -338,6 +352,7 @@ public class Scene1 extends JPanel {
             drawShot(g);
             drawBombing(g); // Draw enemy bombs
             drawDashboard(g); // Draw dashboard on top
+            drawLevelText(g); // Draw level text on top
 
         } else {
 
@@ -374,7 +389,7 @@ public class Scene1 extends JPanel {
         g.setFont(g.getFont().deriveFont(12f));
         String restartText = "Press R to Restart";
         int restartWidth = g.getFontMetrics().stringWidth(restartText);
-        g.drawString(restartText, (BOARD_WIDTH - restartWidth) / 2, BOARD_WIDTH / 2 + 30);
+        g.drawString(restartText, (BOARD_WIDTH - restartWidth) / 2, BOARD_WIDTH / 2 + 50);
     }
 
     private void update() {

@@ -15,6 +15,8 @@ public class Alien2 extends Enemy {
 
     public Alien2(int x, int y) {
         super(x, y);
+        // Set fixed collision bounds for Alien2 - smaller than visual size to prevent false collisions
+        setCollisionBounds(20, 20); // Alien2 collision box - smaller than visual
         this.initialY = y;
         this.phaseOffset = Math.random() * Math.PI * 2; // Random starting phase
         initEnemy(x, y);

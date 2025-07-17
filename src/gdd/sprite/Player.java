@@ -28,6 +28,8 @@ public class Player extends Sprite {
     private Rectangle bounds = new Rectangle(175,135,17,32);
 
     public Player() {
+        // Set fixed collision bounds for player - smaller than visual size to prevent false collisions
+        setCollisionBounds(25, 15); // Player collision box - smaller than visual
         initPlayer();
     }
 

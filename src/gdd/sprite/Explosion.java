@@ -7,7 +7,8 @@ public class Explosion extends Sprite {
 
 
     public Explosion(int x, int y) {
-
+        // Set fixed collision bounds for explosions
+        setCollisionBounds(32, 32); // Explosion collision box
         initExplosion(x, y);
     }
 

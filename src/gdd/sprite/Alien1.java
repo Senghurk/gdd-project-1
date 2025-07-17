@@ -14,8 +14,10 @@ public class Alien1 extends Enemy {
 
     public Alien1(int x, int y) {
         super(x, y);
+        // Set fixed collision bounds for Alien1 - smaller than visual size to prevent false collisions
+        setCollisionBounds(20, 20); // Alien1 collision box - smaller than visual
         this.initialY = y;
-        initEnemy(x, y); // Uncomment to enable bomb functionality
+        initEnemy(x, y);
     }
 
     private void initEnemy(int x, int y) {

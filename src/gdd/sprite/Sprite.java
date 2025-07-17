@@ -1,6 +1,7 @@
 package gdd.sprite;
 
 import java.awt.Image;
+import java.awt.Rectangle;
 
 abstract public class Sprite {
 
@@ -12,6 +13,10 @@ abstract public class Sprite {
     protected int x;
     protected int y;
     protected int dx;
+    
+    // Fixed collision bounds - override in subclasses
+    protected int collisionWidth = 20;
+    protected int collisionHeight = 20;
 
     public Sprite() {
         visible = true;
@@ -23,10 +28,27 @@ abstract public class Sprite {
         if (other == null || !this.isVisible() || !other.isVisible()) {
             return false;
         }
-        return this.getX() < other.getX() + other.getImage().getWidth(null)
-                && this.getX() + this.getImage().getWidth(null) > other.getX()
-                && this.getY() < other.getY() + other.getImage().getHeight(null)
-                && this.getY() + this.getImage().getHeight(null) > other.getY();
+        
+        // Use fixed collision bounds instead of image dimensions
+        Rectangle thisRect = new Rectangle(this.x, this.y, this.collisionWidth, this.collisionHeight);
+        Rectangle otherRect = new Rectangle(other.x, other.y, other.collisionWidth, other.collisionHeight);
+        
+        return thisRect.intersects(otherRect);
+    }
+    
+    // Getters for collision bounds
+    public int getCollisionWidth() {
+        return collisionWidth;
+    }
+    
+    public int getCollisionHeight() {
+        return collisionHeight;
+    }
+    
+    // Setters for collision bounds
+    protected void setCollisionBounds(int width, int height) {
+        this.collisionWidth = width;
+        this.collisionHeight = height;
     }
 
     public void die() {

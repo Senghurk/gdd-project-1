@@ -383,55 +383,26 @@ public class SpawnManager {
         // First wave starts at 4 seconds (frame 240)
         spawnMap.put(240, new SpawnDetails(2, 1, false, false, true)); // 2 Alien1s and 1 Alien2 with initial multishot
         
-        // Wave 2: More aggressive (10 seconds)
-        spawnMap.put(600, new SpawnDetails(2, 2, false, false, false)); // 2 of each type
-        
-        // Wave 3: Intense (15-20 seconds)
-        spawnMap.put(900, new SpawnDetails(3, 2, false, false, false)); // 3 Alien1s and 2 Alien2s
-        spawnMap.put(1200, new SpawnDetails(3, 3, false, false, false)); // 3 of each
-        
-        // Wave 4: Very intense (25-30 seconds)
-        spawnMap.put(1500, new SpawnDetails(4, 3, false, false, false)); // 4 Alien1s and 3 Alien2s
-        spawnMap.put(1800, new SpawnDetails(0, 0, false, false, true)); // Multishot powerup at 30 seconds
-        
-        // Wave 5: Extreme (35-40 seconds)
-        spawnMap.put(2100, new SpawnDetails(4, 4, false, false, false)); // 4 of each
-        spawnMap.put(2400, new SpawnDetails(5, 3, false, false, false)); // 5 Alien1s and 3 Alien2s
-        
-        // Continuing waves through 4 minutes (14400 frames)
-        for (int frame = 2700; frame <= 14400; frame += 300) { // Every 5 seconds
-            // Increase difficulty over time
-            int timeMultiplier = frame / 3600; // Increases every minute
-            int baseAlien1 = 2 + timeMultiplier; // Starts at 2, increases each minute
-            int baseAlien2 = 1 + timeMultiplier; // Starts at 1, increases each minute
-            
-            // Add some randomness to spawn counts
-            int alien1Count = baseAlien1 + randomizer.nextInt(3); // Add 0-2 random enemies
-            int alien2Count = baseAlien2 + randomizer.nextInt(2); // Add 0-1 random enemies
-            
-            // Cap maximum enemies to prevent overwhelming the player
-            alien1Count = Math.min(alien1Count, 8);
-            alien2Count = Math.min(alien2Count, 6);
-            
-            spawnMap.put(frame, new SpawnDetails(alien1Count, alien2Count, false, false, false));
-            
-            // 10% chance for a bonus wave 2.5 seconds after main wave
-            if (randomizer.nextInt(10) == 0) {
-                spawnMap.put(frame + 150, new SpawnDetails(
-                    1 + randomizer.nextInt(2),
-                    1 + randomizer.nextInt(2),
-                    false, false, false
-                ));
-            }
+        // Major waves every 30 seconds (1800 frames)
+        for (int frame = 600; frame < 14400; frame += 1800) {
+            int a1 = 2 + randomizer.nextInt(4); // 2-5 Alien1s
+            int a2 = 1 + randomizer.nextInt(3); // 1-3 Alien2s
+            spawnMap.put(frame, new SpawnDetails(a1, a2, false, false, false));
         }
-
-        // Add multishot powerups every 45 seconds
-        for (int frame = 2700; frame <= 19000; frame += 2700) {
+        // Multishot powerups every 45 seconds (2700 frames), not on frames with major waves
+        for (int frame = 1800; frame < 14400; frame += 2700) {
             if (!spawnMap.containsKey(frame)) {
                 spawnMap.put(frame, new SpawnDetails(0, 0, false, false, true));
             }
         }
-        
+        // Continuous action: spawn smaller waves every 5 seconds (300 frames)
+        for (int frame = 300; frame < 14400; frame += 300) {
+            if (!spawnMap.containsKey(frame)) {
+                int alien1Count = 1 + randomizer.nextInt(3); // 1-3 Alien1s
+                int alien2Count = randomizer.nextInt(2); // 0-1 Alien2s
+                spawnMap.put(frame, new SpawnDetails(alien1Count, alien2Count, false, false, false));
+            }
+        }
     }
 
     // Result class to hold spawn results

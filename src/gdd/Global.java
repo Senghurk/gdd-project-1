@@ -30,7 +30,8 @@ public class Global {
 
     // Images
     public static final String IMG_ENEMY = "src/images/alien.png";
-    public static final String IMG_ENEMY2 = "src/images/alien2.png";
+    public static final String IMG_ENEMY2_1 = "src/images/alien2-1.png";
+    public static final String IMG_ENEMY2_2 = "src/images/alien2-2.png";
     public static final String IMG_PLAYER = "src/images/player.png";
     public static final String IMG_SHOT = "src/images/shot.png";
     public static final String IMG_EXPLOSION = "src/images/explosion.png";

@@ -139,37 +139,18 @@ public class Scene2 extends JPanel {
         shots = new ArrayList<>();
 
         initStarField();
-        
-        // If direct access, create new player with testing stats
-        if (isDirectAccess) {
-            // Create new player instance
-            player = new Player();
-            
-            // Reset timer and frame
-            gameTimeSeconds = 0;
-            framesSinceLastSecond = 0;
-            frame = 0;
-            
-            // Set default stats for testing
-            for (int i = 0; i < 6; i++) { // Add 6 speed powerups to reach 11
-                player.increaseSpeed();
-            }
-            // Set bullet count to exactly 5
-            while (player.getCurrentBulletCount() < 5) {
-                player.increaseBulletCount();
-            }
-        } else {
-            // For transition from Scene1, use the player from Scene1
-            Player scene1Player = game.getPlayerFromScene1();
-            if (scene1Player != null) {
-                player = scene1Player;
-                // Don't reset timer - continue from Scene1's time
-                // Don't modify player stats - keep them from Scene1
-            } else {
-                // Fallback: create new player if no Scene1 player
-                player = new Player();
-            }
+
+        // Always create a new player with speed 8 and bullet 5
+        player = new Player();
+        // Set speed to 8
+        while (player.getCurrentSpeed() < 8) {
+            player.increaseSpeed();
         }
+        // Set bullet count to 5
+        while (player.getCurrentBulletCount() < 5) {
+            player.increaseBulletCount();
+        }
+        // If player stats are higher, do not decrease (just cap at 8/5 by not increasing further)
     }
 
     private void initStarField() {
@@ -253,12 +234,12 @@ public class Scene2 extends JPanel {
         int maxShots = player.getMaxShots();
         g.drawString("Shots: " + shots.size() + "/" + maxShots, 150, 40);
         
-        // Show current powerup status
+        // Show fixed powerup status
         g.setColor(Color.yellow);
-        g.drawString("Bullets: " + player.getCurrentBulletCount() + "/" + player.getMaxBulletCount(), 300, 20);
+        g.drawString("Bullets: 5", 300, 20);
         
         g.setColor(Color.cyan);
-        g.drawString("Speed: " + player.getCurrentSpeed() + "/" + player.getMaxSpeed(), 300, 40);
+        g.drawString("Speed: 8", 300, 40);
         
         // Multishot status
         g.setColor(Color.white);

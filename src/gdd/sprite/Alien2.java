@@ -12,45 +12,48 @@ public class Alien2 extends Enemy {
     private int frameCounter = 0;
     private int initialY;
     private double phaseOffset;
+    private javax.swing.ImageIcon img1;
+    private javax.swing.ImageIcon img2;
+    private java.awt.Image scaledImg1;
+    private java.awt.Image scaledImg2;
 
     public Alien2(int x, int y) {
         super(x, y);
-        // Set fixed collision bounds for Alien2 - smaller than visual size to prevent false collisions
-        setCollisionBounds(20, 20); // Alien2 collision box - smaller than visual
+        setCollisionBounds(20, 20);
         this.initialY = y;
-        this.phaseOffset = Math.random() * Math.PI * 2; // Random starting phase
+        this.phaseOffset = Math.random() * Math.PI * 2;
         initEnemy(x, y);
     }
 
     private void initEnemy(int x, int y) {
-
         this.x = x;
         this.y = y;
-
         bomb = new EnemyBomb(x, y, 3);
-
-        var ii = new ImageIcon(IMG_ENEMY2);
-
-        var scaledImage = ii.getImage().getScaledInstance(ii.getIconWidth() * SCALE_FACTOR,
-                ii.getIconHeight() * SCALE_FACTOR,
+        img1 = new ImageIcon(IMG_ENEMY2_1);
+        img2 = new ImageIcon(IMG_ENEMY2_2);
+        scaledImg1 = img1.getImage().getScaledInstance(img1.getIconWidth() * SCALE_FACTOR,
+                img1.getIconHeight() * SCALE_FACTOR,
                 java.awt.Image.SCALE_SMOOTH);
-        setImage(scaledImage);
+        scaledImg2 = img2.getImage().getScaledInstance(img2.getIconWidth() * SCALE_FACTOR,
+                img2.getIconHeight() * SCALE_FACTOR,
+                java.awt.Image.SCALE_SMOOTH);
+        setImage(scaledImg1);
     }
 
     public void act(int direction) {
         frameCounter++;
-        
-        // Faster leftward movement than Alien1
-        this.x -= Math.abs(direction) * 2;
-        
-        // More aggressive spiral/curved movement
-        double spiralOffset = Math.sin(frameCounter * 0.12 + phaseOffset) * 35; // Larger amplitude
-        double curveOffset = Math.cos(frameCounter * 0.06) * 15; // Secondary curve
+        this.x -= Math.abs(direction) * 1.5;
+        double spiralOffset = Math.sin(frameCounter * 0.12 + phaseOffset) * 35;
+        double curveOffset = Math.cos(frameCounter * 0.06) * 15;
         this.y = (int)(initialY + spiralOffset + curveOffset);
-        
-        // Keep within screen bounds
         if (this.y < 50) this.y = 50;
         if (this.y > BOARD_HEIGHT - 100) this.y = BOARD_HEIGHT - 100;
+        // Animation: alternate every 20 frames
+        if ((frameCounter / 20) % 2 == 0) {
+            setImage(scaledImg1);
+        } else {
+            setImage(scaledImg2);
+        }
     }
 
     public void act() {

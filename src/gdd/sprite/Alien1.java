@@ -51,9 +51,6 @@ public class Alien1 extends Enemy {
         if (this.y > BOARD_HEIGHT - 100) this.y = BOARD_HEIGHT - 100;
     }
 
-    public void act() {
-        act(1); // Default direction for autonomous movement
-    }
 
     public EnemyBomb getBomb() {
         return bomb;

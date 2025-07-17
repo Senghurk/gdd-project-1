@@ -127,13 +127,13 @@ public class TitleScene extends JPanel {
             int memberX = (d.width - g.getFontMetrics().stringWidth(teamMembers[i])) / 2;
             g.drawString(teamMembers[i], memberX, 480 + (i * 20));
         }
-        
+        /* 
         // Volume control instructions
         g.setColor(Color.cyan);
         g.setFont(g.getFont().deriveFont(12f));
         g.drawString("Volume Controls: + / - keys", 10, 620);
         g.drawString("Current Volume: " + Math.round(currentVolume * 100) + "%", 10, 640);
-        
+        */
         g.setColor(Color.gray);
         g.setFont(g.getFont().deriveFont(10f));
         g.drawString("Game by UbiRiotHoyoverse", 10, 670);
@@ -172,7 +172,7 @@ public class TitleScene extends JPanel {
             if (key == KeyEvent.VK_SPACE) {
                 // Load the next scene
                 game.loadScene1();
-            } else if (key == KeyEvent.VK_PLUS || key == KeyEvent.VK_EQUALS) {
+            } /*else if (key == KeyEvent.VK_PLUS || key == KeyEvent.VK_EQUALS) {
                 // Increase volume
                 currentVolume = Math.min(1.0f, currentVolume + 0.1f);
                 if (audioPlayer != null) {
@@ -184,7 +184,7 @@ public class TitleScene extends JPanel {
                 if (audioPlayer != null) {
                     audioPlayer.setVolume(currentVolume);
                 }
-            }
+            }*/
 
         }
     }

@@ -530,7 +530,7 @@ public class Scene1 extends JPanel {
                 case 3:
                     // Phase 3: Regular shooting every 5 seconds (210-300 seconds)
                     canShoot = true;
-                    shootChance = 300; // More frequent shooting
+                    shootChance = 500; // More frequent shooting
                     break;
             }
             
@@ -711,10 +711,6 @@ public class Scene1 extends JPanel {
         if (stars.size() > 150) {
             stars.remove(0);
         }
-    }
-
-    public Player getPlayer() {
-        return player;
     }
 
     private void restartGame() {

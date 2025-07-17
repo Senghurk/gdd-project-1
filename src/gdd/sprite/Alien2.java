@@ -19,7 +19,7 @@ public class Alien2 extends Enemy {
 
     public Alien2(int x, int y) {
         super(x, y);
-        setCollisionBounds(20, 20);
+        setCollisionBounds(25, 25);
         this.initialY = y;
         this.phaseOffset = Math.random() * Math.PI * 2;
         initEnemy(x, y);
@@ -31,11 +31,11 @@ public class Alien2 extends Enemy {
         bomb = new EnemyBomb(x, y, 3);
         img1 = new ImageIcon(IMG_ENEMY2_1);
         img2 = new ImageIcon(IMG_ENEMY2_2);
-        scaledImg1 = img1.getImage().getScaledInstance(img1.getIconWidth() * SCALE_FACTOR,
-                img1.getIconHeight() * SCALE_FACTOR,
+        scaledImg1 = img1.getImage().getScaledInstance(img1.getIconWidth() * (SCALE_FACTOR-1),
+                img1.getIconHeight() * (SCALE_FACTOR-1),
                 java.awt.Image.SCALE_SMOOTH);
-        scaledImg2 = img2.getImage().getScaledInstance(img2.getIconWidth() * SCALE_FACTOR,
-                img2.getIconHeight() * SCALE_FACTOR,
+        scaledImg2 = img2.getImage().getScaledInstance(img2.getIconWidth() * (SCALE_FACTOR-1),
+                img2.getIconHeight() * (SCALE_FACTOR-1),
                 java.awt.Image.SCALE_SMOOTH);
         setImage(scaledImg1);
     }

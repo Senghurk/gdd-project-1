@@ -22,8 +22,8 @@ public class Game extends JFrame  {
         initUI();
         
         // Comment/uncomment these lines to switch between normal start and Scene2 testing
-        //loadTitle(); // Start with title screen
-        loadScene2(); // Uncomment to test Scene2 directly
+        loadTitle(); // Start with title screen
+        //loadScene2(); // Uncomment to test Scene2 directly
     }
 
     private void initUI() {
@@ -59,8 +59,6 @@ public class Game extends JFrame  {
         getContentPane().removeAll();
         add(scene2);
         if (scene1Started) {
-            // Pass player from Scene1 to Scene2
-            playerFromScene1 = scene1.getPlayer();
             scene1.stop();
         }
         if (titleStarted) {

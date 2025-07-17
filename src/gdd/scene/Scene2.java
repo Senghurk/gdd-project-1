@@ -13,6 +13,8 @@ import gdd.sprite.Explosion;
 import gdd.sprite.Player;
 import gdd.sprite.Shot;
 import gdd.sprite.EnemyBomb;
+import gdd.sprite.Boss;
+import gdd.sprite.BossBomb;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -39,6 +41,7 @@ public class Scene2 extends JPanel {
     private List<Explosion> explosions;
     private List<Shot> shots;
     private Player player;
+    private Boss boss;
 
     private int direction = -1;
     private int deaths = 0;
@@ -49,6 +52,8 @@ public class Scene2 extends JPanel {
     
     // Phase-based enemy behavior
     private int currentPhase = 1;
+    private boolean bossSpawned = false;
+    private boolean bossDefeated = false;
 
     private boolean inGame = true;
     private String message = "Game Over";
@@ -82,6 +87,7 @@ public class Scene2 extends JPanel {
     private boolean isDirectAccess = false;
 
     private List<EnemyBomb> bombs = new ArrayList<>();
+    private List<BossBomb> bossBombs = new ArrayList<>();
 
     public Scene2(Game game) {
         this.game = game;
@@ -250,26 +256,48 @@ public class Scene2 extends JPanel {
         if (player.hasMultishot()) {
             int remainingSeconds = player.getMultishotFramesRemaining() / 60;
             g.setColor(Color.yellow);
-            g.drawString("🔥 MULTISHOT: " + remainingSeconds + "s", 450, 20);
+            g.drawString("🔥 MULTISHOT: " + remainingSeconds + "s", 10, 60);
             g.setColor(Color.red);
-            g.drawString("AUTO-FIRE ACTIVE!", 450, 40);
+            g.drawString("AUTO-FIRE ACTIVE!", 10, 80);
         }
         
-        // Phase information
-        g.setColor(Color.red); // Red for level 2
-        String phaseText = "Phase " + currentPhase;
-        switch (currentPhase) {
-            case 1:
-                phaseText += " (Warm Up)";
-                break;
-            case 2:
-                phaseText += " (Attack!)";
-                break;
-            case 3:
-                phaseText += " (MAYHEM!)";
-                break;
+        // Boss status
+        if (boss != null && boss.isVisible()) {
+            g.setColor(Color.red);
+            g.drawString("BOSS HEALTH: " + boss.getHealth() + "/" + boss.getMaxHealth(), 400, 20);
+            g.setColor(Color.orange);
+            g.drawString("BOSS INCOMING!", 400, 40);
+        } else if (bossDefeated) {
+            g.setColor(Color.green);
+            g.drawString("BOSS DEFEATED!", 400, 20);
         }
-        g.drawString(phaseText, 550, 20);
+        
+        // Phase information - only show if boss is not present
+        if (boss == null || !boss.isVisible()) {
+            g.setColor(Color.red); // Red for level 2
+            String phaseText = "Phase " + currentPhase;
+            switch (currentPhase) {
+                case 1:
+                    phaseText += " (Warm Up)";
+                    break;
+                case 2:
+                    phaseText += " (Attack!)";
+                    break;
+                case 3:
+                    phaseText += " (BOSS SPAWN!)";
+                    break;
+                case 4:
+                    phaseText += " (BOSS FIGHT!)";
+                    break;
+                case 5:
+                    phaseText += " (VICTORY!)";
+                    break;
+                case 6:
+                    phaseText += " (COMPLETE!)";
+                    break;
+            }
+            g.drawString(phaseText, 550, 20);
+        }
     }
 
     @Override
@@ -295,6 +323,7 @@ public class Scene2 extends JPanel {
             drawExplosions(g);
             drawPowerUps(g);
             drawAliens(g);
+            drawBoss(g);
             drawPlayer(g);
             drawShot(g);
             drawBombing(g);
@@ -352,11 +381,24 @@ public class Scene2 extends JPanel {
         }
     }
 
+    private void drawBoss(Graphics g) {
+        if (boss != null && boss.isVisible()) {
+            g.drawImage(boss.getImage(), boss.getX(), boss.getY(), this);
+        }
+    }
+
     private void drawBombing(Graphics g) {
         // Draw all bombs from the bombs list
         for (EnemyBomb bomb : bombs) {
             if (!bomb.isDestroyed()) {
                 g.drawImage(bomb.getImage(), bomb.getX(), bomb.getY(), this);
+            }
+        }
+        
+        // Draw boss bombs
+        for (BossBomb bossBomb : bossBombs) {
+            if (!bossBomb.isDestroyed()) {
+                g.drawImage(bossBomb.getImage(), bossBomb.getX(), bossBomb.getY(), this);
             }
         }
     }
@@ -431,26 +473,62 @@ public class Scene2 extends JPanel {
             powerups.addAll(spawnResult.powerups);
         }
         
+        // Dynamic spawning after boss defeat - continue spawning aliens until 5 minutes
+        if (bossDefeated && gameTimeSeconds >= 240 && gameTimeSeconds < 300) {
+            // Spawn additional aliens every 2 seconds after boss defeat
+            if (frame % 120 == 0) { // Every 2 seconds at 60 FPS
+                int y = 100 + randomizer.nextInt(400);
+                String enemyType = randomizer.nextInt(2) == 0 ? "Alien2" : "Alien1"; // 50% each
+                Enemy enemy = enemyType.equals("Alien2") ? new Alien2(BOARD_WIDTH, y) : new Alien1(BOARD_WIDTH, y);
+                enemies.add(enemy);
+                System.out.println("Frame " + frame + ": Spawning post-boss " + enemyType);
+            }
+        }
+        
         // Handle victory condition
         if (spawnResult.gameOver) {
             inGame = false;
             message = spawnResult.victoryMessage;
         }
 
-        // Victory condition: Survive 4 minutes (240 seconds)
-        if (isDirectAccess) {
-            // For direct access, check against actual time
-            if (gameTimeSeconds >= 240) {
+        // Boss spawning logic - spawn boss at 4 minutes (240 seconds)
+        if (!bossSpawned && gameTimeSeconds >= 240) {
+            boss = new Boss(BOARD_WIDTH - 300, BOARD_HEIGHT / 2 - 50);
+            bossSpawned = true;
+            System.out.println("BOSS SPAWNED!");
+        }
+        
+        // Boss management
+        if (boss != null && boss.isVisible()) {
+            boss.act();
+            
+            // Boss shooting logic
+            if (boss.shouldShoot()) {
+                List<BossBomb> newBombs = boss.shoot();
+                bossBombs.addAll(newBombs);
+            }
+            
+            // Check if boss is defeated
+            if (boss.isDying()) {
+                boss.die();
+                bossDefeated = true;
+                explosions.add(new Explosion(boss.getX(), boss.getY()));
+                System.out.println("BOSS DEFEATED!");
+            }
+        }
+        
+        // Simple Victory/Defeat conditions
+        if (gameTimeSeconds >= 300) { // 5 minutes reached
+            if (bossSpawned && !bossDefeated) {
+                // Boss not defeated - player loses
+                inGame = false;
+                timer.stop();
+                message = "Game Over! Boss was not defeated in time!";
+            } else {
+                // Boss defeated or no boss spawned - player wins
                 inGame = false;
                 timer.stop();
                 message = "Congratulations! You've completed Scene 2!";
-            }
-        } else {
-            // For transition from Scene1, check against relative time (5 minutes + 4 minutes)
-            if (gameTimeSeconds >= 540) { // 300 (Scene1) + 240 (Scene2) seconds
-                inGame = false;
-                timer.stop();
-                message = "Congratulations! You've completed the game!";
             }
         }
 
@@ -523,6 +601,37 @@ public class Scene2 extends JPanel {
                 }
             }
         }
+        
+        // Update boss bombs
+        List<BossBomb> bossBombsToRemove = new ArrayList<>();
+        for (BossBomb bossBomb : bossBombs) {
+            bossBomb.act();
+            
+            // Check collision with player
+            if (!bossBomb.isDestroyed() && player.isVisible()
+                && bossBomb.getX() >= player.getX()
+                && bossBomb.getX() <= (player.getX() + PLAYER_WIDTH)
+                && bossBomb.getY() >= player.getY()
+                && bossBomb.getY() <= (player.getY() + PLAYER_HEIGHT)) {
+                bossBomb.setDestroyed(true);
+                explosions.add(new Explosion(player.getX(), player.getY()));
+                player.takeDamage();
+                lives--;
+                if (lives <= 0) {
+                    var ii = new ImageIcon(IMG_EXPLOSION);
+                    player.setImage(ii.getImage());
+                    player.setDying(true);
+                    inGame = false;
+                    message = "Game Over!";
+                }
+            }
+            
+            // Remove destroyed boss bombs
+            if (bossBomb.isDestroyed()) {
+                bossBombsToRemove.add(bossBomb);
+            }
+        }
+        bossBombs.removeAll(bossBombsToRemove);
 
         // Shots
         List<Shot> shotsToRemove = new ArrayList<>();
@@ -530,6 +639,17 @@ public class Scene2 extends JPanel {
             if (shot.isVisible()) {
                 shot.act();
                 
+                // Check collision with boss first
+                if (boss != null && boss.isVisible() && shot.isVisible() && shot.collidesWith(boss)) {
+                    boss.takeDamage();
+                    explosions.add(new Explosion(shot.getX(), shot.getY()));
+                    score += 50; // Points for hitting boss
+                    shot.die();
+                    shotsToRemove.add(shot);
+                    continue; // Skip enemy collision check
+                }
+                
+                // Check collision with regular enemies
                 for (Enemy enemy : enemies) {
                     if (enemy.isVisible() && shot.isVisible() && shot.collidesWith(enemy)) {
                         var ii = new ImageIcon(IMG_EXPLOSION);
@@ -566,13 +686,19 @@ public class Scene2 extends JPanel {
     }
     
     private void updateEnemyPhase() {
-        // Level 2 phases are shorter and more intense
-        if (gameTimeSeconds < 60) {
+        // Level 2 phases for 5-minute duration
+        if (gameTimeSeconds < 120) { // First 2 minutes
             currentPhase = 1;
-        } else if (gameTimeSeconds < 120) {
+        } else if (gameTimeSeconds < 240) { // Minutes 2-4
             currentPhase = 2;
-        } else {
+        } else if (gameTimeSeconds >= 240 && !bossSpawned) { // Boss spawns at 4 minutes
             currentPhase = 3;
+        } else if (bossSpawned && !bossDefeated) { // Boss fight phase
+            currentPhase = 4;
+        } else if (bossDefeated && gameTimeSeconds < 300) { // Continue fighting until 5 minutes
+            currentPhase = 5;
+        } else {
+            currentPhase = 6; // Victory at 5 minutes
         }
     }
 

@@ -39,6 +39,9 @@ public class Global {
     public static final String IMG_POWERUP_SPEEDUP = "src/images/powerup-s.png";
     public static final String IMG_POWERUP_ADDBULLET = "src/images/powerup_bullet.png";
     public static final String IMG_POWERUP_MULTISHOT = "src/images/powerup_autoshot.png";
+    public static final String IMG_BOSS1 = "src/images/boss1.png";
+    public static final String IMG_BOSS2 = "src/images/boss2.png";
+    public static final String IMG_BOSS_SHOT = "src/images/boss_shot.png";
     
     // Power-up constants (rebalanced for better gameplay)
     public static final int MULTISHOT_DURATION_FRAMES = 600; // 10 seconds at 60 FPS

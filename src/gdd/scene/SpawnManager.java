@@ -241,10 +241,11 @@ public class SpawnManager {
         // Phase 1: Minutes 1-2 (frames 1000-7200) - Moderate difficulty
         generatePhase1Spawns();
         
-        // Phase 2: Minutes 2-4 (frames 7200-14400) - Increased difficulty  
+        // Phase 2: Minutes 2-4 (frames 7200-12600) - Increased difficulty  
         generatePhase2Spawns();
         
-        // Phase 3: Minutes 4-5 (frames 14400-18000) - High difficulty
+        // Phase 3: Minutes 4-5 (frames 12600-14400) - High difficulty
+        // Last minute (frames 14400-18000): No enemies - Player relief period
         generatePhase3Spawns();
         
         // NEW: Distribute powerups evenly across the entire gameplay
@@ -341,14 +342,15 @@ public class SpawnManager {
     }
     
     private void generatePhase3Spawns() {
-        // Phase 3: Frames 12600-18000 (210-300 seconds) - Intense waves
+        // Phase 3: Frames 12600-14400 (210-240 seconds) - Intense waves
+        // Boss spawns at 4 minutes (240 seconds = 14400 frames)
         
         // Add intense wave events  
         spawnMap.put(13200, new SpawnDetails("WAVE_ELITE", 0, 0)); // 30 seconds in
-        spawnMap.put(15000, new SpawnDetails("WAVE_SWARM", 0, 0)); // 80 seconds in
-        spawnMap.put(16800, new SpawnDetails("WAVE_FINAL", 0, 0)); // 130 seconds in
+        spawnMap.put(13800, new SpawnDetails("WAVE_SWARM", 0, 0)); // 50 seconds in
+        spawnMap.put(14200, new SpawnDetails("WAVE_FINAL", 0, 0)); // 70 seconds in
         
-        for (int frame = 12600; frame <= 18000; frame += 45) { // Every 0.75 seconds (intense)
+        for (int frame = 12600; frame <= 14400; frame += 45) { // Every 0.75 seconds (intense) - STOP at 14400
             int y = 100 + randomizer.nextInt(400);
             // Only spawn enemies, powerups are handled by distributePowerupsEvenly()
             String enemyType = randomizer.nextInt(4) < 3 ? "Alien2" : "Alien1"; // 75% Alien2
@@ -371,8 +373,8 @@ public class SpawnManager {
             }
         }
         
-        // Remove old victory condition since we handle it in update()
-        // spawnMap.put(18000, new SpawnDetails("VICTORY", 0, 0));
+        // After boss defeat (frames 14400-18000): Continue spawning normal aliens until 5 minutes
+        // This will be handled dynamically in Scene2 based on boss defeat status
     }
 
     public void loadScene2SpawnDetails() {
@@ -383,7 +385,7 @@ public class SpawnManager {
         // First wave starts at 4 seconds (frame 240)
         spawnMap.put(240, new SpawnDetails(2, 1, false, false, true)); // 2 Alien1s and 1 Alien2 with initial multishot
         
-        // Major waves every 30 seconds (1800 frames)
+        // Major waves every 30 seconds (1800 frames) - STOP at 14400 (4 minutes)
         for (int frame = 600; frame < 14400; frame += 1800) {
             int a1 = 2 + randomizer.nextInt(4); // 2-5 Alien1s
             int a2 = 1 + randomizer.nextInt(3); // 1-3 Alien2s
@@ -395,7 +397,7 @@ public class SpawnManager {
                 spawnMap.put(frame, new SpawnDetails(0, 0, false, false, true));
             }
         }
-        // Continuous action: spawn smaller waves every 5 seconds (300 frames)
+        // Continuous action: spawn smaller waves every 5 seconds (300 frames) - STOP at 14400
         for (int frame = 300; frame < 14400; frame += 300) {
             if (!spawnMap.containsKey(frame)) {
                 int alien1Count = 1 + randomizer.nextInt(3); // 1-3 Alien1s
@@ -403,6 +405,7 @@ public class SpawnManager {
                 spawnMap.put(frame, new SpawnDetails(alien1Count, alien2Count, false, false, false));
             }
         }
+        // Last minute (frames 14400-18000): NO ENEMIES - Player gets a break before victory
     }
 
     // Result class to hold spawn results

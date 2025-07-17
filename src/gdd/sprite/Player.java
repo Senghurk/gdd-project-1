@@ -40,10 +40,7 @@ public class Player extends Sprite {
         var scaledImage = ii.getImage().getScaledInstance(ii.getIconWidth() * SCALE_FACTOR,
                 ii.getIconHeight() * SCALE_FACTOR,
                 java.awt.Image.SCALE_SMOOTH);
-        
-        // TODO: Re-enable rotation once image loading is fixed
-        // var rotatedImage = rotateImage(scaledImage, 90);
-        // setImage(rotatedImage);
+
         setImage(scaledImage);
 
         setX(START_X);

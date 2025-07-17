@@ -426,7 +426,7 @@ public class Scene1 extends JPanel {
         if (gameTimeSeconds >= 300) {
             inGame = false;
             timer.stop();
-            message = "Stage 1 Complete! You survived 5 minutes!";
+            message = "Level 1 Complete!You survived 5 minutes!Press SPACE to continue to Level 2";
         }
 
         // player
@@ -653,59 +653,6 @@ public class Scene1 extends JPanel {
         }
     }
 
-    private void doGameCycle() {
-        frame++;
-        update();
-        repaint();
-    }
-
-    private class GameCycle implements ActionListener {
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            doGameCycle();
-        }
-    }
-
-    private class TAdapter extends KeyAdapter {
-
-        @Override
-        public void keyReleased(KeyEvent e) {
-            // Only handle player key releases when game is running
-            if (inGame) {
-                player.keyReleased(e);
-            }
-        }
-
-        @Override
-        public void keyPressed(KeyEvent e) {
-            int key = e.getKeyCode();
-
-            // Handle restart when game is over
-            if (!inGame && key == KeyEvent.VK_R) {
-                restartGame();
-                return;
-            }
-
-            // Only handle player controls when game is running
-            if (inGame) {
-                player.keyPressed(e);
-
-                int x = player.getX();
-                int y = player.getY();
-
-                // One bullet per space press, but more bullets can be on screen
-                if (key == KeyEvent.VK_SPACE) {
-                    int maxShots = player.getMaxShots();
-                    if (shots.size() < maxShots) {
-                        Shot shot = new Shot(x, y);
-                        shots.add(shot);
-                    }
-                }
-            }
-        }
-    }
-
     private void initStarField() {
         // Initialize random stars across the screen
         for (int i = 0; i < 100; i++) {
@@ -766,6 +713,10 @@ public class Scene1 extends JPanel {
         }
     }
 
+    public Player getPlayer() {
+        return player;
+    }
+
     private void restartGame() {
         // Reset game state
         inGame = true;
@@ -793,6 +744,62 @@ public class Scene1 extends JPanel {
         // Restart timer if it was stopped
         if (!timer.isRunning()) {
             timer.start();
+        }
+    }
+
+    private class GameCycle implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            doGameCycle();
+        }
+    }
+
+    private void doGameCycle() {
+        update();
+        repaint();
+        frame++;
+    }
+
+    private class TAdapter extends KeyAdapter {
+        @Override
+        public void keyReleased(KeyEvent e) {
+            // Only handle player key releases when game is running
+            if (inGame) {
+                player.keyReleased(e);
+            }
+        }
+
+        @Override
+        public void keyPressed(KeyEvent e) {
+            int key = e.getKeyCode();
+
+            // Handle game over actions
+            if (!inGame) {
+                if (key == KeyEvent.VK_R) {
+                    restartGame();
+                    return;
+                } else if (key == KeyEvent.VK_SPACE && message.contains("Level 2")) {
+                    game.loadScene2(); // Move to Scene2
+                    return;
+                }
+            }
+
+            // Only handle player controls when game is running
+            if (inGame) {
+                player.keyPressed(e);
+
+                int x = player.getX();
+                int y = player.getY();
+
+                // One bullet per space press, but more bullets can be on screen
+                if (key == KeyEvent.VK_SPACE) {
+                    int maxShots = player.getMaxShots();
+                    if (shots.size() < maxShots) {
+                        Shot shot = new Shot(x, y);
+                        shots.add(shot);
+                    }
+                }
+            }
         }
     }
 }

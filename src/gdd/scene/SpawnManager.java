@@ -34,13 +34,48 @@ public class SpawnManager {
     public SpawnResult spawnEnemies(int frame, Player player) {
         SpawnResult result = new SpawnResult();
         
-        // Update wave system
-        updateWaveSystem(frame);
-        
         // Check enemy spawn
         SpawnDetails sd = spawnMap.get(frame);
         if (sd != null) {
-            handleSpawnDetails(sd, result, player, frame);
+            // Handle string-based spawn details (Scene1)
+            if (sd.type != null && !sd.type.isEmpty()) {
+                handleSpawnDetails(sd, result, player, frame);
+            } 
+            // Handle count-based spawn details (Scene2)
+            else {
+                // Spawn Alien1s
+                for (int i = 0; i < sd.alien1Count; i++) {
+                    int y = randomizer.nextInt(BOARD_HEIGHT - 100) + 50; // Random Y position
+                    Enemy alien = new Alien1(BOARD_WIDTH, y);
+                    result.enemies.add(alien);
+                }
+                
+                // Spawn Alien2s
+                for (int i = 0; i < sd.alien2Count; i++) {
+                    int y = randomizer.nextInt(BOARD_HEIGHT - 100) + 50;
+                    Enemy alien = new Alien2(BOARD_WIDTH, y);
+                    result.enemies.add(alien);
+                }
+                
+                // Handle powerups
+                if (sd.spawnSpeedPowerup) {
+                    int y = randomizer.nextInt(BOARD_HEIGHT - 100) + 50;
+                    PowerUp speedup = new SpeedUp(BOARD_WIDTH, y);
+                    result.powerups.add(speedup);
+                }
+                
+                if (sd.spawnBulletPowerup) {
+                    int y = randomizer.nextInt(BOARD_HEIGHT - 100) + 50;
+                    PowerUp bulletup = new AddBulletPowerUp(BOARD_WIDTH, y);
+                    result.powerups.add(bulletup);
+                }
+                
+                if (sd.spawnMultiShotPowerup) {
+                    int y = randomizer.nextInt(BOARD_HEIGHT - 100) + 50;
+                    PowerUp multishot = new MultiShotPowerUp(BOARD_WIDTH, y);
+                    result.powerups.add(multishot);
+                }
+            }
         }
         
         return result;
@@ -338,6 +373,65 @@ public class SpawnManager {
         
         // Remove old victory condition since we handle it in update()
         // spawnMap.put(18000, new SpawnDetails("VICTORY", 0, 0));
+    }
+
+    public void loadScene2SpawnDetails() {
+        // Clear any existing spawn details
+        spawnMap.clear();
+        
+        // Initial buffer period with "Level 2" text (3 seconds)
+        // First wave starts at 4 seconds (frame 240)
+        spawnMap.put(240, new SpawnDetails(2, 1, false, false, true)); // 2 Alien1s and 1 Alien2 with initial multishot
+        
+        // Wave 2: More aggressive (10 seconds)
+        spawnMap.put(600, new SpawnDetails(2, 2, false, false, false)); // 2 of each type
+        
+        // Wave 3: Intense (15-20 seconds)
+        spawnMap.put(900, new SpawnDetails(3, 2, false, false, false)); // 3 Alien1s and 2 Alien2s
+        spawnMap.put(1200, new SpawnDetails(3, 3, false, false, false)); // 3 of each
+        
+        // Wave 4: Very intense (25-30 seconds)
+        spawnMap.put(1500, new SpawnDetails(4, 3, false, false, false)); // 4 Alien1s and 3 Alien2s
+        spawnMap.put(1800, new SpawnDetails(0, 0, false, false, true)); // Multishot powerup at 30 seconds
+        
+        // Wave 5: Extreme (35-40 seconds)
+        spawnMap.put(2100, new SpawnDetails(4, 4, false, false, false)); // 4 of each
+        spawnMap.put(2400, new SpawnDetails(5, 3, false, false, false)); // 5 Alien1s and 3 Alien2s
+        
+        // Continuing waves through 4 minutes (14400 frames)
+        for (int frame = 2700; frame <= 14400; frame += 300) { // Every 5 seconds
+            // Increase difficulty over time
+            int timeMultiplier = frame / 3600; // Increases every minute
+            int baseAlien1 = 2 + timeMultiplier; // Starts at 2, increases each minute
+            int baseAlien2 = 1 + timeMultiplier; // Starts at 1, increases each minute
+            
+            // Add some randomness to spawn counts
+            int alien1Count = baseAlien1 + randomizer.nextInt(3); // Add 0-2 random enemies
+            int alien2Count = baseAlien2 + randomizer.nextInt(2); // Add 0-1 random enemies
+            
+            // Cap maximum enemies to prevent overwhelming the player
+            alien1Count = Math.min(alien1Count, 8);
+            alien2Count = Math.min(alien2Count, 6);
+            
+            spawnMap.put(frame, new SpawnDetails(alien1Count, alien2Count, false, false, false));
+            
+            // 10% chance for a bonus wave 2.5 seconds after main wave
+            if (randomizer.nextInt(10) == 0) {
+                spawnMap.put(frame + 150, new SpawnDetails(
+                    1 + randomizer.nextInt(2),
+                    1 + randomizer.nextInt(2),
+                    false, false, false
+                ));
+            }
+        }
+
+        // Add multishot powerups every 45 seconds
+        for (int frame = 2700; frame <= 19000; frame += 2700) {
+            if (!spawnMap.containsKey(frame)) {
+                spawnMap.put(frame, new SpawnDetails(0, 0, false, false, true));
+            }
+        }
+        
     }
 
     // Result class to hold spawn results

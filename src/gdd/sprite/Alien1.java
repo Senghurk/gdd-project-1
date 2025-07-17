@@ -12,6 +12,10 @@ public class Alien1 extends Enemy {
     private int frameCounter = 0;
     private int initialY;
 
+    // Add static flag to indicate if we are in level 2
+    public static boolean IS_LEVEL2 = false;
+    private boolean hasShotBomb = false;
+
     public Alien1(int x, int y) {
         super(x, y);
         // Set fixed collision bounds for Alien1 - smaller than visual size to prevent false collisions
@@ -49,6 +53,15 @@ public class Alien1 extends Enemy {
         // Keep within screen bounds
         if (this.y < 50) this.y = 50;
         if (this.y > BOARD_HEIGHT - 100) this.y = BOARD_HEIGHT - 100;
+        // Level 2: shoot one bomb if not already shot
+        if (IS_LEVEL2 && !hasShotBomb && bomb.isDestroyed() && this.x < BOARD_WIDTH - 200) {
+            bomb.setDestroyed(false);
+            bomb.setX(this.x);
+            bomb.setY(this.y);
+            hasShotBomb = true;
+        }
+        // Move bomb if active
+        bomb.act();
     }
 
 

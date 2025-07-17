@@ -81,6 +81,8 @@ public class Scene2 extends JPanel {
 
     private boolean isDirectAccess = false;
 
+    private List<EnemyBomb> bombs = new ArrayList<>();
+
     public Scene2(Game game) {
         this.game = game;
         this.spawnManager = new SpawnManager(spawnMap, randomizer);
@@ -103,8 +105,8 @@ public class Scene2 extends JPanel {
     }
     
     public void start() {
-        // Check if this is direct access (shortcut) or transition from Scene1
-        isDirectAccess = gameTimeSeconds == 0;
+        // Indicate to Alien1 that this is level 2
+        gdd.sprite.Alien1.IS_LEVEL2 = true;
 
         addKeyListener(new TAdapter());
         setFocusable(true);
@@ -130,6 +132,8 @@ public class Scene2 extends JPanel {
         } catch (Exception e) {
             System.err.println("Error closing audio player.");
         }
+        // Reset Alien1 level2 flag
+        gdd.sprite.Alien1.IS_LEVEL2 = false;
     }
 
     private void gameInit() {
@@ -349,15 +353,9 @@ public class Scene2 extends JPanel {
     }
 
     private void drawBombing(Graphics g) {
-        for (Enemy e : enemies) {
-            EnemyBomb bomb = null;
-            if (e instanceof Alien1) {
-                bomb = ((Alien1) e).getBomb();
-            } else if (e instanceof Alien2) {
-                bomb = ((Alien2) e).getBomb();
-            }
-            
-            if (bomb != null && !bomb.isDestroyed()) {
+        // Draw all bombs from the bombs list
+        for (EnemyBomb bomb : bombs) {
+            if (!bomb.isDestroyed()) {
                 g.drawImage(bomb.getImage(), bomb.getX(), bomb.getY(), this);
             }
         }
@@ -486,11 +484,42 @@ public class Scene2 extends JPanel {
         }
 
         // Enemies
+        bombs.clear();
         for (Enemy enemy : enemies) {
             if (enemy.isVisible()) {
                 enemy.act(direction);
                 if (enemy.getX() < -50) {
                     enemy.die();
+                }
+            }
+            // Collect bombs from Alien1 and Alien2
+            if (enemy instanceof Alien1) {
+                EnemyBomb bomb = ((Alien1) enemy).getBomb();
+                if (bomb != null) bombs.add(bomb);
+            } else if (enemy instanceof Alien2) {
+                EnemyBomb bomb = ((Alien2) enemy).getBomb();
+                if (bomb != null) bombs.add(bomb);
+            }
+        }
+        // Update all bombs
+        for (EnemyBomb bomb : bombs) {
+            bomb.act();
+            // Check collision with player
+            if (!bomb.isDestroyed() && player.isVisible()
+                && bomb.getX() >= player.getX()
+                && bomb.getX() <= (player.getX() + PLAYER_WIDTH)
+                && bomb.getY() >= player.getY()
+                && bomb.getY() <= (player.getY() + PLAYER_HEIGHT)) {
+                bomb.setDestroyed(true);
+                explosions.add(new Explosion(player.getX(), player.getY()));
+                player.takeDamage();
+                lives--;
+                if (lives <= 0) {
+                    var ii = new ImageIcon(IMG_EXPLOSION);
+                    player.setImage(ii.getImage());
+                    player.setDying(true);
+                    inGame = false;
+                    message = "Game Over!";
                 }
             }
         }

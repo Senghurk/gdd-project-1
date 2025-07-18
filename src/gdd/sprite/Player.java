@@ -1,11 +1,8 @@
 package gdd.sprite;
 
 import static gdd.Global.*;
-import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.event.KeyEvent;
-import java.awt.geom.AffineTransform;
-import java.awt.image.BufferedImage;
 import javax.swing.ImageIcon;
 
 public class Player extends Sprite {

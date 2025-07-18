@@ -3,18 +3,18 @@ package gdd.scene;
 import gdd.AudioPlayer;
 import gdd.Game;
 import static gdd.Global.*;
+import gdd.SoundEffectPlayer;
 import gdd.SpawnDetails;
 import gdd.powerup.PowerUp;
-import gdd.powerup.MultiShotPowerUp;
 import gdd.sprite.Alien1;
 import gdd.sprite.Alien2;
+import gdd.sprite.Boss;
+import gdd.sprite.BossBomb;
 import gdd.sprite.Enemy;
+import gdd.sprite.EnemyBomb;
 import gdd.sprite.Explosion;
 import gdd.sprite.Player;
 import gdd.sprite.Shot;
-import gdd.sprite.EnemyBomb;
-import gdd.sprite.Boss;
-import gdd.sprite.BossBomb;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -65,6 +65,10 @@ public class Scene2 extends JPanel {
     private final Game game;
 
     private List<Star> stars = new ArrayList<>();
+
+    private boolean bossIntroPlayed = false; // Track if boss intro has been played
+
+    private boolean gameOverSoundPlayed = false; // Track if game over sound has been played
 
     // Star class for random background stars
     private static class Star {
@@ -121,6 +125,8 @@ public class Scene2 extends JPanel {
 
         // Reset frame counter
         frame = 0;
+
+        gameOverSoundPlayed = false; // Reset game over sound flag
 
         timer = new Timer(16, new GameCycle());
         timer.start();
@@ -256,7 +262,7 @@ public class Scene2 extends JPanel {
         if (player.hasMultishot()) {
             int remainingSeconds = player.getMultishotFramesRemaining() / 60;
             g.setColor(Color.yellow);
-            g.drawString("🔥 MULTISHOT: " + remainingSeconds + "s", 10, 60);
+            g.drawString("≡ MULTISHOT: " + remainingSeconds + "s", 10, 60);
             g.setColor(Color.red);
             g.drawString("AUTO-FIRE ACTIVE!", 10, 80);
         }
@@ -370,6 +376,13 @@ public class Scene2 extends JPanel {
         if (player.isDying()) {
             player.die();
             inGame = false;
+
+            // Play game over sound 
+            if (!gameOverSoundPlayed) {
+                SoundEffectPlayer.playGameOverSound();
+                gameOverSoundPlayed = true;
+            }
+
         }
     }
 
@@ -491,8 +504,15 @@ public class Scene2 extends JPanel {
             message = spawnResult.victoryMessage;
         }
 
+        if (!bossIntroPlayed && gameTimeSeconds >= 9) {
+            // Play boss intro sound if not already played
+            SoundEffectPlayer.playBossIntroSound(); // Play 1 second before boss spawn
+            bossIntroPlayed = true;
+
+        }
+
         // Boss spawning logic - spawn boss at 4 minutes (240 seconds)
-        if (!bossSpawned && gameTimeSeconds >= 240) {
+        if (!bossSpawned && gameTimeSeconds >= 10) {
             boss = new Boss(BOARD_WIDTH - 300, BOARD_HEIGHT / 2 - 50);
             bossSpawned = true;
             System.out.println("BOSS SPAWNED!");
@@ -513,6 +533,9 @@ public class Scene2 extends JPanel {
                 boss.die();
                 bossDefeated = true;
                 explosions.add(new Explosion(boss.getX(), boss.getY()));
+
+                SoundEffectPlayer.playVictorySound(); // Play victory sound
+
                 System.out.println("BOSS DEFEATED!");
             }
         }
@@ -524,11 +547,21 @@ public class Scene2 extends JPanel {
                 inGame = false;
                 timer.stop();
                 message = "Game Over! Boss was not defeated in time!";
+                
+                if (!gameOverSoundPlayed) {
+                    SoundEffectPlayer.playGameOverSound(); // Play game over sound
+                    gameOverSoundPlayed = true;
+                }
             } else {
                 // Boss defeated or no boss spawned - player wins
                 inGame = false;
                 timer.stop();
                 message = "Congratulations! You've completed Scene 2!";
+
+                if (!bossDefeated) {
+                    SoundEffectPlayer.playVictorySound();
+                }
+
             }
         }
 
@@ -542,6 +575,9 @@ public class Scene2 extends JPanel {
             
             Shot autoShot = new Shot(x, y);
             shots.add(autoShot);
+
+            SoundEffectPlayer.playShootSound(); // Play shooting sound
+
             
             if (player.hasMultishot() && shots.size() < player.getMaxShots()) {
                 Shot spreadShot = new Shot(x, y + 25);
@@ -556,6 +592,9 @@ public class Scene2 extends JPanel {
             if (powerup.isVisible()) {
                 powerup.act();
                 if (powerup.collidesWith(player)) {
+
+                    SoundEffectPlayer.playCatchPowerUpSound(); // Play power-up sound
+
                     powerup.upgrade(player);
                 }
             }
@@ -590,6 +629,9 @@ public class Scene2 extends JPanel {
                 && bomb.getY() <= (player.getY() + PLAYER_HEIGHT)) {
                 bomb.setDestroyed(true);
                 explosions.add(new Explosion(player.getX(), player.getY()));
+
+                SoundEffectPlayer.playPlayerHitSound(); // Play player hit sound
+
                 player.takeDamage();
                 lives--;
                 if (lives <= 0) {
@@ -598,6 +640,13 @@ public class Scene2 extends JPanel {
                     player.setDying(true);
                     inGame = false;
                     message = "Game Over!";
+                
+                // Play game over sound
+                if (!gameOverSoundPlayed) {
+                    SoundEffectPlayer.playGameOverSound();
+                    gameOverSoundPlayed = true;
+                    }    
+
                 }
             }
         }
@@ -615,6 +664,9 @@ public class Scene2 extends JPanel {
                 && bossBomb.getY() <= (player.getY() + PLAYER_HEIGHT)) {
                 bossBomb.setDestroyed(true);
                 explosions.add(new Explosion(player.getX(), player.getY()));
+                
+                SoundEffectPlayer.playPlayerHitSound();
+
                 player.takeDamage();
                 lives--;
                 if (lives <= 0) {
@@ -623,6 +675,12 @@ public class Scene2 extends JPanel {
                     player.setDying(true);
                     inGame = false;
                     message = "Game Over!";
+
+                    if (!gameOverSoundPlayed) {
+                        SoundEffectPlayer.playGameOverSound();
+                        gameOverSoundPlayed = true;
+                    }
+
                 }
             }
             
@@ -643,6 +701,10 @@ public class Scene2 extends JPanel {
                 if (boss != null && boss.isVisible() && shot.isVisible() && shot.collidesWith(boss)) {
                     boss.takeDamage();
                     explosions.add(new Explosion(shot.getX(), shot.getY()));
+
+                    SoundEffectPlayer.playEnemyExplodeSound(); // Play boss hit sound
+
+
                     score += 50; // Points for hitting boss
                     shot.die();
                     shotsToRemove.add(shot);
@@ -656,6 +718,10 @@ public class Scene2 extends JPanel {
                         enemy.setImage(ii.getImage());
                         enemy.setDying(true);
                         explosions.add(new Explosion(enemy.getX(), enemy.getY()));
+
+                        SoundEffectPlayer.playEnemyExplodeSound(); // Play enemy explosion sound
+
+
                         deaths++;
                         
                         if (enemy instanceof Alien2) {
@@ -737,6 +803,8 @@ public class Scene2 extends JPanel {
                     if (shots.size() < maxShots) {
                         Shot shot = new Shot(x, y);
                         shots.add(shot);
+
+                        SoundEffectPlayer.playShootSound(); // Play shooting sound
                     }
                 }
             }

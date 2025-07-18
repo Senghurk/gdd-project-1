@@ -3,15 +3,16 @@ package gdd.scene;
 import gdd.AudioPlayer;
 import gdd.Game;
 import static gdd.Global.*;
+import gdd.SoundEffectPlayer;
 import gdd.SpawnDetails;
 import gdd.powerup.PowerUp;
 import gdd.sprite.Alien1;
 import gdd.sprite.Alien2;
 import gdd.sprite.Enemy;
+import gdd.sprite.EnemyBomb;
 import gdd.sprite.Explosion;
 import gdd.sprite.Player;
 import gdd.sprite.Shot;
-import gdd.sprite.EnemyBomb;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -60,6 +61,8 @@ public class Scene1 extends JPanel {
     private final Game game;
 
     private List<Star> stars = new ArrayList<>();
+
+    private boolean gameOverSoundPlayed = false; // Flag to prevent multiple game over sounds
 
     // Star class for random background stars
     private static class Star {
@@ -194,6 +197,12 @@ public class Scene1 extends JPanel {
 
             player.die();
             inGame = false;
+
+            // Play game over sound 
+            if (!gameOverSoundPlayed) {
+                SoundEffectPlayer.playGameOverSound();
+                gameOverSoundPlayed = true;
+            }
         }
     }
 
@@ -439,6 +448,8 @@ public class Scene1 extends JPanel {
             
             Shot autoShot = new Shot(x, y);
             shots.add(autoShot);
+
+            SoundEffectPlayer.playShootSound(); // Play shooting sound
             
             // Create additional spread shot
             if (player.hasMultishot() && shots.size() < player.getMaxShots()) {
@@ -454,6 +465,9 @@ public class Scene1 extends JPanel {
             if (powerup.isVisible()) {
                 powerup.act();
                 if (powerup.collidesWith(player)) {
+
+                    SoundEffectPlayer.playCatchPowerUpSound(); // Play power-up sound
+
                     powerup.upgrade(player);
                 }
             }
@@ -485,6 +499,9 @@ public class Scene1 extends JPanel {
                         enemy.setImage(ii.getImage());
                         enemy.setDying(true);
                         explosions.add(new Explosion(enemy.getX(), enemy.getY()));
+
+                        SoundEffectPlayer.playEnemyExplodeSound(); // Play enemy explosion sound
+
                         deaths++;
                         
                         // Add score based on enemy type
@@ -563,6 +580,8 @@ public class Scene1 extends JPanel {
                     explosions.add(new Explosion(playerX, playerY));
                     player.takeDamage();
                     
+                    SoundEffectPlayer.playPlayerHitSound();
+
                     // Decrement lives instead of instant death
                     lives--;
                     if (lives <= 0) {
@@ -571,8 +590,14 @@ public class Scene1 extends JPanel {
                         player.setDying(true);
                         inGame = false;
                         message = "Game Over!";
-                    }
-                }
+
+                    // Play game over sound 
+                    if (!gameOverSoundPlayed) {
+                        SoundEffectPlayer.playGameOverSound();
+                        gameOverSoundPlayed = true;
+            }
+        }
+    }
 
                 if (!bomb.isDestroyed()) {
                     bomb.act();
@@ -719,6 +744,7 @@ public class Scene1 extends JPanel {
         deaths = 0;
         frame = 0;
         message = "Game Over";
+        gameOverSoundPlayed = false; // Reset game over sound flag
         
         // Reset phase system
         currentPhase = 1;
@@ -793,6 +819,9 @@ public class Scene1 extends JPanel {
                     if (shots.size() < maxShots) {
                         Shot shot = new Shot(x, y);
                         shots.add(shot);
+
+                        SoundEffectPlayer.playShootSound(); // Play shooting sound
+
                     }
                 }
             }

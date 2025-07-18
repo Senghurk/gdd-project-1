@@ -85,7 +85,7 @@ public class SoundEffectPlayer {
     }
     
     public static void playGameOverSound() {
-        playSound("src/audio/GameOver.wav");
+        playSound("src/audio/gameOver.wav");
     }
 
     public static void playCatchPowerUpSound() {

@@ -118,9 +118,9 @@ public class TitleScene extends JPanel {
         
         g.setFont(g.getFont().deriveFont(14f));
         String[] teamMembers = {
-            "Khaing Thin Zar Sein - ID: 6530381",
-            "Bob Smith - ID: 2024002", 
-            "Charlie Davis - ID: 2024003"
+            "KHAING THIN ZAR SEIN - ID: 6530381",
+            "SAI OAN HSENG HURK - ID: 6440041", 
+            "LIN MYAT PHYO - ID: 6530201"
         };
         
         for (int i = 0; i < teamMembers.length; i++) {

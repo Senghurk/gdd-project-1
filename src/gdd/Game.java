@@ -21,9 +21,10 @@ public class Game extends JFrame  {
         scene2 = new Scene2(this);
         initUI();
         
-        // Comment/uncomment these lines to switch between normal start and Scene2 testing
-        //loadTitle(); // Start with title screen
-        loadScene2(); // Uncomment to test Scene2 directly
+        /*  Comment - Uncomment these lines to switch between normal start and Scene2 testing */
+
+        loadTitle(); // Start with title screen
+        // loadScene2(); // Uncomment to test Scene2 directly
     }
 
     private void initUI() {

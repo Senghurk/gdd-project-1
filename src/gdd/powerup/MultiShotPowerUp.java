@@ -16,16 +16,7 @@ public class MultiShotPowerUp extends PowerUp {
         setImage(scaledImage);
     }
 
-    public void act() {
-        // MultiShot specific behavior for sideways gameplay
-        // Move from right to left like enemies
-        this.x -= 2; // Move left by 2 pixels each frame
-        
-        // Remove power-up if it goes off the left side of the screen
-        if (this.x < -50) {
-            this.die();
-        }
-    }
+
 
     public void upgrade(Player player) {
         // Activate multishot for the player

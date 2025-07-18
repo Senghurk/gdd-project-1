@@ -22,26 +22,11 @@ public class SpeedUp extends PowerUp {
         setImage(scaledImage);
     }
 
-    public void act() {
-        // SpeedUp specific behavior for sideways gameplay
-        // Move from right to left like enemies
-        this.x -= 2; // Move left by 2 pixels each frame
-        
-        // Remove power-up if it goes off the left side of the screen
-        if (this.x < -50) {
-            this.die();
-        }
-    }
 
-    // UPDATED: Modified to enable multiple shots capability
+
     public void upgrade(Player player) {
-        // Enable multiple shots capability (main feature)
-        player.enableMultipleShots();
-        
-        // Also apply speed boost as secondary benefit
-        player.applySpeedBoost(SPEED_BOOST_AMOUNT);
-        
+        // Only increase speed by SPEED_BOOST_AMOUNT
+        player.increaseSpeed();
         this.die(); // Remove the power-up after use
     }
-
 }

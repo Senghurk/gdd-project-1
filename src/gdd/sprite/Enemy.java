@@ -8,7 +8,8 @@ public class Enemy extends Sprite {
     // private Bomb bomb;
 
     public Enemy(int x, int y) {
-
+        // Set fixed collision bounds for enemies - smaller than visual size to prevent false collisions
+        setCollisionBounds(20, 20); // Enemy collision box - smaller than visual
         initEnemy(x, y);
     }
 

@@ -5,8 +5,6 @@ import gdd.Game;
 import static gdd.Global.*;
 import gdd.SpawnDetails;
 import gdd.powerup.PowerUp;
-import gdd.powerup.SpeedUp;
-import gdd.powerup.MultiShotPowerUp;
 import gdd.sprite.Alien1;
 import gdd.sprite.Alien2;
 import gdd.sprite.Enemy;
@@ -41,12 +39,6 @@ public class Scene1 extends JPanel {
     private List<Explosion> explosions;
     private List<Shot> shots;
     private Player player;
-    // private Shot shot;
-
-    final int BLOCKHEIGHT = 50;
-    final int BLOCKWIDTH = 50;
-
-    final int BLOCKS_TO_DRAW = BOARD_HEIGHT / BLOCKHEIGHT;
 
     private int direction = -1;
     private int deaths = 0;
@@ -57,14 +49,6 @@ public class Scene1 extends JPanel {
     
     // Phase-based enemy behavior
     private int currentPhase = 1;
-    private int lastPhaseChangeTime = 0;
-    
-    // Wave system
-    private boolean waveActive = false;
-    private int waveEndFrame = 0;
-    private String currentWaveType = "";
-    private int enemiesInCurrentWave = 0;
-    
 
     private boolean inGame = true;
     private String message = "Game Over";
@@ -75,9 +59,6 @@ public class Scene1 extends JPanel {
     private Timer timer;
     private final Game game;
 
-    private int currentRow = -1;
-    // TODO load this map from a file
-    // Replace MAP array with dynamic star generation
     private List<Star> stars = new ArrayList<>();
 
     // Star class for random background stars
@@ -94,18 +75,13 @@ public class Scene1 extends JPanel {
         }
     }
 
-    // Remove the old MAP array - replace with dynamic star generation
-    // The MAP array is no longer used with the new star field system
-    
     private HashMap<Integer, SpawnDetails> spawnMap = new HashMap<>();
     private AudioPlayer audioPlayer;
-    private int lastRowToShow;
-    private int firstRowToShow;
+    private SpawnManager spawnManager;
 
     public Scene1(Game game) {
         this.game = game;
-        // initBoard();
-        // gameInit();
+        this.spawnManager = new SpawnManager(spawnMap, randomizer);
         loadSpawnDetails();
     }
 
@@ -113,6 +89,7 @@ public class Scene1 extends JPanel {
         try {
             String filePath = "src/audio/scene1.wav";
             audioPlayer = new AudioPlayer(filePath);
+            // Volume is already set to 50% in AudioPlayer constructor
             audioPlayer.play();
         } catch (Exception e) {
             System.err.println("Error initializing audio player: " + e.getMessage());
@@ -120,169 +97,10 @@ public class Scene1 extends JPanel {
     }
 
     private void loadSpawnDetails() {
-        // TODO load this from a file
-        // For sideways gameplay, spawn enemies from the right side (x = BOARD_WIDTH) with varying y positions
-        spawnMap.put(50, new SpawnDetails("PowerUp-SpeedUp", BOARD_WIDTH - 50, 100));
-        spawnMap.put(200, new SpawnDetails("Alien1", BOARD_WIDTH - 50, 200));
-        spawnMap.put(300, new SpawnDetails("Alien1", BOARD_WIDTH - 50, 300));
-
-        spawnMap.put(400, new SpawnDetails("Alien1", BOARD_WIDTH - 50, 100));
-        spawnMap.put(401, new SpawnDetails("Alien1", BOARD_WIDTH - 50, 150));
-        spawnMap.put(402, new SpawnDetails("Alien1", BOARD_WIDTH - 50, 200));
-        spawnMap.put(403, new SpawnDetails("Alien1", BOARD_WIDTH - 50, 250));
-
-        spawnMap.put(500, new SpawnDetails("Alien1", BOARD_WIDTH - 50, 300));
-        spawnMap.put(501, new SpawnDetails("Alien1", BOARD_WIDTH - 50, 350));
-        spawnMap.put(502, new SpawnDetails("Alien1", BOARD_WIDTH - 50, 400));
-        spawnMap.put(503, new SpawnDetails("Alien1", BOARD_WIDTH - 50, 450));
-        
-        // Add Alien2 enemies and MultiShot powerup
-        spawnMap.put(250, new SpawnDetails("PowerUp-MultiShot", BOARD_WIDTH - 50, 250));
-        spawnMap.put(600, new SpawnDetails("Alien2", BOARD_WIDTH - 50, 150));
-        spawnMap.put(650, new SpawnDetails("Alien2", BOARD_WIDTH - 50, 350));
-        spawnMap.put(700, new SpawnDetails("Alien2", BOARD_WIDTH - 50, 250));
-        
-        // More varied spawns for extended gameplay
-        spawnMap.put(800, new SpawnDetails("Alien1", BOARD_WIDTH - 50, 100));
-        spawnMap.put(850, new SpawnDetails("Alien2", BOARD_WIDTH - 50, 200));
-        spawnMap.put(900, new SpawnDetails("PowerUp-SpeedUp", BOARD_WIDTH - 50, 300));
-        spawnMap.put(950, new SpawnDetails("Alien1", BOARD_WIDTH - 50, 400));
-        spawnMap.put(1000, new SpawnDetails("Alien2", BOARD_WIDTH - 50, 150));
-        
-        // 5-minute gameplay (18000 frames at 60fps)
-        // Phase 1: Minutes 1-2 (frames 1000-7200) - Moderate difficulty
-        generatePhase1Spawns();
-        
-        // Phase 2: Minutes 2-4 (frames 7200-14400) - Increased difficulty  
-        generatePhase2Spawns();
-        
-        // Phase 3: Minutes 4-5 (frames 14400-18000) - High difficulty
-        generatePhase3Spawns();
-    }
-
-    private void generatePhase1Spawns() {
-        // Phase 1: Frames 0-5400 (0-90 seconds) - Moderate difficulty
-        for (int frame = 1200; frame <= 5400; frame += 80) { // Every 1.3 seconds (tighter)
-            int y = 100 + randomizer.nextInt(400); // Random Y position
-            if (frame % 1800 == 0) { // Every 30 seconds consider powerup (very sparse)
-                // Very rare speed powerup spawning
-                if (randomizer.nextInt(8) == 0) { // 1/8 chance when slot is available
-                    String powerupType = "PowerUp-SpeedUp";
-                    spawnMap.put(frame, new SpawnDetails(powerupType, BOARD_WIDTH - 50, y));
-                }
-            } else {
-                String enemyType = randomizer.nextInt(3) == 0 ? "Alien2" : "Alien1"; // 33% Alien2
-                spawnMap.put(frame, new SpawnDetails(enemyType, BOARD_WIDTH - 50, y));
-                
-                // Add formation spawns (V-formation)
-                if (randomizer.nextInt(5) == 0) {
-                    // Create V-formation with 3 enemies
-                    spawnMap.put(frame + 15, new SpawnDetails(enemyType, BOARD_WIDTH - 50, y - 40));
-                    spawnMap.put(frame + 25, new SpawnDetails(enemyType, BOARD_WIDTH - 50, y + 40));
-                    spawnMap.put(frame + 35, new SpawnDetails(enemyType, BOARD_WIDTH - 50, y)); // Leader slightly behind
-                }
-            }
-        }
+        // Use SpawnManager to handle all spawning logic
+        spawnManager.loadSpawnDetails();
     }
     
-    private void generatePhase2Spawns() {
-        // Phase 2: Frames 5400-12600 (90-210 seconds) - Wave-based difficulty
-        
-        // Add special wave events
-        spawnMap.put(6000, new SpawnDetails("WAVE_SWARM", 0, 0)); // 30 seconds in
-        spawnMap.put(8400, new SpawnDetails("WAVE_ELITE", 0, 0)); // 70 seconds in  
-        spawnMap.put(10800, new SpawnDetails("WAVE_MIXED", 0, 0)); // 110 seconds in
-        
-        for (int frame = 5400; frame <= 12600; frame += 60) { // Every 1 second (much tighter)
-            int y = 100 + randomizer.nextInt(400);
-            if (frame % 1200 == 0) { // Every 20 seconds consider powerup  
-                // Phase 2: Multishot more common, speed very rare
-                String powerupType = null;
-                if (randomizer.nextInt(3) == 0) { // 1/3 chance for any powerup
-                    if (randomizer.nextInt(10) == 0) { // 1/10 chance for speed (very rare)
-                        powerupType = "PowerUp-SpeedUp";
-                    } else {
-                        powerupType = "PowerUp-MultiShot"; // Much more common
-                    }
-                }
-                if (powerupType != null) {
-                    spawnMap.put(frame, new SpawnDetails(powerupType, BOARD_WIDTH - 50, y));
-                }
-            } else {
-                String enemyType = randomizer.nextInt(2) == 0 ? "Alien2" : "Alien1"; // 50% Alien2
-                spawnMap.put(frame, new SpawnDetails(enemyType, BOARD_WIDTH - 50, y));
-                
-                // Line formation spawns
-                if (randomizer.nextInt(4) == 0) {
-                    // Create horizontal line formation
-                    spawnMap.put(frame + 10, new SpawnDetails(enemyType, BOARD_WIDTH - 50, y - 50));
-                    spawnMap.put(frame + 20, new SpawnDetails(enemyType, BOARD_WIDTH - 50, y + 50));
-                }
-                
-                // Diamond formation occasionally  
-                if (randomizer.nextInt(7) == 0) {
-                    spawnMap.put(frame + 15, new SpawnDetails("Alien2", BOARD_WIDTH - 50, y - 30));
-                    spawnMap.put(frame + 25, new SpawnDetails("Alien2", BOARD_WIDTH - 50, y + 30));
-                    spawnMap.put(frame + 35, new SpawnDetails("Alien1", BOARD_WIDTH - 50, y)); // Center
-                    spawnMap.put(frame + 45, new SpawnDetails("Alien2", BOARD_WIDTH - 50, y)); // Rear
-                }
-            }
-        }
-    }
-    
-    private void generatePhase3Spawns() {
-        // Phase 3: Frames 12600-18000 (210-300 seconds) - Intense waves
-        
-        // Add intense wave events  
-        spawnMap.put(13200, new SpawnDetails("WAVE_ELITE", 0, 0)); // 30 seconds in
-        spawnMap.put(15000, new SpawnDetails("WAVE_SWARM", 0, 0)); // 80 seconds in
-        spawnMap.put(16800, new SpawnDetails("WAVE_FINAL", 0, 0)); // 130 seconds in
-        
-        for (int frame = 12600; frame <= 18000; frame += 45) { // Every 0.75 seconds (intense)
-            int y = 100 + randomizer.nextInt(400);
-            if (frame % 600 == 0) { // Every 10 seconds consider powerup
-                // Phase 3: Focus on multishot for intense combat, minimal speed
-                String powerupType = null;
-                if (randomizer.nextInt(2) == 0) { // 50% chance for powerup
-                    if (randomizer.nextInt(20) == 0) { // 1/20 chance for speed (extremely rare)
-                        powerupType = "PowerUp-SpeedUp";
-                    } else {
-                        powerupType = "PowerUp-MultiShot"; // Much more common
-                    }
-                }
-                if (powerupType != null) {
-                    spawnMap.put(frame, new SpawnDetails(powerupType, BOARD_WIDTH - 50, y));
-                }
-            } else {
-                String enemyType = randomizer.nextInt(4) < 3 ? "Alien2" : "Alien1"; // 75% Alien2
-                spawnMap.put(frame, new SpawnDetails(enemyType, BOARD_WIDTH - 50, y));
-                
-                // Phase 3: Aggressive swarm and elite formations
-                if (randomizer.nextInt(3) == 0) { 
-                    // Swarm formation - 4 enemies in close proximity
-                    spawnMap.put(frame + 8, new SpawnDetails("Alien2", BOARD_WIDTH - 50, y - 25));
-                    spawnMap.put(frame + 16, new SpawnDetails("Alien2", BOARD_WIDTH - 50, y + 25));
-                    spawnMap.put(frame + 24, new SpawnDetails("Alien1", BOARD_WIDTH - 50, y - 15));
-                    spawnMap.put(frame + 32, new SpawnDetails("Alien1", BOARD_WIDTH - 50, y + 15));
-                }
-                
-                // Elite pincer formation occasionally
-                if (randomizer.nextInt(8) == 0) {
-                    spawnMap.put(frame + 10, new SpawnDetails("Alien2", BOARD_WIDTH - 50, 100)); // Top pincer
-                    spawnMap.put(frame + 10, new SpawnDetails("Alien2", BOARD_WIDTH - 50, BOARD_HEIGHT - 150)); // Bottom pincer
-                    spawnMap.put(frame + 30, new SpawnDetails("Alien2", BOARD_WIDTH - 50, y)); // Center breakthrough
-                }
-            }
-        }
-        
-        // Remove old victory condition since we handle it in update()
-        // spawnMap.put(18000, new SpawnDetails("VICTORY", 0, 0));
-    }
-
-    private void initBoard() {
-
-    }
-
     public void start() {
         addKeyListener(new TAdapter());
         setFocusable(true);
@@ -317,15 +135,7 @@ public class Scene1 extends JPanel {
         // Initialize the star field for background
         initStarField();
 
-        // for (int i = 0; i < 4; i++) {
-        // for (int j = 0; j < 6; j++) {
-        // var enemy = new Enemy(ALIEN_INIT_X + (ALIEN_WIDTH + ALIEN_GAP) * j,
-        // ALIEN_INIT_Y + (ALIEN_HEIGHT + ALIEN_GAP) * i);
-        // enemies.add(enemy);
-        // }
-        // }
         player = new Player();
-        // shot = new Shot();
     }
 
     private void drawStarField(Graphics g) {
@@ -430,6 +240,24 @@ public class Scene1 extends JPanel {
         explosions.removeAll(toRemove);
     }
 
+    private void drawLevelText(Graphics g) {
+        // Only draw during first 3 seconds (180 frames)
+        if (frame <= 180) {
+            // Flicker every 20 frames
+            if ((frame / 20) % 2 == 0) {
+                g.setColor(Color.WHITE);
+                g.setFont(new Font("Arial", Font.BOLD, 36));
+                
+                // Get text dimensions for centering
+                String levelText = "Level 1";
+                int textWidth = g.getFontMetrics().stringWidth(levelText);
+                
+                // Position text in upper middle, below dashboard
+                g.drawString(levelText, (BOARD_WIDTH - textWidth) / 2, 100);
+            }
+        }
+    }
+
     private void drawDashboard(Graphics g) {
         // Dashboard background
         g.setColor(new Color(0, 0, 0, 150)); // Semi-transparent black
@@ -453,29 +281,21 @@ public class Scene1 extends JPanel {
         int maxShots = player.getMaxShots();
         g.drawString("Shots: " + shots.size() + "/" + maxShots, 150, 40);
         
-        // UPDATED: Show SpeedUp collection status
+        // Show current powerup status
         g.setColor(Color.yellow);
-        if (player.hasCollectedSpeedUp()) {
-            g.drawString("✓ Multi-Shot Unlocked", 300, 20);
-        } else {
-            g.setColor(Color.red);
-            g.drawString("✗ Single Shot Only", 300, 20);
-        }
+        g.drawString("Bullets: " + player.getCurrentBulletCount() + "/" + player.getMaxBulletCount(), 300, 20);
         
-        // Powerup status
+        g.setColor(Color.cyan);
+        g.drawString("Speed: " + player.getCurrentSpeed() + "/" + player.getMaxSpeed(), 300, 40);
+        
+        // Multishot status
         g.setColor(Color.white);
         if (player.hasMultishot()) {
             int remainingSeconds = player.getMultishotFramesRemaining() / 60;
             g.setColor(Color.yellow);
-            g.drawString("🔥 MULTISHOT: " + remainingSeconds + "s", 300, 35);
+            g.drawString("🔥 MULTISHOT: " + remainingSeconds + "s", 450, 20);
             g.setColor(Color.red);
-            g.drawString("AUTO-FIRE ACTIVE!", 300, 50);
-        }
-        
-        // Speed status  
-        if (player.getSpeed() > 8) { // Show if speed is above default
-            g.setColor(Color.cyan);
-            g.drawString("⚡ SPEED: " + player.getSpeed(), 450, 40);
+            g.drawString("AUTO-FIRE ACTIVE!", 450, 40);
         }
         
         // Phase information
@@ -495,11 +315,7 @@ public class Scene1 extends JPanel {
         g.drawString(phaseText, 550, 20);
         
         // Wave information
-        if (waveActive) {
-            g.setColor(Color.red);
-            int remainingSeconds = (waveEndFrame - frame) / 60;
-            g.drawString("🚨 " + currentWaveType + " WAVE: " + remainingSeconds + "s", 550, 40);
-        }
+        // The wave system is now managed by SpawnManager, so we don't need to draw wave info here.
         
     }
 
@@ -526,8 +342,6 @@ public class Scene1 extends JPanel {
         g.setColor(Color.white);
         g.drawString("FRAME: " + frame, 10, 10);
 
-        g.setColor(Color.green);
-
         if (inGame) {
 
             drawStarField(g);  // Draw background stars first
@@ -538,6 +352,7 @@ public class Scene1 extends JPanel {
             drawShot(g);
             drawBombing(g); // Draw enemy bombs
             drawDashboard(g); // Draw dashboard on top
+            drawLevelText(g); // Draw level text on top
 
         } else {
 
@@ -574,7 +389,7 @@ public class Scene1 extends JPanel {
         g.setFont(g.getFont().deriveFont(12f));
         String restartText = "Press R to Restart";
         int restartWidth = g.getFontMetrics().stringWidth(restartText);
-        g.drawString(restartText, (BOARD_WIDTH - restartWidth) / 2, BOARD_WIDTH / 2 + 30);
+        g.drawString(restartText, (BOARD_WIDTH - restartWidth) / 2, BOARD_WIDTH / 2 + 50);
     }
 
     private void update() {
@@ -588,81 +403,44 @@ public class Scene1 extends JPanel {
         
         // Update phase-based enemy behavior
         updateEnemyPhase();
-        
-        // Update wave system
-        updateWaveSystem();
 
         // Update background stars
         updateStarField();
 
-        // Check enemy spawn
-        // TODO this approach can only spawn one enemy at a frame
-        SpawnDetails sd = spawnMap.get(frame);
-        if (sd != null) {
-            // Create a new enemy based on the spawn details
-            switch (sd.type) {
-                case "Alien1":
-                    Enemy enemy = new Alien1(sd.x, sd.y);
-                    enemies.add(enemy);
-                    break;
-                case "Alien2":
-                    Enemy enemy2 = new Alien2(sd.x, sd.y);
-                    enemies.add(enemy2);
-                    break;
-                case "PowerUp-SpeedUp":
-                    // Only spawn speed if player can actually use it
-                    if (player.canReceiveSpeedBoost()) {
-                        PowerUp speedUp = new SpeedUp(sd.x, sd.y);
-                        powerups.add(speedUp);
-                    }
-                    break;
-                case "PowerUp-MultiShot":
-                    PowerUp multiShot = new MultiShotPowerUp(sd.x, sd.y);
-                    powerups.add(multiShot);
-                    break;
-                case "VICTORY":
-                    // Player survived 5 minutes!
-                    inGame = false;
-                    message = "Stage 1 Complete! You survived 5 minutes!";
-                    break;
-                case "WAVE_SWARM":
-                    startWave("SWARM", 360); // 6 second swarm wave
-                    break;
-                case "WAVE_ELITE":
-                    startWave("ELITE", 480); // 8 second elite wave
-                    break;
-                case "WAVE_MIXED":
-                    startWave("MIXED", 420); // 7 second mixed wave
-                    break;
-                case "WAVE_FINAL":
-                    startWave("FINAL", 600); // 10 second final wave
-                    break;
-                default:
-                    System.out.println("Unknown enemy type: " + sd.type);
-                    break;
-            }
+        // Handle spawning through SpawnManager
+        SpawnManager.SpawnResult spawnResult = spawnManager.spawnEnemies(frame, player);
+        
+        // Add spawned enemies to the game
+        enemies.addAll(spawnResult.enemies);
+        
+        // Add spawned powerups to the game
+        powerups.addAll(spawnResult.powerups);
+        
+        // Handle victory condition
+        if (spawnResult.gameOver) {
+            inGame = false;
+            message = spawnResult.victoryMessage;
         }
 
         // Victory condition: Survive 5 minutes (300 seconds)
         if (gameTimeSeconds >= 300) {
             inGame = false;
             timer.stop();
-            message = "Stage 1 Complete! You survived 5 minutes!";
+            message = "Level 1 Complete!You survived 5 minutes!Press SPACE to continue to Level 2";
         }
 
         // player
         player.act();
         
-        // UPDATED: Auto-fire only works if player has collected SpeedUp
+        // Auto-fire for multishot powerup
         if (player.canAutoFire() && shots.size() < player.getMaxShots() - 2) {
             int x = player.getX();
             int y = player.getY();
             
-            // Create auto-fire shot with proper spacing
             Shot autoShot = new Shot(x, y);
             shots.add(autoShot);
             
-            // Create one additional spread shot only
+            // Create additional spread shot
             if (player.hasMultishot() && shots.size() < player.getMaxShots()) {
                 Shot spreadShot = new Shot(x, y + 25);
                 shots.add(spreadShot);
@@ -723,8 +501,7 @@ public class Scene1 extends JPanel {
                 }
 
                 int x = shot.getX();
-                // Remove old shot movement code since Shot.act() now handles movement
-                // For sideways gameplay, remove shots that go off the right side
+                // Remove shots that go off the right side
                 if (x > BOARD_WIDTH) {
                     shot.die();
                     shotsToRemove.add(shot);
@@ -733,34 +510,7 @@ public class Scene1 extends JPanel {
         }
         shots.removeAll(shotsToRemove);
 
-        // enemies
-        // for (Enemy enemy : enemies) {
-        //     int x = enemy.getX();
-        //     if (x >= BOARD_WIDTH - BORDER_RIGHT && direction != -1) {
-        //         direction = -1;
-        //         for (Enemy e2 : enemies) {
-        //             e2.setY(e2.getY() + GO_DOWN);
-        //         }
-        //     }
-        //     if (x <= BORDER_LEFT && direction != 1) {
-        //         direction = 1;
-        //         for (Enemy e : enemies) {
-        //             e.setY(e.getY() + GO_DOWN);
-        //         }
-        //     }
-        // }
-        // for (Enemy enemy : enemies) {
-        //     if (enemy.isVisible()) {
-        //         int y = enemy.getY();
-        //         if (y > GROUND - ALIEN_HEIGHT) {
-        //             inGame = false;
-        //             message = "Invasion!";
-        //         }
-        //         enemy.act(direction);
-        //     }
-        // }
-        // bombs - collision detection
-        // Bomb is with enemy, so it loops over enemies
+        // Enemy bomb collision detection
         for (Enemy enemy : enemies) {
 
             // Phase-based shooting behavior
@@ -780,7 +530,7 @@ public class Scene1 extends JPanel {
                 case 3:
                     // Phase 3: Regular shooting every 5 seconds (210-300 seconds)
                     canShoot = true;
-                    shootChance = 300; // More frequent shooting
+                    shootChance = 500; // More frequent shooting
                     break;
             }
             
@@ -825,8 +575,8 @@ public class Scene1 extends JPanel {
                 }
 
                 if (!bomb.isDestroyed()) {
-                    bomb.act(); // Use bomb's act method for movement
-                    // For sideways gameplay, remove bombs that go off the left side
+                    bomb.act();
+                    // Remove bombs that go off the left side
                     if (bomb.getX() < 0) {
                         bomb.setDestroyed(true);
                     }
@@ -872,8 +622,8 @@ public class Scene1 extends JPanel {
                 }
 
                 if (!bomb.isDestroyed()) {
-                    bomb.act(); // Use bomb's act method for movement
-                    // For sideways gameplay, remove bombs that go off the left side
+                    bomb.act();
+                    // Remove bombs that go off the left side
                     if (bomb.getX() < 0) {
                         bomb.setDestroyed(true);
                     }
@@ -881,12 +631,10 @@ public class Scene1 extends JPanel {
             }
         }
         
-        // Update explosions
+        // Update and remove completed explosions
         for (Explosion explosion : explosions) {
-            explosion.act(); // Handle explosion animation lifecycle
+            explosion.act();
         }
-        
-        // Remove completed explosions
         explosions.removeIf(explosion -> !explosion.isVisible());
     }
     
@@ -902,136 +650,6 @@ public class Scene1 extends JPanel {
         // Phase 3: 210-300 seconds (regular shooting every 5 seconds)
         else {
             currentPhase = 3;
-        }
-    }
-    
-    private void startWave(String waveType, int durationFrames) {
-        waveActive = true;
-        currentWaveType = waveType;
-        waveEndFrame = frame + durationFrames;
-        enemiesInCurrentWave = 0;
-        
-        // Spawn wave enemies immediately
-        spawnWaveEnemies(waveType);
-    }
-    
-    private void spawnWaveEnemies(String waveType) {
-        int centerY = BOARD_HEIGHT / 2;
-        
-        switch (waveType) {
-            case "SWARM":
-                // 6 weak enemies in tight formation
-                for (int i = 0; i < 6; i++) {
-                    int y = centerY - 60 + (i * 24);
-                    enemies.add(new Alien1(BOARD_WIDTH - 50, y));
-                    enemiesInCurrentWave++;
-                }
-                break;
-                
-            case "ELITE":
-                // 3 strong enemies spread out
-                enemies.add(new Alien2(BOARD_WIDTH - 50, centerY - 80));
-                enemies.add(new Alien2(BOARD_WIDTH - 50, centerY));
-                enemies.add(new Alien2(BOARD_WIDTH - 50, centerY + 80));
-                enemiesInCurrentWave += 3;
-                break;
-                
-            case "MIXED":
-                // 2 Alien2 flanking 3 Alien1
-                enemies.add(new Alien2(BOARD_WIDTH - 50, centerY - 100));
-                enemies.add(new Alien1(BOARD_WIDTH - 50, centerY - 40));
-                enemies.add(new Alien1(BOARD_WIDTH - 50, centerY));
-                enemies.add(new Alien1(BOARD_WIDTH - 50, centerY + 40));
-                enemies.add(new Alien2(BOARD_WIDTH - 50, centerY + 100));
-                enemiesInCurrentWave += 5;
-                break;
-                
-            case "FINAL":
-                // 4 Alien2 in diamond formation
-                enemies.add(new Alien2(BOARD_WIDTH - 50, centerY));        // Front
-                enemies.add(new Alien2(BOARD_WIDTH - 20, centerY - 60));   // Top
-                enemies.add(new Alien2(BOARD_WIDTH - 20, centerY + 60));   // Bottom
-                enemies.add(new Alien2(BOARD_WIDTH + 10, centerY));        // Rear
-                enemiesInCurrentWave += 4;
-                break;
-        }
-    }
-    
-    private void updateWaveSystem() {
-        if (waveActive && frame >= waveEndFrame) {
-            waveActive = false;
-            currentWaveType = "";
-            enemiesInCurrentWave = 0;
-        }
-    }
-
-    private void doGameCycle() {
-        frame++;
-        update();
-        repaint();
-    }
-
-    private class GameCycle implements ActionListener {
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            doGameCycle();
-        }
-    }
-
-    private class TAdapter extends KeyAdapter {
-
-        @Override
-        public void keyReleased(KeyEvent e) {
-            // Only handle player key releases when game is running
-            if (inGame) {
-                player.keyReleased(e);
-            }
-        }
-
-        @Override
-        public void keyPressed(KeyEvent e) {
-            System.out.println("Scene2.keyPressed: " + e.getKeyCode());
-
-            int key = e.getKeyCode();
-
-            // Handle restart when game is over
-            if (!inGame && key == KeyEvent.VK_R) {
-                restartGame();
-                return;
-            }
-
-            // Only handle player controls when game is running
-            if (inGame) {
-                player.keyPressed(e);
-
-                int x = player.getX();
-                int y = player.getY();
-
-                // UPDATED: Modified shooting logic to respect single-shot limitation
-                if (key == KeyEvent.VK_SPACE) {
-                    int maxShots = player.getMaxShots();
-                    System.out.println("Shots: " + shots.size() + "/" + maxShots);
-                    if (shots.size() < maxShots) {
-                        // Create primary shot
-                        Shot shot = new Shot(x, y);
-                        shots.add(shot);
-                        
-                        // Only create additional shots if player can shoot multiple AND has multishot
-                        if (player.canShootMultiple() && player.hasMultishot()) {
-                            int extraShots = player.getExtraShots();
-                            for (int i = 1; i <= extraShots && shots.size() < maxShots; i++) {
-                                // Create shots with spread pattern
-                                int spreadY = y + (i * 25) - (extraShots * 12); // Wider spread
-                                Shot extraShot = new Shot(x, spreadY);
-                                shots.add(extraShot);
-                            }
-                            
-                            // No rapid-fire burst - controlled by auto-fire system
-                        }
-                    }
-                }
-            }
         }
     }
 
@@ -1104,7 +722,6 @@ public class Scene1 extends JPanel {
         
         // Reset phase system
         currentPhase = 1;
-        lastPhaseChangeTime = 0;
         gameTimeSeconds = 0;
         framesSinceLastSecond = 0;
         score = 0;
@@ -1124,7 +741,61 @@ public class Scene1 extends JPanel {
         if (!timer.isRunning()) {
             timer.start();
         }
+    }
 
-        System.out.println("Game restarted!");
+    private class GameCycle implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            doGameCycle();
+        }
+    }
+
+    private void doGameCycle() {
+        update();
+        repaint();
+        frame++;
+    }
+
+    private class TAdapter extends KeyAdapter {
+        @Override
+        public void keyReleased(KeyEvent e) {
+            // Only handle player key releases when game is running
+            if (inGame) {
+                player.keyReleased(e);
+            }
+        }
+
+        @Override
+        public void keyPressed(KeyEvent e) {
+            int key = e.getKeyCode();
+
+            // Handle game over actions
+            if (!inGame) {
+                if (key == KeyEvent.VK_R) {
+                    restartGame();
+                    return;
+                } else if (key == KeyEvent.VK_SPACE && message.contains("Level 2")) {
+                    game.loadScene2(); // Move to Scene2
+                    return;
+                }
+            }
+
+            // Only handle player controls when game is running
+            if (inGame) {
+                player.keyPressed(e);
+
+                int x = player.getX();
+                int y = player.getY();
+
+                // One bullet per space press, but more bullets can be on screen
+                if (key == KeyEvent.VK_SPACE) {
+                    int maxShots = player.getMaxShots();
+                    if (shots.size() < maxShots) {
+                        Shot shot = new Shot(x, y);
+                        shots.add(shot);
+                    }
+                }
+            }
+        }
     }
 }

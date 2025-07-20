@@ -16,7 +16,7 @@ public class Alien2 extends Enemy {
 
     public Alien2(int x, int y) {
         super(x, y);
-        setCollisionBounds(25, 25);
+        setCollisionBounds(35, 35); // Alien2 collision box - covers full sprite, slightly larger than Alien1
         this.initialY = y;
         this.phaseOffset = Math.random() * Math.PI * 2;
         initEnemy(x, y);

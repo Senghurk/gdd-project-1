@@ -205,41 +205,17 @@ public class SpawnManager {
     }
     
     public void loadSpawnDetails() {
-        // TODO load this from a file
-        // For sideways gameplay, spawn enemies from the right side (x = BOARD_WIDTH) with varying y positions
-        spawnMap.put(200, new SpawnDetails("Alien1", BOARD_WIDTH - 50, 200));
-        spawnMap.put(300, new SpawnDetails("Alien1", BOARD_WIDTH - 50, 300));
-
-        spawnMap.put(400, new SpawnDetails("Alien1", BOARD_WIDTH - 50, 100));
-        spawnMap.put(401, new SpawnDetails("Alien1", BOARD_WIDTH - 50, 150));
-        spawnMap.put(402, new SpawnDetails("Alien1", BOARD_WIDTH - 50, 200));
-        spawnMap.put(403, new SpawnDetails("Alien1", BOARD_WIDTH - 50, 250));
-
-        spawnMap.put(500, new SpawnDetails("Alien1", BOARD_WIDTH - 50, 300));
-        spawnMap.put(501, new SpawnDetails("Alien1", BOARD_WIDTH - 50, 350));
-        spawnMap.put(502, new SpawnDetails("Alien1", BOARD_WIDTH - 50, 400));
-        spawnMap.put(503, new SpawnDetails("Alien1", BOARD_WIDTH - 50, 450));
-        
-        // Add Alien2 enemies (powerups handled by distributePowerupsEvenly)
-        spawnMap.put(600, new SpawnDetails("Alien2", BOARD_WIDTH - 50, 150));
-        spawnMap.put(650, new SpawnDetails("Alien2", BOARD_WIDTH - 50, 350));
-        spawnMap.put(700, new SpawnDetails("Alien2", BOARD_WIDTH - 50, 250));
-        
-        // More varied spawns for extended gameplay
-        spawnMap.put(800, new SpawnDetails("Alien1", BOARD_WIDTH - 50, 100));
-        spawnMap.put(850, new SpawnDetails("Alien2", BOARD_WIDTH - 50, 200));
-        spawnMap.put(950, new SpawnDetails("Alien1", BOARD_WIDTH - 50, 400));
-        spawnMap.put(1000, new SpawnDetails("Alien2", BOARD_WIDTH - 50, 150));
+        // Clear any hardcoded spawns - all spawning now handled by phase generators
+        // Phase-based spawning provides better control and balancing
         
         // 5-minute gameplay (18000 frames at 60fps)
-        // Phase 1: Minutes 1-2 (frames 1000-7200) - Moderate difficulty
+        // Phase 1: 0-90 seconds (frames 0-5400) - Learning phase, Alien1 only
         generatePhase1Spawns();
         
-        // Phase 2: Minutes 2-4 (frames 7200-12600) - Increased difficulty  
+        // Phase 2: 90-210 seconds (frames 5400-12600) - Threat introduction, Alien1 only
         generatePhase2Spawns();
         
-        // Phase 3: Minutes 4-5 (frames 12600-14400) - High difficulty
-        // Last minute (frames 14400-18000): No enemies - Player relief period
+        // Phase 3: 210-300 seconds (frames 12600-18000) - Escalation, mixed enemies
         generatePhase3Spawns();
         
         // NEW: Distribute powerups evenly across the entire gameplay
@@ -250,6 +226,13 @@ public class SpawnManager {
         // Spawn one SpeedUp and one AddBullet at game start (avoid frame conflicts)
         spawnMap.put(250, new SpawnDetails("PowerUp-SpeedUp", BOARD_WIDTH - 50, 200));
         spawnMap.put(500, new SpawnDetails("PowerUp-AddBullet", BOARD_WIDTH - 50, 250));
+        
+        // Add MultiShot powerups earlier than before (15-20 seconds earlier)
+        // First MultiShot at ~30 seconds instead of ~47 seconds
+        spawnMap.put(1800, new SpawnDetails("PowerUp-MultiShot", BOARD_WIDTH - 50, 300)); // 30 seconds
+        spawnMap.put(4800, new SpawnDetails("PowerUp-MultiShot", BOARD_WIDTH - 50, 200)); // 80 seconds
+        spawnMap.put(9000, new SpawnDetails("PowerUp-MultiShot", BOARD_WIDTH - 50, 350)); // 150 seconds
+        spawnMap.put(13200, new SpawnDetails("PowerUp-MultiShot", BOARD_WIDTH - 50, 250)); // 220 seconds
         
         // 5-minute gameplay = 18000 frames at 60fps
         // 6 remaining powerups (3 speed + 3 bullet) spread evenly across rest of game
@@ -287,88 +270,61 @@ public class SpawnManager {
     }
 
     private void generatePhase1Spawns() {
-        // Phase 1: Frames 0-5400 (0-90 seconds) - Moderate difficulty
-        for (int frame = 1200; frame <= 5400; frame += 80) { // Every 1.3 seconds (tighter)
+        // Phase 1: Frames 0-5400 (0-90 seconds) - Learning phase with sparse Alien1 only
+        for (int frame = 1500; frame <= 5400; frame += 150) { // Every 2.5 seconds (much sparser)
             int y = 100 + randomizer.nextInt(400); // Random Y position
-            // Only spawn enemies, powerups are handled by distributePowerupsEvenly()
-            String enemyType = randomizer.nextInt(3) == 0 ? "Alien2" : "Alien1"; // 33% Alien2
-            spawnMap.put(frame, new SpawnDetails(enemyType, BOARD_WIDTH - 50, y));
+            // Only spawn Alien1 enemies - no Alien2 in phase 1
+            spawnMap.put(frame, new SpawnDetails("Alien1", BOARD_WIDTH - 50, y));
             
-            // Add formation spawns (V-formation)
-            if (randomizer.nextInt(5) == 0) {
-                // Create V-formation with 3 enemies
-                spawnMap.put(frame + 15, new SpawnDetails(enemyType, BOARD_WIDTH - 50, y - 40));
-                spawnMap.put(frame + 25, new SpawnDetails(enemyType, BOARD_WIDTH - 50, y + 40));
-                spawnMap.put(frame + 35, new SpawnDetails(enemyType, BOARD_WIDTH - 50, y)); // Leader slightly behind
-            }
+            // No formations in Phase 1 - single enemies only for learning
         }
     }
     
     private void generatePhase2Spawns() {
-        // Phase 2: Frames 5400-12600 (90-210 seconds) - Wave-based difficulty
+        // Phase 2: Frames 5400-12600 (90-210 seconds) - Threat introduction with Alien1 only
         
-        // Add special wave events
-        spawnMap.put(6000, new SpawnDetails("WAVE_SWARM", 0, 0)); // 30 seconds in
-        spawnMap.put(8400, new SpawnDetails("WAVE_ELITE", 0, 0)); // 70 seconds in  
-        spawnMap.put(10800, new SpawnDetails("WAVE_MIXED", 0, 0)); // 110 seconds in
+        // Remove complex wave events for Phase 2 - keep it simple
         
-        for (int frame = 5400; frame <= 12600; frame += 60) { // Every 1 second (much tighter)
+        for (int frame = 5400; frame <= 12600; frame += 120) { // Every 2 seconds (sparser than before)
             int y = 100 + randomizer.nextInt(400);
-            // Only spawn enemies, powerups are handled by distributePowerupsEvenly()
-            String enemyType = randomizer.nextInt(2) == 0 ? "Alien2" : "Alien1"; // 50% Alien2
-            spawnMap.put(frame, new SpawnDetails(enemyType, BOARD_WIDTH - 50, y));
+            // Only spawn Alien1 enemies - no Alien2 in phase 2
+            spawnMap.put(frame, new SpawnDetails("Alien1", BOARD_WIDTH - 50, y));
             
-            // Line formation spawns
-            if (randomizer.nextInt(4) == 0) {
-                // Create horizontal line formation
-                spawnMap.put(frame + 10, new SpawnDetails(enemyType, BOARD_WIDTH - 50, y - 50));
-                spawnMap.put(frame + 20, new SpawnDetails(enemyType, BOARD_WIDTH - 50, y + 50));
-            }
-            
-            // Diamond formation occasionally  
-            if (randomizer.nextInt(7) == 0) {
-                spawnMap.put(frame + 15, new SpawnDetails("Alien2", BOARD_WIDTH - 50, y - 30));
-                spawnMap.put(frame + 25, new SpawnDetails("Alien2", BOARD_WIDTH - 50, y + 30));
-                spawnMap.put(frame + 35, new SpawnDetails("Alien1", BOARD_WIDTH - 50, y)); // Center
-                spawnMap.put(frame + 45, new SpawnDetails("Alien2", BOARD_WIDTH - 50, y)); // Rear
+            // Simple pair formations occasionally (10% chance)
+            if (randomizer.nextInt(10) == 0) {
+                // Create simple pair formation
+                spawnMap.put(frame + 30, new SpawnDetails("Alien1", BOARD_WIDTH - 50, y - 60));
             }
         }
     }
     
     private void generatePhase3Spawns() {
-        // Phase 3: Frames 12600-14400 (210-240 seconds) - Intense waves
-        // Boss spawns at 4 minutes (240 seconds = 14400 frames)
+        // Phase 3: Frames 12600-18000 (210-300 seconds) - Escalation with mixed enemies
+        // Extended to full 5 minutes - no dead time
         
-        // Add intense wave events  
-        spawnMap.put(13200, new SpawnDetails("WAVE_ELITE", 0, 0)); // 30 seconds in
-        spawnMap.put(13800, new SpawnDetails("WAVE_SWARM", 0, 0)); // 50 seconds in
-        spawnMap.put(14200, new SpawnDetails("WAVE_FINAL", 0, 0)); // 70 seconds in
+        // Add moderate wave events for variety
+        spawnMap.put(14400, new SpawnDetails("WAVE_MIXED", 0, 0)); // 4 minutes in
+        spawnMap.put(16800, new SpawnDetails("WAVE_ELITE", 0, 0)); // 4.7 minutes in
         
-        for (int frame = 12600; frame <= 14400; frame += 45) { // Every 0.75 seconds (intense) - STOP at 14400
+        for (int frame = 12600; frame <= 18000; frame += 90) { // Every 1.5 seconds - balanced pace
             int y = 100 + randomizer.nextInt(400);
-            // Only spawn enemies, powerups are handled by distributePowerupsEvenly()
-            String enemyType = randomizer.nextInt(4) < 3 ? "Alien2" : "Alien1"; // 75% Alien2
+            // 70% Alien1, 30% Alien2 mix for escalation
+            String enemyType = randomizer.nextInt(10) < 7 ? "Alien1" : "Alien2";
             spawnMap.put(frame, new SpawnDetails(enemyType, BOARD_WIDTH - 50, y));
             
-            // Phase 3: Aggressive swarm and elite formations
-            if (randomizer.nextInt(3) == 0) { 
-                // Swarm formation - 4 enemies in close proximity
-                spawnMap.put(frame + 8, new SpawnDetails("Alien2", BOARD_WIDTH - 50, y - 25));
-                spawnMap.put(frame + 16, new SpawnDetails("Alien2", BOARD_WIDTH - 50, y + 25));
-                spawnMap.put(frame + 24, new SpawnDetails("Alien1", BOARD_WIDTH - 50, y - 15));
-                spawnMap.put(frame + 32, new SpawnDetails("Alien1", BOARD_WIDTH - 50, y + 15));
+            // Line formations occasionally (20% chance)
+            if (randomizer.nextInt(5) == 0) { 
+                // Create 3-enemy line formation
+                spawnMap.put(frame + 20, new SpawnDetails(enemyType, BOARD_WIDTH - 50, y - 50));
+                spawnMap.put(frame + 40, new SpawnDetails(enemyType, BOARD_WIDTH - 50, y + 50));
             }
             
-            // Elite pincer formation occasionally
-            if (randomizer.nextInt(8) == 0) {
-                spawnMap.put(frame + 10, new SpawnDetails("Alien2", BOARD_WIDTH - 50, 100)); // Top pincer
-                spawnMap.put(frame + 10, new SpawnDetails("Alien2", BOARD_WIDTH - 50, BOARD_HEIGHT - 150)); // Bottom pincer
-                spawnMap.put(frame + 30, new SpawnDetails("Alien2", BOARD_WIDTH - 50, y)); // Center breakthrough
+            // Small cluster formations occasionally (10% chance)
+            if (randomizer.nextInt(10) == 0) {
+                spawnMap.put(frame + 15, new SpawnDetails("Alien1", BOARD_WIDTH - 50, y - 30));
+                spawnMap.put(frame + 30, new SpawnDetails("Alien1", BOARD_WIDTH - 50, y + 30));
             }
         }
-        
-        // After boss defeat (frames 14400-18000): Continue spawning normal aliens until 5 minutes
-        // This will be handled dynamically in Scene2 based on boss defeat status
     }
 
     public void loadScene2SpawnDetails() {

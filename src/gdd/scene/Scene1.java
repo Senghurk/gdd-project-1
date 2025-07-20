@@ -536,18 +536,18 @@ public class Scene1 extends JPanel {
             
             switch (currentPhase) {
                 case 1:
-                    // Phase 1: No shooting (0-90 seconds)
+                    // Phase 1: No shooting (0-90 seconds) - pure learning
                     canShoot = false;
                     break;
                 case 2:
-                    // Phase 2: Occasional shooting (90-210 seconds)
+                    // Phase 2: Very occasional shooting (90-210 seconds) - introduce threat
                     canShoot = true;
-                    shootChance = 800; // Very rare shooting
+                    shootChance = 1200; // Very rare shooting (~20 second intervals)
                     break;
                 case 3:
-                    // Phase 3: Regular shooting every 5 seconds (210-300 seconds)
+                    // Phase 3: More frequent shooting (210-300 seconds) - escalation
                     canShoot = true;
-                    shootChance = 500; // More frequent shooting
+                    shootChance = 600; // More frequent shooting (~10 second intervals)
                     break;
             }
             

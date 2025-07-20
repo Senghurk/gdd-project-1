@@ -22,7 +22,7 @@ public class Player extends Sprite {
     private int autoFireCooldown = 0;
     
 
-    private Rectangle bounds = new Rectangle(175,135,17,32);
+
 
     public Player() {
         // Set fixed collision bounds for player - smaller than visual size to prevent false collisions

@@ -88,7 +88,7 @@ public class Scene2 extends JPanel {
     private AudioPlayer audioPlayer;
     private SpawnManager spawnManager;
 
-    private boolean isDirectAccess = false;
+
 
     private List<EnemyBomb> bombs = new ArrayList<>();
     private List<BossBomb> bossBombs = new ArrayList<>();

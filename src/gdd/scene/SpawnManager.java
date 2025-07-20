@@ -189,13 +189,7 @@ public class SpawnManager {
         }
     }
     
-    private void updateWaveSystem(int currentFrame) {
-        if (waveActive && currentFrame >= waveEndFrame) {
-            waveActive = false;
-            currentWaveType = "";
-            enemiesInCurrentWave = 0;
-        }
-    }
+
     
     // Getter methods for wave state
     public boolean isWaveActive() {

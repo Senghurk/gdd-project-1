@@ -2,7 +2,6 @@ package gdd.sprite;
 
 import static gdd.Global.*;
 import javax.swing.ImageIcon;
-import java.awt.Image;
 import java.util.ArrayList;
 import java.util.List;
 

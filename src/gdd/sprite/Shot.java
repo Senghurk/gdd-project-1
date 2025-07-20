@@ -1,5 +1,6 @@
 package gdd.sprite;
 
+import gdd.Global;
 import static gdd.Global.*;
 import javax.swing.ImageIcon;
 
@@ -22,8 +23,10 @@ public class Shot extends Sprite {
     }
 
     private void initShot(int x, int y) {
-
-        var ii = new ImageIcon(IMG_SHOT);
+        // Use mode-aware shot sprite
+        String shotImage = Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL ? 
+            "src/images/shotVertical.png" : IMG_SHOT;
+        var ii = new ImageIcon(shotImage);
 
         // Scale the image to use the global scaling factor
         var scaledImage = ii.getImage().getScaledInstance(ii.getIconWidth() * SCALE_FACTOR,
@@ -43,7 +46,12 @@ public class Shot extends Sprite {
 
 
     public void act() {
-        this.x += 12; // Super fast shots for intense gameplay
+        // Mode-aware shot movement
+        if (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) {
+            this.y -= 12; // Move up in vertical mode
+        } else {
+            this.x += 12; // Move right in horizontal mode (current)
+        }
         framesSinceFired++; // Increment frame counter
     }
 
@@ -60,5 +68,14 @@ public class Shot extends Sprite {
             return false;
         }
         return super.collidesWith(other);
+    }
+    
+    // NEW: Mode-aware boundary checking
+    public boolean isOffScreen() {
+        if (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) {
+            return y < -10; // Off top edge
+        } else {
+            return x > BOARD_WIDTH + 10; // Off right edge
+        }
     }
 }

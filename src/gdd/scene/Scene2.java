@@ -2,6 +2,7 @@ package gdd.scene;
 
 import gdd.AudioPlayer;
 import gdd.Game;
+import gdd.Global;
 import static gdd.Global.*;
 import gdd.SoundEffectPlayer;
 import gdd.SpawnDetails;
@@ -169,13 +170,27 @@ public class Scene2 extends JPanel {
         // If player stats are higher, do not decrease (just cap at 8/5 by not increasing further)
     }
 
+    /**
+     * Initialize star field background with mode-aware positioning for Scene2
+     */
     private void initStarField() {
         // Initialize star field with more stars and different colors for level 2
         for (int i = 0; i < 100; i++) {
-            int x = randomizer.nextInt(BOARD_WIDTH);
-            int y = randomizer.nextInt(BOARD_HEIGHT);
+            int x, y, speed;
+            
+            if (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) {
+                // Vertical mode: stars spawn across width and fall downward
+                x = randomizer.nextInt(BOARD_WIDTH);
+                y = randomizer.nextInt(BOARD_HEIGHT + 200); // Some start above screen
+                speed = randomizer.nextInt(3) + 2; // Variable speed 2-4 for vertical Scene2
+            } else {
+                // Horizontal mode: stars spawn across height and move leftward
+                x = randomizer.nextInt(BOARD_WIDTH);
+                y = randomizer.nextInt(BOARD_HEIGHT);
+                speed = randomizer.nextInt(3) + 2; // Variable speed 2-4 for horizontal Scene2
+            }
+            
             int size = randomizer.nextInt(3) + 1;
-            int speed = randomizer.nextInt(3) + 2;
             
             // Level 2 uses more reddish colors for stars
             Color[] colors = {
@@ -189,12 +204,27 @@ public class Scene2 extends JPanel {
         }
     }
 
+    /**
+     * Update star field movement with mode-aware direction for Scene2
+     */
     private void updateStarField() {
         for (Star star : stars) {
-            star.x -= star.speed;
-            if (star.x < 0) {
-                star.x = BOARD_WIDTH;
-                star.y = randomizer.nextInt(BOARD_HEIGHT);
+            if (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) {
+                // Vertical mode: stars fall downward
+                star.y += star.speed;
+                
+                // If star goes off the bottom, respawn it at the top
+                if (star.y > BOARD_HEIGHT + 10) {
+                    star.y = -10;
+                    star.x = randomizer.nextInt(BOARD_WIDTH);
+                }
+            } else {
+                // Horizontal mode: stars move leftward (current behavior)
+                star.x -= star.speed;
+                if (star.x < 0) {
+                    star.x = BOARD_WIDTH;
+                    star.y = randomizer.nextInt(BOARD_HEIGHT);
+                }
             }
         }
     }
@@ -600,13 +630,23 @@ public class Scene2 extends JPanel {
             }
         }
 
-        // Enemies
+        // Enemies with mode-aware cleanup
         bombs.clear();
         for (Enemy enemy : enemies) {
             if (enemy.isVisible()) {
                 enemy.act(direction);
-                if (enemy.getX() < -50) {
-                    enemy.die();
+                
+                // Mode-aware enemy cleanup when they go offscreen
+                if (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) {
+                    // Vertical mode: remove enemies that fall off bottom
+                    if (enemy.getY() > BOARD_HEIGHT + 50) {
+                        enemy.die(); // Mark enemy as invisible so it gets cleaned up
+                    }
+                } else {
+                    // Horizontal mode: remove enemies that go off left side (current behavior)
+                    if (enemy.getX() < -50) {
+                        enemy.die();
+                    }
                 }
             }
             // Collect bombs from Alien1 and Alien2
@@ -736,9 +776,19 @@ public class Scene2 extends JPanel {
                     }
                 }
 
-                if (shot.getX() > BOARD_WIDTH) {
-                    shot.die();
-                    shotsToRemove.add(shot);
+                // Mode-aware shot cleanup when they go offscreen
+                if (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) {
+                    // Vertical mode: remove shots that go off top
+                    if (shot.getY() < -10) {
+                        shot.die();
+                        shotsToRemove.add(shot);
+                    }
+                } else {
+                    // Horizontal mode: remove shots that go off right side (current behavior)
+                    if (shot.getX() > BOARD_WIDTH) {
+                        shot.die();
+                        shotsToRemove.add(shot);
+                    }
                 }
             }
         }

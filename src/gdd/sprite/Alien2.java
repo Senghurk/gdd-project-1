@@ -1,5 +1,6 @@
 package gdd.sprite;
 
+import gdd.Global;
 import static gdd.Global.*;
 import javax.swing.ImageIcon;
 
@@ -8,6 +9,7 @@ public class Alien2 extends Enemy {
     private EnemyBomb bomb;
     private int frameCounter = 0;
     private int initialY;
+    private int initialX; // NEW: For vertical mode
     private double phaseOffset;
     private javax.swing.ImageIcon img1;
     private javax.swing.ImageIcon img2;
@@ -18,6 +20,7 @@ public class Alien2 extends Enemy {
         super(x, y);
         setCollisionBounds(35, 35); // Alien2 collision box - covers full sprite, slightly larger than Alien1
         this.initialY = y;
+        this.initialX = x; // NEW: Store initial X for vertical mode
         this.phaseOffset = Math.random() * Math.PI * 2;
         initEnemy(x, y);
     }
@@ -39,12 +42,29 @@ public class Alien2 extends Enemy {
 
     public void act(int direction) {
         frameCounter++;
-        this.x -= Math.abs(direction) * 1.5;
-        double spiralOffset = Math.sin(frameCounter * 0.12 + phaseOffset) * 35;
-        double curveOffset = Math.cos(frameCounter * 0.06) * 15;
-        this.y = (int)(initialY + spiralOffset + curveOffset);
-        if (this.y < 50) this.y = 50;
-        if (this.y > BOARD_HEIGHT - 100) this.y = BOARD_HEIGHT - 100;
+        
+        if (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) {
+            // Move downward with complex horizontal movement (spiral + curve)
+            this.y += Math.abs(direction) * 1.5;
+            double spiralOffset = Math.sin(frameCounter * 0.12 + phaseOffset) * 35;
+            double curveOffset = Math.cos(frameCounter * 0.06) * 15;
+            this.x = (int)(initialX + spiralOffset + curveOffset);
+            
+            // Keep within horizontal bounds
+            if (this.x < 50) this.x = 50;
+            if (this.x > BOARD_WIDTH - 100) this.x = BOARD_WIDTH - 100;
+        } else {
+            // Current horizontal movement with complex vertical patterns
+            this.x -= Math.abs(direction) * 1.5;
+            double spiralOffset = Math.sin(frameCounter * 0.12 + phaseOffset) * 35;
+            double curveOffset = Math.cos(frameCounter * 0.06) * 15;
+            this.y = (int)(initialY + spiralOffset + curveOffset);
+            
+            // Keep within vertical bounds
+            if (this.y < 50) this.y = 50;
+            if (this.y > BOARD_HEIGHT - 100) this.y = BOARD_HEIGHT - 100;
+        }
+        
         // Animation: alternate every 20 frames
         if ((frameCounter / 20) % 2 == 0) {
             setImage(scaledImg1);

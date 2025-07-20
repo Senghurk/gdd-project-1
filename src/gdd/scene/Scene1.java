@@ -2,6 +2,7 @@ package gdd.scene;
 
 import gdd.AudioPlayer;
 import gdd.Game;
+import gdd.Global;
 import static gdd.Global.*;
 import gdd.SoundEffectPlayer;
 import gdd.SpawnDetails;
@@ -473,13 +474,22 @@ public class Scene1 extends JPanel {
             }
         }
 
-        // Enemies
+        // Enemies with mode-aware cleanup
         for (Enemy enemy : enemies) {
             if (enemy.isVisible()) {
                 enemy.act(direction);
-                // Remove enemies that have gone off the left side of the screen
-                if (enemy.getX() < -50) { // Give some buffer for image width
-                    enemy.die(); // Mark enemy as invisible so it gets cleaned up
+                
+                // Mode-aware enemy cleanup when they go offscreen
+                if (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) {
+                    // Vertical mode: remove enemies that fall off bottom
+                    if (enemy.getY() > BOARD_HEIGHT + 50) {
+                        enemy.die(); // Mark enemy as invisible so it gets cleaned up
+                    }
+                } else {
+                    // Horizontal mode: remove enemies that go off left side (current behavior)
+                    if (enemy.getX() < -50) { // Give some buffer for image width
+                        enemy.die(); // Mark enemy as invisible so it gets cleaned up
+                    }
                 }
             }
         }
@@ -517,11 +527,19 @@ public class Scene1 extends JPanel {
                     }
                 }
 
-                int x = shot.getX();
-                // Remove shots that go off the right side
-                if (x > BOARD_WIDTH) {
-                    shot.die();
-                    shotsToRemove.add(shot);
+                // Mode-aware shot cleanup when they go offscreen
+                if (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) {
+                    // Vertical mode: remove shots that go off top
+                    if (shot.getY() < -10) {
+                        shot.die();
+                        shotsToRemove.add(shot);
+                    }
+                } else {
+                    // Horizontal mode: remove shots that go off right side (current behavior)
+                    if (shot.getX() > BOARD_WIDTH) {
+                        shot.die();
+                        shotsToRemove.add(shot);
+                    }
                 }
             }
         }
@@ -678,58 +696,95 @@ public class Scene1 extends JPanel {
         }
     }
 
+    /**
+     * Initialize star field background with mode-aware positioning
+     */
     private void initStarField() {
         // Initialize random stars across the screen
         for (int i = 0; i < 100; i++) {
-            int x = randomizer.nextInt(BOARD_WIDTH + 200); // Start some stars off-screen
-            int y = randomizer.nextInt(BOARD_HEIGHT);
+            int x, y, speed;
+            
+            if (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) {
+                // Vertical mode: stars spawn across width and fall downward
+                x = randomizer.nextInt(BOARD_WIDTH);
+                y = randomizer.nextInt(BOARD_HEIGHT + 200); // Some start above screen
+                speed = 1 + randomizer.nextInt(3); // Variable speed 1-3 for vertical
+            } else {
+                // Horizontal mode: stars spawn across height and move leftward
+                x = randomizer.nextInt(BOARD_WIDTH + 200); // Start some stars off-screen
+                y = randomizer.nextInt(BOARD_HEIGHT);
+                speed = 1; // Constant speed for horizontal
+            }
+            
             int size = randomizer.nextInt(3) + 1; // Stars size 1-3
-            int speed = 1; // All stars move at the same slow speed
             
             // Create different colored stars
-            Color color = Color.WHITE;
-            int colorChoice = randomizer.nextInt(10);
-            if (colorChoice < 7) {
-                color = Color.WHITE;
-            } else if (colorChoice < 9) {
-                color = new Color(200, 200, 255); // Light blue
-            } else {
-                color = new Color(255, 255, 200); // Light yellow
-            }
+            Color color = getRandomStarColor();
             
             stars.add(new Star(x, y, size, speed, color));
         }
     }
+    
+    /**
+     * Generate random star colors following the established distribution
+     */
+    private Color getRandomStarColor() {
+        int colorChoice = randomizer.nextInt(10);
+        if (colorChoice < 7) {
+            return Color.WHITE;
+        } else if (colorChoice < 9) {
+            return new Color(200, 200, 255); // Light blue
+        } else {
+            return new Color(255, 255, 200); // Light yellow
+        }
+    }
 
+    /**
+     * Update star field movement with mode-aware direction
+     */
     private void updateStarField() {
-        // Move stars from right to left (simulating forward movement)
         for (Star star : stars) {
-            star.x -= star.speed;
-            
-            // If star goes off the left side, respawn it on the right side
-            if (star.x < -10) {
-                star.x = BOARD_WIDTH + randomizer.nextInt(100);
-                star.y = randomizer.nextInt(BOARD_HEIGHT);
+            if (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) {
+                // Vertical mode: stars fall downward
+                star.y += star.speed;
+                
+                // If star goes off the bottom, respawn it at the top
+                if (star.y > BOARD_HEIGHT + 10) {
+                    star.y = -10;
+                    star.x = randomizer.nextInt(BOARD_WIDTH);
+                }
+            } else {
+                // Horizontal mode: stars move leftward (current behavior)
+                star.x -= star.speed;
+                
+                // If star goes off the left side, respawn it on the right side
+                if (star.x < -10) {
+                    star.x = BOARD_WIDTH + randomizer.nextInt(100);
+                    star.y = randomizer.nextInt(BOARD_HEIGHT);
+                }
             }
         }
         
-        // Occasionally add new stars from the right
+        // Occasionally add new stars with mode-aware positioning
         if (randomizer.nextInt(20) == 0) {
-            int y = randomizer.nextInt(BOARD_HEIGHT);
-            int size = randomizer.nextInt(3) + 1;
-            int speed = 1; // All new stars also move at speed 1
+            int x, y, size, speed;
             
-            Color color = Color.WHITE;
-            int colorChoice = randomizer.nextInt(10);
-            if (colorChoice < 7) {
-                color = Color.WHITE;
-            } else if (colorChoice < 9) {
-                color = new Color(200, 200, 255);
+            if (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) {
+                // Vertical mode: spawn from top
+                x = randomizer.nextInt(BOARD_WIDTH);
+                y = -10;
+                size = randomizer.nextInt(3) + 1;
+                speed = 1 + randomizer.nextInt(3); // Variable speed for vertical
             } else {
-                color = new Color(255, 255, 200);
+                // Horizontal mode: spawn from right
+                x = BOARD_WIDTH + 10;
+                y = randomizer.nextInt(BOARD_HEIGHT);
+                size = randomizer.nextInt(3) + 1;
+                speed = 1; // Constant speed for horizontal
             }
             
-            stars.add(new Star(BOARD_WIDTH + 10, y, size, speed, color));
+            Color color = getRandomStarColor();
+            stars.add(new Star(x, y, size, speed, color));
         }
         
         // Remove excess stars to prevent memory issues

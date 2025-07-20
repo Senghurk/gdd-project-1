@@ -1,5 +1,7 @@
 package gdd.sprite;
 
+import gdd.Global;
+import static gdd.Global.*;
 import javax.swing.ImageIcon;
 
 public class EnemyBomb extends Sprite {
@@ -34,7 +36,18 @@ public class EnemyBomb extends Sprite {
 
     public void act() {
         if (!destroyed) {
-            this.x -= speed; // Move bomb leftward when active
+            // Mode-aware bomb movement
+            if (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) {
+                this.y += speed; // Move down toward player in vertical mode
+                if (this.y > BOARD_HEIGHT + 50) {
+                    setDestroyed(true);
+                }
+            } else {
+                this.x -= speed; // Move left toward player in horizontal mode
+                if (this.x < -50) {
+                    setDestroyed(true);
+                }
+            }
         }
     }
 

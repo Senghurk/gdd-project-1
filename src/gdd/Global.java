@@ -1,11 +1,20 @@
 package gdd;
 
+import java.util.Random;
+
 public class Global {
     private Global() {
         // Prevent instantiation
     }
 
     public static final int SCALE_FACTOR = 3; // Scaling factor for sprites
+    
+    // NEW: Game mode constants
+    public static final int MODE_HORIZONTAL = 0;
+    public static final int MODE_VERTICAL = 1;
+    public static int CURRENT_GAME_MODE = MODE_HORIZONTAL; // Default horizontal
+    
+    private static final Random modeRandom = new Random();
 
     public static final int BOARD_WIDTH = 716; // Doubled from 358
     public static final int BOARD_HEIGHT = 700; // Doubled from 350
@@ -58,4 +67,23 @@ public class Global {
     public static final int BULLET_COUNT_INCREASE = 1; // Bullet increase per powerup
     public static final int MAX_BULLET_COUNT = 5; // Maximum bullets (1 + 4*1)
     public static final int TOTAL_BULLET_POWERUPS = 4; // Total bullet powerups in game
+    
+    // NEW: Mode-specific helper methods
+    public static int getEnemySpawnX() {
+        return CURRENT_GAME_MODE == MODE_VERTICAL ? 
+            100 + modeRandom.nextInt(BOARD_WIDTH - 200) : BOARD_WIDTH;
+    }
+    
+    public static int getEnemySpawnY() {
+        return CURRENT_GAME_MODE == MODE_VERTICAL ? -50 : 
+            100 + modeRandom.nextInt(BOARD_HEIGHT - 200);
+    }
+    
+    public static int getPlayerStartX() {
+        return CURRENT_GAME_MODE == MODE_VERTICAL ? BOARD_WIDTH/2 : 50;
+    }
+    
+    public static int getPlayerStartY() {
+        return CURRENT_GAME_MODE == MODE_VERTICAL ? BOARD_HEIGHT - 100 : BOARD_HEIGHT/2;
+    }
 }

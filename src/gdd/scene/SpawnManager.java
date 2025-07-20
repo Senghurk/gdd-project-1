@@ -1,5 +1,6 @@
 package gdd.scene;
 
+import gdd.Global;
 import static gdd.Global.*;
 import gdd.SpawnDetails;
 import gdd.sprite.Alien1;
@@ -81,33 +82,54 @@ public class SpawnManager {
         return result;
     }
     
+    // NEW: Mode-aware enemy creation methods (DRY principle)
+    private Enemy createAlien1() {
+        return new Alien1(Global.getEnemySpawnX(), Global.getEnemySpawnY());
+    }
+    
+    private Enemy createAlien2() {
+        return new Alien2(Global.getEnemySpawnX(), Global.getEnemySpawnY());
+    }
+    
+    // NEW: Mode-aware powerup creation method (DRY principle)
+    private PowerUp createPowerUp(String type) {
+        int x = Global.getEnemySpawnX(); // Use same spawn logic as enemies
+        int y = Global.getEnemySpawnY();
+        
+        switch (type) {
+            case "PowerUp-SpeedUp":
+                return new SpeedUp(x, y);
+            case "PowerUp-AddBullet":
+                return new AddBulletPowerUp(x, y);
+            case "PowerUp-MultiShot":
+                return new MultiShotPowerUp(x, y);
+            default:
+                return null;
+        }
+    }
+    
     private void handleSpawnDetails(SpawnDetails sd, SpawnResult result, Player player, int frame) {
         switch (sd.type) {
             case "Alien1":
-                Enemy enemy = new Alien1(sd.x, sd.y);
-                result.enemies.add(enemy);
+                result.enemies.add(createAlien1());
                 break;
             case "Alien2":
-                Enemy enemy2 = new Alien2(sd.x, sd.y);
-                result.enemies.add(enemy2);
+                result.enemies.add(createAlien2());
                 break;
             case "PowerUp-SpeedUp":
                 // Only spawn speed if player can actually use it
                 if (player.getCurrentSpeed() < player.getMaxSpeed()) {
-                    PowerUp speedUp = new SpeedUp(sd.x, sd.y);
-                    result.powerups.add(speedUp);
+                    result.powerups.add(createPowerUp("PowerUp-SpeedUp"));
                 }
                 break;
             case "PowerUp-AddBullet":
                 // Only spawn bullet powerup if player can actually use it
                 if (player.getCurrentBulletCount() < player.getMaxBulletCount()) {
-                    PowerUp addBullet = new AddBulletPowerUp(sd.x, sd.y);
-                    result.powerups.add(addBullet);
+                    result.powerups.add(createPowerUp("PowerUp-AddBullet"));
                 }
                 break;
             case "PowerUp-MultiShot":
-                PowerUp multiShot = new MultiShotPowerUp(sd.x, sd.y);
-                result.powerups.add(multiShot);
+                result.powerups.add(createPowerUp("PowerUp-MultiShot"));
                 break;
             case "VICTORY":
                 // Player survived 5 minutes!

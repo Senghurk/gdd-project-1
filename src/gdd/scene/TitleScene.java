@@ -2,9 +2,11 @@ package gdd.scene;
 
 import gdd.AudioPlayer;
 import gdd.Game;
+import gdd.Global;
 import static gdd.Global.*;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.Toolkit;
@@ -25,6 +27,10 @@ public class TitleScene extends JPanel {
     private Timer timer;
     private Game game;
     private float currentVolume = 0.5f; // Track current volume
+    
+    // NEW: Mode selection variables
+    private int selectedMode = Global.MODE_HORIZONTAL; // Default to horizontal
+    private String[] modeNames = {"Horizontal Scrolling", "Vertical Scrolling"};
 
     public TitleScene(Game game) {
         this.game = game;
@@ -96,6 +102,9 @@ public class TitleScene extends JPanel {
         int imageY = 50; // Position from top
         g.drawImage(image, imageX, imageY, imageWidth, imageHeight, null);
 
+        // Draw mode selector
+        drawModeSelector(g);
+
         if (frame % 60 < 30) {
             g.setColor(Color.red);
         } else {
@@ -125,18 +134,45 @@ public class TitleScene extends JPanel {
             int memberX = (d.width - g.getFontMetrics().stringWidth(teamMembers[i])) / 2;
             g.drawString(teamMembers[i], memberX, 480 + (i * 20));
         }
-        /* 
-        // Volume control instructions
+        
+        // Mode selector controls
         g.setColor(Color.cyan);
         g.setFont(g.getFont().deriveFont(12f));
-        g.drawString("Volume Controls: + / - keys", 10, 620);
-        g.drawString("Current Volume: " + Math.round(currentVolume * 100) + "%", 10, 640);
-        */
+        g.drawString("Mode Controls: UP/DOWN arrows to select", 10, 620);
+        
         g.setColor(Color.gray);
         g.setFont(g.getFont().deriveFont(10f));
         g.drawString("Game by UbiRiotHoyoverse", 10, 670);
 
         Toolkit.getDefaultToolkit().sync();
+    }
+    
+    /**
+     * Draws the mode selector UI with highlighting for selected mode
+     */
+    private void drawModeSelector(Graphics g) {
+        g.setColor(Color.white);
+        g.setFont(g.getFont().deriveFont(18f));
+        String modeTitle = "Game Mode:";
+        int titleX = (d.width - g.getFontMetrics().stringWidth(modeTitle)) / 2;
+        g.drawString(modeTitle, titleX, 550);
+        
+        // Draw mode options with selection highlighting
+        g.setFont(g.getFont().deriveFont(16f));
+        for (int i = 0; i < modeNames.length; i++) {
+            // Highlight selected mode
+            if (i == selectedMode) {
+                g.setColor(Color.yellow);
+                g.drawString("> " + modeNames[i] + " <", 
+                    (d.width - g.getFontMetrics().stringWidth("> " + modeNames[i] + " <")) / 2, 
+                    570 + (i * 25));
+            } else {
+                g.setColor(Color.lightGray);
+                g.drawString(modeNames[i], 
+                    (d.width - g.getFontMetrics().stringWidth(modeNames[i])) / 2, 
+                    570 + (i * 25));
+            }
+        }
     }
 
     private void update() {
@@ -168,8 +204,17 @@ public class TitleScene extends JPanel {
             System.out.println("Title.keyPressed: " + e.getKeyCode());
             int key = e.getKeyCode();
             if (key == KeyEvent.VK_SPACE) {
-                // Load the next scene
+                // Set the selected mode in the game and load Scene1
+                game.setGameMode(selectedMode);
                 game.loadScene1();
+            } else if (key == KeyEvent.VK_UP) {
+                // Navigate up in mode selector
+                selectedMode = (selectedMode - 1 + modeNames.length) % modeNames.length;
+                repaint(); // Update display immediately
+            } else if (key == KeyEvent.VK_DOWN) {
+                // Navigate down in mode selector
+                selectedMode = (selectedMode + 1) % modeNames.length;
+                repaint(); // Update display immediately
             } /*else if (key == KeyEvent.VK_PLUS || key == KeyEvent.VK_EQUALS) {
                 // Increase volume
                 currentVolume = Math.min(1.0f, currentVolume + 0.1f);

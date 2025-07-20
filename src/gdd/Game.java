@@ -14,6 +14,9 @@ public class Game extends JFrame  {
     private boolean scene1Started = false;
     private boolean titleStarted = false;
     private Player playerFromScene1 = null;
+    
+    // NEW: Mode management
+    private int gameMode = Global.MODE_HORIZONTAL; // Default to horizontal
 
     public Game() {
         titleScene = new TitleScene(this);
@@ -72,5 +75,15 @@ public class Game extends JFrame  {
 
     public Player getPlayerFromScene1() {
         return playerFromScene1;
+    }
+    
+    // NEW: Mode management methods
+    public void setGameMode(int mode) {
+        this.gameMode = mode;
+        Global.CURRENT_GAME_MODE = mode;
+    }
+    
+    public int getGameMode() {
+        return gameMode;
     }
 }

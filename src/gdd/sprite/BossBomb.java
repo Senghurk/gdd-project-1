@@ -1,5 +1,6 @@
 package gdd.sprite;
 
+import gdd.Global;
 import static gdd.Global.*;
 import javax.swing.ImageIcon;
 
@@ -28,12 +29,17 @@ public class BossBomb extends Sprite {
     
     @Override
     public void act() {
-        // Boss bombs move faster than regular bombs
-        this.x -= 3;
-        
-        // Destroy if off screen
-        if (this.x < -50) {
-            setDestroyed(true);
+        // Mode-aware boss bomb movement - faster than regular bombs
+        if (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) {
+            this.y += 3; // Move down toward player in vertical mode
+            if (this.y > BOARD_HEIGHT + 50) {
+                setDestroyed(true);
+            }
+        } else {
+            this.x -= 3; // Move left toward player in horizontal mode
+            if (this.x < -50) {
+                setDestroyed(true);
+            }
         }
     }
     

@@ -1,5 +1,6 @@
 package gdd.sprite;
 
+import gdd.Global;
 import static gdd.Global.*;
 import java.awt.Rectangle;
 import java.awt.event.KeyEvent;
@@ -7,8 +8,7 @@ import javax.swing.ImageIcon;
 
 public class Player extends Sprite {
 
-    private static final int START_X = 50; // Move player to left side of screen
-    private static final int START_Y = 270; // Center vertically
+    // Mode-aware positioning - use Global helper methods instead of fixed constants
     private int width;
     
     // NEW: Separated powerup system
@@ -31,7 +31,10 @@ public class Player extends Sprite {
     }
 
     private void initPlayer() {
-        var ii = new ImageIcon(IMG_PLAYER);
+        // Use mode-aware player sprite
+        String playerImage = Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL ? 
+            "src/images/playerVertical.png" : IMG_PLAYER;
+        var ii = new ImageIcon(playerImage);
 
         // Scale the image to use the global scaling factor
         var scaledImage = ii.getImage().getScaledInstance(ii.getIconWidth() * SCALE_FACTOR,
@@ -40,8 +43,9 @@ public class Player extends Sprite {
 
         setImage(scaledImage);
 
-        setX(START_X);
-        setY(START_Y);
+        // Use mode-aware positioning
+        setX(Global.getPlayerStartX());
+        setY(Global.getPlayerStartY());
     }
 
     public int getSpeed() {
@@ -57,14 +61,21 @@ public class Player extends Sprite {
     }
 
     public void act() {
-        y += dx; // Change from x += dx to y += dx for vertical movement
-
-        if (y <= 2) {
-            y = 2;
-        }
-
-        if (y >= BOARD_HEIGHT - 2 * width) {
-            y = BOARD_HEIGHT - 2 * width;
+        // Mode-aware movement
+        if (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) {
+            // Horizontal movement for vertical mode
+            x += dx;
+            
+            // Horizontal boundaries
+            if (x <= 0) x = 0;
+            if (x >= BOARD_WIDTH - PLAYER_WIDTH) x = BOARD_WIDTH - PLAYER_WIDTH;
+        } else {
+            // Vertical movement for horizontal mode (current)
+            y += dx;
+            
+            // Vertical boundaries
+            if (y <= 60) y = 60; // Below dashboard
+            if (y >= BOARD_HEIGHT - PLAYER_HEIGHT) y = BOARD_HEIGHT - PLAYER_HEIGHT;
         }
         
         // Update multishot timer
@@ -93,25 +104,37 @@ public class Player extends Sprite {
 
     public void keyPressed(KeyEvent e) {
         int key = e.getKeyCode();
-
-        if (key == KeyEvent.VK_UP) {
-            dx = -currentSpeed; // Move up
-        }
-
-        if (key == KeyEvent.VK_DOWN) {
-            dx = currentSpeed; // Move down
+        
+        if (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) {
+            // Horizontal movement for vertical mode
+            if (key == KeyEvent.VK_LEFT) {
+                dx = -currentSpeed;
+            }
+            if (key == KeyEvent.VK_RIGHT) {
+                dx = +currentSpeed;
+            }
+        } else {
+            // Vertical movement for horizontal mode (current)
+            if (key == KeyEvent.VK_UP) {
+                dx = -currentSpeed; // Move up
+            }
+            if (key == KeyEvent.VK_DOWN) {
+                dx = currentSpeed; // Move down
+            }
         }
     }
 
     public void keyReleased(KeyEvent e) {
         int key = e.getKeyCode();
-
-        if (key == KeyEvent.VK_UP) {
-            dx = 0;
-        }
-
-        if (key == KeyEvent.VK_DOWN) {
-            dx = 0;
+        
+        if (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) {
+            if (key == KeyEvent.VK_LEFT || key == KeyEvent.VK_RIGHT) {
+                dx = 0;
+            }
+        } else {
+            if (key == KeyEvent.VK_UP || key == KeyEvent.VK_DOWN) {
+                dx = 0;
+            }
         }
     }
     
@@ -183,5 +206,16 @@ public class Player extends Sprite {
         if (!isInvincible()) {
             invincibilityFrames = 120; // 2 seconds of invincibility at 60 FPS
         }
+    }
+    
+    // NEW: Mode-aware shot spawn position
+    public int getShotStartX() {
+        return Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL ? 
+            x + PLAYER_WIDTH/2 : x + PLAYER_WIDTH;
+    }
+    
+    public int getShotStartY() {
+        return Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL ? 
+            y : y + PLAYER_HEIGHT/2;
     }
 }

@@ -504,7 +504,7 @@ public class Scene2 extends JPanel {
             message = spawnResult.victoryMessage;
         }
 
-        if (!bossIntroPlayed && gameTimeSeconds >= 9) {
+        if (!bossIntroPlayed && gameTimeSeconds >= 239) {
             // Play boss intro sound if not already played
             SoundEffectPlayer.playBossIntroSound(); // Play 1 second before boss spawn
             bossIntroPlayed = true;
@@ -512,7 +512,7 @@ public class Scene2 extends JPanel {
         }
 
         // Boss spawning logic - spawn boss at 4 minutes (240 seconds)
-        if (!bossSpawned && gameTimeSeconds >= 10) {
+        if (!bossSpawned && gameTimeSeconds >= 240) {
             boss = new Boss(BOARD_WIDTH - 300, BOARD_HEIGHT / 2 - 50);
             bossSpawned = true;
             System.out.println("BOSS SPAWNED!");

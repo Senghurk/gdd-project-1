@@ -33,27 +33,34 @@ java -jar game.jar
 ### Scene System
 The game uses a scene-based architecture:
 - `src/gdd/scene/TitleScene.java` - Title screen with animated "Press SPACE to Start" text and background music
-- `src/gdd/scene/Scene1.java` - Main gameplay scene with sideways scrolling mechanics
+- `src/gdd/scene/Scene1.java` - Stage 1 gameplay scene with sideways scrolling mechanics (5-minute survival)
+- `src/gdd/scene/Scene2.java` - Stage 2 gameplay scene with boss battle mechanics (5-minute boss fight)
+- `src/gdd/scene/SpawnManager.java` - Centralized enemy and powerup spawning logic for both scenes
 
 ### Sprite System
 All game entities inherit from a common sprite base:
 - `src/gdd/sprite/Sprite.java` - Base sprite class with position, image, collision detection
-- `src/gdd/sprite/Player.java` - Player-controlled ship with multishot capability
+- `src/gdd/sprite/Player.java` - Player-controlled ship with multishot capability and bullet count management
 - `src/gdd/sprite/Enemy.java` - Base enemy class
-- `src/gdd/sprite/Alien1.java` - Basic alien enemy with bombing capability (100 points)
-- `src/gdd/sprite/Alien2.java` - Advanced alien enemy, faster movement and bombs (200 points)
+- `src/gdd/sprite/Alien1.java` - Basic alien enemy with bombing capability (Stage 1: 100pts, Stage 2: 150pts)
+- `src/gdd/sprite/Alien2.java` - Advanced alien enemy, faster movement and bombs (Stage 1: 200pts, Stage 2: 300pts)
+- `src/gdd/sprite/Boss.java` - **NEW**: Large boss enemy with health system, animated sprites, and multi-projectile attacks
 - `src/gdd/sprite/Shot.java` - Player projectiles (speed: 8 pixels/frame)
+- `src/gdd/sprite/EnemyBomb.java` - Regular enemy projectiles
+- `src/gdd/sprite/BossBomb.java` - **NEW**: Boss projectiles with higher damage and speed
 - `src/gdd/sprite/Explosion.java` - Visual explosion effects
 
-### Power-up System (Rebalanced)
+### Power-up System (Enhanced)
 - `src/gdd/powerup/PowerUp.java` - Base power-up class
 - `src/gdd/powerup/SpeedUp.java` - Speed boost power-up implementation (permanent +2 speed, capped at 14)
-- `src/gdd/powerup/MultiShotPowerUp.java` - Multi-shot power-up (4 shots, 10 seconds duration)
-- **Sparse Spawning**: Speed powerups are extremely rare (1/8 to 1/20 chance)
-- **Permanent Speed**: Speed boosts are permanent but capped at maximum of 14
+- `src/gdd/powerup/MultiShotPowerUp.java` - Multi-shot power-up (4 shots, 10 seconds duration) with auto-fire capability
+- `src/gdd/powerup/AddBulletPowerUp.java` - **NEW**: Bullet capacity power-up (permanent +1 bullet count)
+- **Stage-specific spawning**: Stage 1 has sparse speed powerups, Stage 2 focuses on multishot powerups
+- **Permanent upgrades**: Speed and bullet count boosts are permanent across stages
 
 ### Supporting Classes
-- `src/gdd/AudioPlayer.java` - Sound effect and music playback
+- `src/gdd/AudioPlayer.java` - Background music playback with volume control
+- `src/gdd/SoundEffectPlayer.java` - **NEW**: Non-blocking sound effect system with thread pool
 - `src/gdd/SpawnDetails.java` - Data structure for enemy/powerup spawn configuration
 
 ## Key Features
@@ -92,18 +99,33 @@ Enemies and power-ups are spawned based on frame timing using `spawnMap` in Scen
 - Elite formations: Swarm attacks, pincer movements
 - **Special Wave Events**: ELITE, SWARM, and FINAL boss waves
 
-### Audio System
-- Background music for title screen and gameplay (50% volume by default)
+### Audio System (Enhanced)
+- Background music for title screen, Stage 1, and Stage 2 (50% volume by default)
 - Volume control with +/- keys on title screen
+- **NEW**: Comprehensive sound effects system:
+  - Shooting sounds (`Shoot.wav`)
+  - Enemy destruction (`enemyExplode.wav`)
+  - Player hit (`playerDown.wav`)
+  - Boss intro (`bossIntro.wav`)
+  - Victory (`Victory.wav`)
+  - Game over (`gameOver.wav`)
+  - Power-up collection (`catchPowerUp.wav`)
+- Non-blocking audio playback using thread pool
 - Uses WAV files in `src/audio/` directory
 
 ## Asset Structure
 - `src/images/` - All sprite images (PNG format)
   - `alien.png` - Alien1 sprite
-  - `alien2.png` - Alien2 sprite (orange, more aggressive)
+  - `alien2.png`, `alien2-1.png`, `alien2-2.png` - Alien2 sprites with animation frames
+  - `boss1.png`, `boss2.png` - **NEW**: Boss sprites with animation frames
+  - `boss_shot.png` - **NEW**: Boss projectile sprite
   - `powerup-s.png` - Speed powerup sprite
-  - `powerup-multishot.png` - Multi-shot powerup sprite
-- `src/audio/` - Sound files (WAV and MP3 formats)
+  - `powerup_autoshot.png` - Multi-shot powerup sprite
+  - `powerup_bullet.png` - **NEW**: Bullet capacity powerup sprite
+  - `transparent/` - **NEW**: Transparent versions of sprites for advanced effects
+- `src/audio/` - Sound files (WAV format)
+  - Music: `title.wav`, `scene1.wav`, `scene2.wav`
+  - Sound effects: `Shoot.wav`, `enemyExplode.wav`, `playerDown.wav`, `bossIntro.wav`, `Victory.wav`, `gameOver.wav`, `catchPowerUp.wav`
 
 ## Game Controls
 - Arrow keys: Move player up/down (default speed: 8)
@@ -125,7 +147,10 @@ Enemies and power-ups are spawned based on frame timing using `spawnMap` in Scen
 
 ## Victory/Completion Conditions
 - **Stage 1 Complete**: Survive for exactly 5 minutes (18,000 frames at 60 FPS)
-- **Game Over**: Lives reach 0 (collision system not yet implemented)
+- **Stage 2 Complete**: Defeat the boss within 5 minutes AND survive until time expires
+- **Game Over**: Lives reach 0 (fully implemented collision system with invincibility frames)
+- **Boss Defeat**: Boss has 100 health points and requires sustained fire to defeat
+- **Time Limit**: Both stages have 5-minute time limits with different victory conditions
 - **Restart**: Press 'R' key when game ends
 
 ## Performance Optimizations  
@@ -140,16 +165,33 @@ Enemies and power-ups are spawned based on frame timing using `spawnMap` in Scen
 - Mock team data displayed on title screen (3 members with IDs)
 - Can be easily modified in `TitleScene.java`
 
+## Stage 2 Features (Boss Battle)
+- **Two-Stage Progression**: Stage 1 completion unlocks Stage 2
+- **Boss Battle System**: Large animated boss with 100 health points
+- **Boss Mechanics**:
+  - Animated sprites that switch every 0.5 seconds
+  - Vertical movement patterns near right edge
+  - Multi-projectile attacks (3-way spread)
+  - Shoots every 3+ seconds
+- **Enhanced Scoring**: Increased point values in Stage 2 (Alien1: 150pts, Alien2: 300pts, Boss hits: 50pts)
+- **Phase System**: 6 distinct phases including boss spawn, boss fight, and victory
+- **Player Advantages**: Fixed stats (Speed: 8, Bullets: 5) with multishot powerups
+- **Auto-fire**: Multishot powerup enables automatic firing with spread shots
+- **Victory Conditions**: Defeat boss before 5-minute timer expires
+
 ## Important Notes
 - The game uses a precise 16ms timer for 60fps animation
 - **Enhanced enemy AI**: Sine wave patterns for Alien1, spiral movements for Alien2
 - **Wave system**: Special challenge events with unique enemy formations
-- **Sparse powerup spawning**: Speed powerups are extremely rare but permanent
+- **Multi-stage progression**: Stage 1 survival leads to Stage 2 boss battle
+- **Persistent player stats**: Speed and bullet upgrades carry between stages
 - **Default player speed**: Increased to 8 for better responsiveness
-- Collision detection uses rectangle-based collision with invincibility frames
+- **Collision detection**: Rectangle-based collision with 2-second invincibility frames
+- **Thread-safe audio**: Non-blocking sound effects using executor service
 - Game state managed through boolean flags and frame counting
 - All constants centralized in `Global.java` for easy balancing
 - **Powerup constants**: 
   - `MULTISHOT_DURATION_FRAMES = 600` (10 seconds)
   - `SPEED_BOOST_AMOUNT = 2` (permanent speed increase)
   - `MAX_PLAYER_SPEED = 14` (speed cap allows 3 speed boosts)
+  - Boss health: 100 HP, requires sustained damage to defeat

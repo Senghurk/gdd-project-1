@@ -170,42 +170,39 @@ public class SpawnManager {
     }
     
     private void spawnWaveEnemies(String waveType, SpawnResult result) {
-        int centerY = BOARD_HEIGHT / 2;
-        
         switch (waveType) {
             case "SWARM":
-                // 6 weak enemies in tight formation
+                // 6 weak enemies in tight formation using mode-aware positioning
                 for (int i = 0; i < 6; i++) {
-                    int y = centerY - 60 + (i * 24);
-                    result.enemies.add(new Alien1(BOARD_WIDTH - 50, y));
+                    result.enemies.add(createAlien1());
                     enemiesInCurrentWave++;
                 }
                 break;
                 
             case "ELITE":
-                // 3 strong enemies spread out
-                result.enemies.add(new Alien2(BOARD_WIDTH - 50, centerY - 80));
-                result.enemies.add(new Alien2(BOARD_WIDTH - 50, centerY));
-                result.enemies.add(new Alien2(BOARD_WIDTH - 50, centerY + 80));
+                // 3 strong enemies spread out using mode-aware positioning
+                result.enemies.add(createAlien2());
+                result.enemies.add(createAlien2());
+                result.enemies.add(createAlien2());
                 enemiesInCurrentWave += 3;
                 break;
                 
             case "MIXED":
-                // 2 Alien2 flanking 3 Alien1
-                result.enemies.add(new Alien2(BOARD_WIDTH - 50, centerY - 100));
-                result.enemies.add(new Alien1(BOARD_WIDTH - 50, centerY - 40));
-                result.enemies.add(new Alien1(BOARD_WIDTH - 50, centerY));
-                result.enemies.add(new Alien1(BOARD_WIDTH - 50, centerY + 40));
-                result.enemies.add(new Alien2(BOARD_WIDTH - 50, centerY + 100));
+                // 2 Alien2 flanking 3 Alien1 using mode-aware positioning
+                result.enemies.add(createAlien2());
+                result.enemies.add(createAlien1());
+                result.enemies.add(createAlien1());
+                result.enemies.add(createAlien1());
+                result.enemies.add(createAlien2());
                 enemiesInCurrentWave += 5;
                 break;
                 
             case "FINAL":
-                // 4 Alien2 in diamond formation
-                result.enemies.add(new Alien2(BOARD_WIDTH - 50, centerY));        // Front
-                result.enemies.add(new Alien2(BOARD_WIDTH - 20, centerY - 60));   // Top
-                result.enemies.add(new Alien2(BOARD_WIDTH - 20, centerY + 60));   // Bottom
-                result.enemies.add(new Alien2(BOARD_WIDTH + 10, centerY));        // Rear
+                // 4 Alien2 in diamond formation using mode-aware positioning
+                result.enemies.add(createAlien2());
+                result.enemies.add(createAlien2());
+                result.enemies.add(createAlien2());
+                result.enemies.add(createAlien2());
                 enemiesInCurrentWave += 4;
                 break;
         }
@@ -246,15 +243,16 @@ public class SpawnManager {
     
     private void distributePowerupsEvenly() {
         // Spawn one SpeedUp and one AddBullet at game start (avoid frame conflicts)
-        spawnMap.put(250, new SpawnDetails("PowerUp-SpeedUp", BOARD_WIDTH - 50, 200));
-        spawnMap.put(500, new SpawnDetails("PowerUp-AddBullet", BOARD_WIDTH - 50, 250));
+        // Use SpawnDetails with just the type - position will be handled by createPowerUp method
+        spawnMap.put(250, new SpawnDetails("PowerUp-SpeedUp", 0, 0));
+        spawnMap.put(500, new SpawnDetails("PowerUp-AddBullet", 0, 0));
         
         // Add MultiShot powerups earlier than before (15-20 seconds earlier)
         // First MultiShot at ~30 seconds instead of ~47 seconds
-        spawnMap.put(1800, new SpawnDetails("PowerUp-MultiShot", BOARD_WIDTH - 50, 300)); // 30 seconds
-        spawnMap.put(4800, new SpawnDetails("PowerUp-MultiShot", BOARD_WIDTH - 50, 200)); // 80 seconds
-        spawnMap.put(9000, new SpawnDetails("PowerUp-MultiShot", BOARD_WIDTH - 50, 350)); // 150 seconds
-        spawnMap.put(13200, new SpawnDetails("PowerUp-MultiShot", BOARD_WIDTH - 50, 250)); // 220 seconds
+        spawnMap.put(1800, new SpawnDetails("PowerUp-MultiShot", 0, 0)); // 30 seconds
+        spawnMap.put(4800, new SpawnDetails("PowerUp-MultiShot", 0, 0)); // 80 seconds
+        spawnMap.put(9000, new SpawnDetails("PowerUp-MultiShot", 0, 0)); // 150 seconds
+        spawnMap.put(13200, new SpawnDetails("PowerUp-MultiShot", 0, 0)); // 220 seconds
         
         // 5-minute gameplay = 18000 frames at 60fps
         // 6 remaining powerups (3 speed + 3 bullet) spread evenly across rest of game
@@ -283,20 +281,17 @@ public class SpawnManager {
             int randomOffset = randomizer.nextInt(2400) - 1200; // ±20 seconds
             int spawnFrame = Math.max(2000, Math.min(17000, baseTime + randomOffset));
             
-            // Random Y position
-            int y = 100 + randomizer.nextInt(400);
-            
-            // Add to spawn map
-            spawnMap.put(spawnFrame, new SpawnDetails(powerupTypes[i], BOARD_WIDTH - 50, y));
+            // Add to spawn map - position will be handled by createPowerUp method
+            spawnMap.put(spawnFrame, new SpawnDetails(powerupTypes[i], 0, 0));
         }
     }
 
     private void generatePhase1Spawns() {
         // Phase 1: Frames 0-5400 (0-90 seconds) - Learning phase with sparse Alien1 only
-        for (int frame = 1500; frame <= 5400; frame += 150) { // Every 2.5 seconds (much sparser)
-            int y = 100 + randomizer.nextInt(400); // Random Y position
+        for (int frame = 600; frame <= 5400; frame += 150) { // Start at 10 seconds, every 2.5 seconds
             // Only spawn Alien1 enemies - no Alien2 in phase 1
-            spawnMap.put(frame, new SpawnDetails("Alien1", BOARD_WIDTH - 50, y));
+            // Position will be handled by createAlien1 method
+            spawnMap.put(frame, new SpawnDetails("Alien1", 0, 0));
             
             // No formations in Phase 1 - single enemies only for learning
         }
@@ -308,14 +303,14 @@ public class SpawnManager {
         // Remove complex wave events for Phase 2 - keep it simple
         
         for (int frame = 5400; frame <= 12600; frame += 120) { // Every 2 seconds (sparser than before)
-            int y = 100 + randomizer.nextInt(400);
             // Only spawn Alien1 enemies - no Alien2 in phase 2
-            spawnMap.put(frame, new SpawnDetails("Alien1", BOARD_WIDTH - 50, y));
+            // Position will be handled by createAlien1 method
+            spawnMap.put(frame, new SpawnDetails("Alien1", 0, 0));
             
             // Simple pair formations occasionally (10% chance)
             if (randomizer.nextInt(10) == 0) {
                 // Create simple pair formation
-                spawnMap.put(frame + 30, new SpawnDetails("Alien1", BOARD_WIDTH - 50, y - 60));
+                spawnMap.put(frame + 30, new SpawnDetails("Alien1", 0, 0));
             }
         }
     }
@@ -329,22 +324,22 @@ public class SpawnManager {
         spawnMap.put(16800, new SpawnDetails("WAVE_ELITE", 0, 0)); // 4.7 minutes in
         
         for (int frame = 12600; frame <= 18000; frame += 90) { // Every 1.5 seconds - balanced pace
-            int y = 100 + randomizer.nextInt(400);
             // 70% Alien1, 30% Alien2 mix for escalation
             String enemyType = randomizer.nextInt(10) < 7 ? "Alien1" : "Alien2";
-            spawnMap.put(frame, new SpawnDetails(enemyType, BOARD_WIDTH - 50, y));
+            // Position will be handled by createAlien1/createAlien2 methods
+            spawnMap.put(frame, new SpawnDetails(enemyType, 0, 0));
             
             // Line formations occasionally (20% chance)
             if (randomizer.nextInt(5) == 0) { 
                 // Create 3-enemy line formation
-                spawnMap.put(frame + 20, new SpawnDetails(enemyType, BOARD_WIDTH - 50, y - 50));
-                spawnMap.put(frame + 40, new SpawnDetails(enemyType, BOARD_WIDTH - 50, y + 50));
+                spawnMap.put(frame + 20, new SpawnDetails(enemyType, 0, 0));
+                spawnMap.put(frame + 40, new SpawnDetails(enemyType, 0, 0));
             }
             
             // Small cluster formations occasionally (10% chance)
             if (randomizer.nextInt(10) == 0) {
-                spawnMap.put(frame + 15, new SpawnDetails("Alien1", BOARD_WIDTH - 50, y - 30));
-                spawnMap.put(frame + 30, new SpawnDetails("Alien1", BOARD_WIDTH - 50, y + 30));
+                spawnMap.put(frame + 15, new SpawnDetails("Alien1", 0, 0));
+                spawnMap.put(frame + 30, new SpawnDetails("Alien1", 0, 0));
             }
         }
     }

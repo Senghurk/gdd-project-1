@@ -45,12 +45,8 @@ public class BossBomb extends Sprite {
                 ii.getIconHeight() * (SCALE_FACTOR-1),
                 java.awt.Image.SCALE_SMOOTH);
         
-        // Apply color tinting for vertical mode only
-        if (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) {
-            setImage(applyColorTint(scaledImage, Color.RED));
-        } else {
-            setImage(scaledImage);
-        }
+        // Use the image directly - no color tinting needed since we have proper vertical/horizontal images
+        setImage(scaledImage);
     }
     
     private BufferedImage applyColorTint(java.awt.Image originalImage, Color tintColor) {

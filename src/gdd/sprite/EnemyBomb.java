@@ -3,6 +3,9 @@ package gdd.sprite;
 import gdd.Global;
 import static gdd.Global.*;
 import javax.swing.ImageIcon;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
 
 public class EnemyBomb extends Sprite {
     
@@ -26,7 +29,31 @@ public class EnemyBomb extends Sprite {
             ? Global.IMG_BOMB_VERTICAL 
             : Global.IMG_BOMB;
         var ii = new ImageIcon(bombImg);
-        setImage(ii.getImage());
+        
+        // Apply color tinting for vertical mode only
+        if (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) {
+            setImage(applyColorTint(ii.getImage(), Color.ORANGE));
+        } else {
+            setImage(ii.getImage());
+        }
+    }
+    
+    private BufferedImage applyColorTint(java.awt.Image originalImage, Color tintColor) {
+        int width = originalImage.getWidth(null);
+        int height = originalImage.getHeight(null);
+        
+        BufferedImage tintedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2d = tintedImage.createGraphics();
+        
+        // Draw the original image
+        g2d.drawImage(originalImage, 0, 0, null);
+        
+        // Apply the tint with multiply blend mode effect
+        g2d.setColor(new Color(tintColor.getRed(), tintColor.getGreen(), tintColor.getBlue(), 120));
+        g2d.fillRect(0, 0, width, height);
+        
+        g2d.dispose();
+        return tintedImage;
     }
 
     public void setDestroyed(boolean destroyed) {

@@ -21,7 +21,24 @@ public class BossBomb extends Sprite {
         this.x = x;
         this.y = y;
         
-        var ii = new ImageIcon(IMG_BOSS_SHOT);
+        // Use mode-aware boss shot image
+        String bossShot = (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) 
+            ? Global.IMG_BOSS_SHOT_VERTICAL 
+            : IMG_BOSS_SHOT;
+        var ii = new ImageIcon(bossShot);
+        
+        // Check if image loaded properly
+        if (ii.getIconWidth() <= 0 || ii.getIconHeight() <= 0) {
+            System.err.println("Failed to load boss shot image: " + bossShot);
+            // Use a fallback - create a simple colored rectangle
+            BufferedImage fallbackImage = new BufferedImage(20, 20, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D g = fallbackImage.createGraphics();
+            g.setColor(Color.YELLOW);
+            g.fillRect(0, 0, 20, 20);
+            g.dispose();
+            setImage(fallbackImage);
+            return;
+        }
         
         // Scale the image to use the global scaling factor
         var scaledImage = ii.getImage().getScaledInstance(ii.getIconWidth() * (SCALE_FACTOR-1),
@@ -39,6 +56,18 @@ public class BossBomb extends Sprite {
     private BufferedImage applyColorTint(java.awt.Image originalImage, Color tintColor) {
         int width = originalImage.getWidth(null);
         int height = originalImage.getHeight(null);
+        
+        // Check for invalid dimensions
+        if (width <= 0 || height <= 0) {
+            System.err.println("Invalid image dimensions for color tint: " + width + "x" + height);
+            // Return a fallback colored image
+            BufferedImage fallbackImage = new BufferedImage(20, 20, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D g = fallbackImage.createGraphics();
+            g.setColor(tintColor);
+            g.fillRect(0, 0, 20, 20);
+            g.dispose();
+            return fallbackImage;
+        }
         
         BufferedImage tintedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2d = tintedImage.createGraphics();

@@ -14,6 +14,9 @@ public class Global {
     public static final int MODE_VERTICAL = 1;
     public static int CURRENT_GAME_MODE = MODE_HORIZONTAL; // Default horizontal
     
+    // TESTING MODE - set to true for quick testing (boss spawns at 10 seconds)
+    public static final boolean TESTING_MODE = true;
+    
     private static final Random modeRandom = new Random();
 
     public static final int BOARD_WIDTH = 716; // Doubled from 358
@@ -48,9 +51,11 @@ public class Global {
     public static final String IMG_POWERUP_SPEEDUP = "src/images/powerup-s.png";
     public static final String IMG_POWERUP_ADDBULLET = "src/images/powerup_bullet.png";
     public static final String IMG_POWERUP_MULTISHOT = "src/images/powerup_autoshot.png";
+    public static final String IMG_POWERUP_HEALTH = "src/images/health-pickup.png";
     public static final String IMG_BOSS1 = "src/images/boss1.png";
     public static final String IMG_BOSS2 = "src/images/boss2.png";
     public static final String IMG_BOSS_SHOT = "src/images/boss_shot.png";
+    public static final String IMG_BOSS_SHOT_VERTICAL = "src/images/boss_shot-vertical.png";
     public static final String IMG_BOMB = "src/images/bomb.png";
     public static final String IMG_BOMB_VERTICAL = "src/images/bomb-vertical.png";
     

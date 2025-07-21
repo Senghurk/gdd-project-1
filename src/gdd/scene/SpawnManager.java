@@ -10,6 +10,7 @@ import gdd.powerup.PowerUp;
 import gdd.powerup.SpeedUp;
 import gdd.powerup.AddBulletPowerUp;
 import gdd.powerup.MultiShotPowerUp;
+import gdd.powerup.HealthPickup;
 import gdd.sprite.Player;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -71,6 +72,11 @@ public class SpawnManager {
                     PowerUp multishot = createPowerUp("PowerUp-MultiShot");
                     result.powerups.add(multishot);
                 }
+                
+                if (sd.spawnHealthPowerup) {
+                    PowerUp health = createPowerUp("PowerUp-Health");
+                    result.powerups.add(health);
+                }
             }
         }
         
@@ -98,6 +104,8 @@ public class SpawnManager {
                 return new AddBulletPowerUp(x, y);
             case "PowerUp-MultiShot":
                 return new MultiShotPowerUp(x, y);
+            case "PowerUp-Health":
+                return new HealthPickup(x, y);
             default:
                 return null;
         }
@@ -125,6 +133,9 @@ public class SpawnManager {
                 break;
             case "PowerUp-MultiShot":
                 result.powerups.add(createPowerUp("PowerUp-MultiShot"));
+                break;
+            case "PowerUp-Health":
+                result.powerups.add(createPowerUp("PowerUp-Health"));
                 break;
             case "VICTORY":
                 // Player survived 5 minutes!
@@ -249,6 +260,10 @@ public class SpawnManager {
         spawnMap.put(9000, new SpawnDetails("PowerUp-MultiShot", 0, 0)); // 150 seconds
         spawnMap.put(13200, new SpawnDetails("PowerUp-MultiShot", 0, 0)); // 220 seconds
         
+        // Add Health pickups at specified times for Scene1
+        spawnMap.put(10200, new SpawnDetails("PowerUp-Health", 0, 0)); // 2:50 (170 seconds)
+        spawnMap.put(16200, new SpawnDetails("PowerUp-Health", 0, 0)); // 4:30 (270 seconds)
+        
         // 5-minute gameplay = 18000 frames at 60fps
         // 6 remaining powerups (3 speed + 3 bullet) spread evenly across rest of game
         // Spawn every ~2800 frames (46.7 seconds) with some randomization
@@ -347,27 +362,32 @@ public class SpawnManager {
         // First wave starts at 4 seconds (frame 240)
         spawnMap.put(240, new SpawnDetails(2, 1, false, false, true)); // 2 Alien1s and 1 Alien2 with initial multishot
         
-        // Major waves every 30 seconds (1800 frames) - STOP at 14400 (4 minutes)
-        for (int frame = 600; frame < 14400; frame += 1800) {
+        // Major waves every 30 seconds (1800 frames) - STOP at 10800 (3 minutes)
+        for (int frame = 600; frame < 10800; frame += 1800) {
             int a1 = 2 + randomizer.nextInt(4); // 2-5 Alien1s
             int a2 = 1 + randomizer.nextInt(3); // 1-3 Alien2s
             spawnMap.put(frame, new SpawnDetails(a1, a2, false, false, false));
         }
         // Multishot powerups every 45 seconds (2700 frames), not on frames with major waves
-        for (int frame = 1800; frame < 14400; frame += 2700) {
+        for (int frame = 1800; frame < 10800; frame += 2700) {
             if (!spawnMap.containsKey(frame)) {
                 spawnMap.put(frame, new SpawnDetails(0, 0, false, false, true));
             }
         }
-        // Continuous action: spawn smaller waves every 5 seconds (300 frames) - STOP at 14400
-        for (int frame = 300; frame < 14400; frame += 300) {
+        
+        // Add Health pickups at specified times for Scene2
+        spawnMap.put(10200, new SpawnDetails(0, 0, false, false, false, true)); // 2:50 (170 seconds)
+        spawnMap.put(13800, new SpawnDetails(0, 0, false, false, false, true)); // 3:50 (230 seconds)  
+        spawnMap.put(16200, new SpawnDetails(0, 0, false, false, false, true)); // 4:30 (270 seconds)
+        // Continuous action: spawn smaller waves every 5 seconds (300 frames) - STOP at 10800 (3 minutes)
+        for (int frame = 300; frame < 10800; frame += 300) {
             if (!spawnMap.containsKey(frame)) {
                 int alien1Count = 1 + randomizer.nextInt(3); // 1-3 Alien1s
                 int alien2Count = randomizer.nextInt(2); // 0-1 Alien2s
                 spawnMap.put(frame, new SpawnDetails(alien1Count, alien2Count, false, false, false));
             }
         }
-        // Last minute (frames 14400-18000): NO ENEMIES - Player gets a break before victory
+        // After 3 minutes (frames 10800-18000): Boss fight then easier enemies until victory
     }
 
     // Result class to hold spawn results

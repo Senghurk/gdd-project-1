@@ -7,6 +7,7 @@ import static gdd.Global.*;
 import gdd.SoundEffectPlayer;
 import gdd.SpawnDetails;
 import gdd.powerup.PowerUp;
+import gdd.powerup.HealthPickup;
 import gdd.sprite.Alien1;
 import gdd.sprite.Alien2;
 import gdd.sprite.Boss;
@@ -343,6 +344,12 @@ public class Scene2 extends JPanel {
             }
             g.drawString(phaseText, 550, 20);
         }
+        
+        // Testing mode indicator
+        if (Global.TESTING_MODE) {
+            g.setColor(Color.MAGENTA);
+            g.drawString("TESTING MODE", 550, 40);
+        }
     }
 
     @Override
@@ -533,17 +540,26 @@ public class Scene2 extends JPanel {
             powerups.addAll(spawnResult.powerups);
         }
         
-        // Dynamic spawning after boss defeat - continue spawning aliens until 5 minutes
-        if (bossDefeated && gameTimeSeconds >= 240 && gameTimeSeconds < 300) {
-            // Spawn additional aliens every 2 seconds after boss defeat
-            if (frame % 120 == 0) { // Every 2 seconds at 60 FPS
-                String enemyType = randomizer.nextInt(2) == 0 ? "Alien2" : "Alien1"; // 50% each
+        // Dynamic spawning after boss defeat - continue spawning easier aliens until 5 minutes
+        int postBossStartTime = Global.TESTING_MODE ? 10 : 180; // Start after boss spawn time
+        if (bossDefeated && gameTimeSeconds >= postBossStartTime && gameTimeSeconds < 300) {
+            // Spawn easier aliens every 3 seconds after boss defeat (more manageable)
+            if (frame % 180 == 0) { // Every 3 seconds at 60 FPS
+                // 75% Alien1, 25% Alien2 - easier than regular gameplay
+                String enemyType = randomizer.nextInt(4) < 3 ? "Alien1" : "Alien2";
                 // Use mode-aware positioning
                 Enemy enemy = enemyType.equals("Alien2") ? 
                     new Alien2(Global.getEnemySpawnX(), Global.getEnemySpawnY()) : 
                     new Alien1(Global.getEnemySpawnX(), Global.getEnemySpawnY());
                 enemies.add(enemy);
-                System.out.println("Frame " + frame + ": Spawning post-boss " + enemyType);
+                System.out.println("Frame " + frame + ": Spawning easier post-boss " + enemyType);
+            }
+            
+            // Occasional double spawns to maintain some challenge (every 10 seconds)
+            if (frame % 600 == 0) { // Every 10 seconds
+                Enemy extraEnemy = new Alien1(Global.getEnemySpawnX(), Global.getEnemySpawnY());
+                enemies.add(extraEnemy);
+                System.out.println("Frame " + frame + ": Extra post-boss Alien1");
             }
         }
         
@@ -553,15 +569,19 @@ public class Scene2 extends JPanel {
             message = spawnResult.victoryMessage;
         }
 
-        if (!bossIntroPlayed && gameTimeSeconds >= 239) {
+        // Testing mode or normal boss intro timing
+        int bossIntroTime = Global.TESTING_MODE ? 9 : 179; // 9 seconds in testing, 179 in normal
+        int bossSpawnTime = Global.TESTING_MODE ? 10 : 180; // 10 seconds in testing, 180 in normal
+        
+        if (!bossIntroPlayed && gameTimeSeconds >= bossIntroTime) {
             // Play boss intro sound if not already played
             SoundEffectPlayer.playBossIntroSound(); // Play 1 second before boss spawn
             bossIntroPlayed = true;
 
         }
 
-        // Boss spawning logic - spawn boss at 4 minutes (240 seconds)
-        if (!bossSpawned && gameTimeSeconds >= 240) {
+        // Boss spawning logic - spawn boss at 10 seconds (testing) or 3 minutes (normal)
+        if (!bossSpawned && gameTimeSeconds >= bossSpawnTime) {
             // Mode-aware boss positioning
             int bossX, bossY;
             if (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) {
@@ -603,7 +623,7 @@ public class Scene2 extends JPanel {
         // Simple Victory/Defeat conditions
         if (gameTimeSeconds >= 300) { // 5 minutes reached
             if (bossSpawned && !bossDefeated) {
-                // Boss not defeated - player loses
+                // Boss not defeated - player loses (had 2 minutes to fight boss)
                 inGame = false;
                 timer.stop();
                 message = "Game Over! Boss was not defeated in time!";
@@ -663,7 +683,16 @@ public class Scene2 extends JPanel {
 
                     SoundEffectPlayer.playCatchPowerUpSound(); // Play power-up sound
 
-                    powerup.upgrade(player);
+                    // Special handling for health pickup
+                    if (powerup instanceof HealthPickup && lives < 3) {
+                        lives++; // Restore one life
+                        powerup.die();
+                    } else if (!(powerup instanceof HealthPickup)) {
+                        powerup.upgrade(player);
+                    } else {
+                        // Health pickup when already at max lives - just remove it
+                        powerup.die();
+                    }
                 }
             }
         }
@@ -856,14 +885,14 @@ public class Scene2 extends JPanel {
     }
     
     private void updateEnemyPhase() {
-        // Level 2 phases for 5-minute duration
+        // Level 2 phases for 5-minute duration with boss at 3:00
         if (gameTimeSeconds < 120) { // First 2 minutes
             currentPhase = 1;
-        } else if (gameTimeSeconds < 240) { // Minutes 2-4
+        } else if (gameTimeSeconds < 180) { // Minutes 2-3
             currentPhase = 2;
-        } else if (gameTimeSeconds >= 240 && !bossSpawned) { // Boss spawns at 4 minutes
+        } else if (gameTimeSeconds >= 180 && !bossSpawned) { // Boss spawns at 3 minutes
             currentPhase = 3;
-        } else if (bossSpawned && !bossDefeated) { // Boss fight phase
+        } else if (bossSpawned && !bossDefeated) { // Boss fight phase (2 minutes)
             currentPhase = 4;
         } else if (bossDefeated && gameTimeSeconds < 300) { // Continue fighting until 5 minutes
             currentPhase = 5;

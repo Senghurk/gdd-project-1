@@ -7,6 +7,7 @@ import static gdd.Global.*;
 import gdd.SoundEffectPlayer;
 import gdd.SpawnDetails;
 import gdd.powerup.PowerUp;
+import gdd.powerup.HealthPickup;
 import gdd.sprite.Alien1;
 import gdd.sprite.Alien2;
 import gdd.sprite.Enemy;
@@ -482,7 +483,16 @@ public class Scene1 extends JPanel {
 
                     SoundEffectPlayer.playCatchPowerUpSound(); // Play power-up sound
 
-                    powerup.upgrade(player);
+                    // Special handling for health pickup
+                    if (powerup instanceof HealthPickup && lives < 3) {
+                        lives++; // Restore one life
+                        powerup.die();
+                    } else if (!(powerup instanceof HealthPickup)) {
+                        powerup.upgrade(player);
+                    } else {
+                        // Health pickup when already at max lives - just remove it
+                        powerup.die();
+                    }
                 }
             }
         }

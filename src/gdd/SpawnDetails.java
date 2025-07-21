@@ -12,6 +12,7 @@ public class SpawnDetails {
     public boolean spawnSpeedPowerup;
     public boolean spawnBulletPowerup;
     public boolean spawnMultiShotPowerup;
+    public boolean spawnHealthPowerup;
 
     // Constructor for string-based spawn details (Scene1)
     public SpawnDetails(String type, int x, int y) {
@@ -25,15 +26,22 @@ public class SpawnDetails {
         this.spawnSpeedPowerup = false;
         this.spawnBulletPowerup = false;
         this.spawnMultiShotPowerup = false;
+        this.spawnHealthPowerup = false;
     }
 
     // Constructor for count-based spawn details (Scene2)
     public SpawnDetails(int alien1Count, int alien2Count, boolean spawnSpeedPowerup, boolean spawnBulletPowerup, boolean spawnMultiShotPowerup) {
+        this(alien1Count, alien2Count, spawnSpeedPowerup, spawnBulletPowerup, spawnMultiShotPowerup, false);
+    }
+    
+    // Constructor for count-based spawn details (Scene2) with health pickup
+    public SpawnDetails(int alien1Count, int alien2Count, boolean spawnSpeedPowerup, boolean spawnBulletPowerup, boolean spawnMultiShotPowerup, boolean spawnHealthPowerup) {
         this.alien1Count = alien1Count;
         this.alien2Count = alien2Count;
         this.spawnSpeedPowerup = spawnSpeedPowerup;
         this.spawnBulletPowerup = spawnBulletPowerup;
         this.spawnMultiShotPowerup = spawnMultiShotPowerup;
+        this.spawnHealthPowerup = spawnHealthPowerup;
         
         // Initialize string-based fields to defaults
         this.type = "";
@@ -46,17 +54,4 @@ public class SpawnDetails {
         this(alien1Count, alien2Count, false, false, spawnMultiShotPowerup);
     }
 
-    // Constructor for Scene2 with explicit multishot parameter
-    public SpawnDetails(int alien1Count, int alien2Count, boolean spawnSpeedPowerup, boolean spawnBulletPowerup, boolean spawnMultiShotPowerup, boolean forceMultishot) {
-        this.alien1Count = alien1Count;
-        this.alien2Count = alien2Count;
-        this.spawnSpeedPowerup = spawnSpeedPowerup;
-        this.spawnBulletPowerup = spawnBulletPowerup;
-        this.spawnMultiShotPowerup = forceMultishot;
-        
-        // Initialize string-based fields to defaults
-        this.type = "";
-        this.x = 0;
-        this.y = 0;
-    }
 }

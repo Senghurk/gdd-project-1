@@ -44,36 +44,31 @@ public class SpawnManager {
             } 
             // Handle count-based spawn details (Scene2)
             else {
-                // Spawn Alien1s
+                // Spawn Alien1s - USE MODE-AWARE POSITIONING
                 for (int i = 0; i < sd.alien1Count; i++) {
-                    int y = randomizer.nextInt(BOARD_HEIGHT - 100) + 50; // Random Y position
-                    Enemy alien = new Alien1(BOARD_WIDTH, y);
+                    Enemy alien = createAlien1(); // Use mode-aware creation method
                     result.enemies.add(alien);
                 }
                 
-                // Spawn Alien2s
+                // Spawn Alien2s - USE MODE-AWARE POSITIONING  
                 for (int i = 0; i < sd.alien2Count; i++) {
-                    int y = randomizer.nextInt(BOARD_HEIGHT - 100) + 50;
-                    Enemy alien = new Alien2(BOARD_WIDTH, y);
+                    Enemy alien = createAlien2(); // Use mode-aware creation method
                     result.enemies.add(alien);
                 }
                 
-                // Handle powerups
+                // Handle powerups - USE MODE-AWARE POSITIONING
                 if (sd.spawnSpeedPowerup) {
-                    int y = randomizer.nextInt(BOARD_HEIGHT - 100) + 50;
-                    PowerUp speedup = new SpeedUp(BOARD_WIDTH, y);
+                    PowerUp speedup = createPowerUp("PowerUp-SpeedUp");
                     result.powerups.add(speedup);
                 }
                 
                 if (sd.spawnBulletPowerup) {
-                    int y = randomizer.nextInt(BOARD_HEIGHT - 100) + 50;
-                    PowerUp bulletup = new AddBulletPowerUp(BOARD_WIDTH, y);
+                    PowerUp bulletup = createPowerUp("PowerUp-AddBullet");
                     result.powerups.add(bulletup);
                 }
                 
                 if (sd.spawnMultiShotPowerup) {
-                    int y = randomizer.nextInt(BOARD_HEIGHT - 100) + 50;
-                    PowerUp multishot = new MultiShotPowerUp(BOARD_WIDTH, y);
+                    PowerUp multishot = createPowerUp("PowerUp-MultiShot");
                     result.powerups.add(multishot);
                 }
             }

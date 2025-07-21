@@ -157,17 +157,26 @@ public class Scene2 extends JPanel {
 
         initStarField();
 
-        // Always create a new player with speed 8 and bullet 5
-        player = new Player();
-        // Set speed to 8
-        while (player.getCurrentSpeed() < 8) {
-            player.increaseSpeed();
+        // Check if we have player data from Scene1
+        Player playerFromScene1 = game.getPlayerFromScene1();
+        if (playerFromScene1 != null) {
+            // Use player from Scene1 but reset position for current mode
+            player = playerFromScene1;
+            player.setX(Global.getPlayerStartX());
+            player.setY(Global.getPlayerStartY());
+            // Keep all powerups and stats from Scene1
+        } else {
+            // TESTING: Create new player with Scene2 default stats (speed 8, bullet 5)
+            player = new Player();
+            // Set speed to 8
+            while (player.getCurrentSpeed() < 8) {
+                player.increaseSpeed();
+            }
+            // Set bullet count to 5
+            while (player.getCurrentBulletCount() < 5) {
+                player.increaseBulletCount();
+            }
         }
-        // Set bullet count to 5
-        while (player.getCurrentBulletCount() < 5) {
-            player.increaseBulletCount();
-        }
-        // If player stats are higher, do not decrease (just cap at 8/5 by not increasing further)
     }
 
     /**

@@ -17,6 +17,10 @@ public class Game extends JFrame  {
     
     // NEW: Mode management
     private int gameMode = Global.MODE_HORIZONTAL; // Default to horizontal
+    
+    // TESTING: Set mode for direct scene testing (when skipping title screen)
+    // Change this to Global.MODE_VERTICAL to test Scene2 in vertical mode
+    private static final int TESTING_MODE = Global.MODE_VERTICAL;
 
     public Game() {
         titleScene = new TitleScene(this);
@@ -24,10 +28,16 @@ public class Game extends JFrame  {
         scene2 = new Scene2(this);
         initUI();
         
-        /*  Comment - Uncomment these lines to switch between normal start and Scene2 testing */
+        /*  Comment - Uncomment these lines to switch between normal start and Scene2 testing 
+         *  
+         *  FOR SCENE2 TESTING:
+         *  1. Change TESTING_MODE above to Global.MODE_VERTICAL for vertical mode testing
+         *  2. Uncomment loadScene2() line below
+         *  3. Comment out loadTitle() line below
+         */
 
-        loadTitle(); // Start with title screen
-        //loadScene2(); // Uncomment to test Scene2 directly
+        //loadTitle(); // Start with title screen
+        loadScene2(); // Uncomment to test Scene2 directly
     }
 
     private void initUI() {
@@ -63,11 +73,18 @@ public class Game extends JFrame  {
         getContentPane().removeAll();
         add(scene2);
         if (scene1Started) {
+            // Store player data before stopping Scene1
+            playerFromScene1 = scene1.getPlayer();
             scene1.stop();
+            // Mode is already set from Scene1, don't override it
+        } else {
+            // TESTING: Only set mode when jumping directly to Scene2 (bypassing Scene1)
+            if (titleStarted) {
+                titleScene.stop();
+            }
+            setGameMode(TESTING_MODE);
         }
-        if (titleStarted) {
-            titleScene.stop();
-        }
+        
         scene2.start();
         revalidate();
         repaint();
@@ -75,6 +92,11 @@ public class Game extends JFrame  {
 
     public Player getPlayerFromScene1() {
         return playerFromScene1;
+    }
+    
+    // NEW: Method to set player data from Scene1
+    public void setPlayerFromScene1(Player player) {
+        this.playerFromScene1 = player;
     }
     
     // NEW: Mode management methods

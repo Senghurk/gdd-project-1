@@ -128,6 +128,11 @@ public class Scene1 extends JPanel {
             System.err.println("Error closing audio player.");
         }
     }
+    
+    // NEW: Method to get player data for Scene2 transition
+    public Player getPlayer() {
+        return player;
+    }
 
     private void gameInit() {
 

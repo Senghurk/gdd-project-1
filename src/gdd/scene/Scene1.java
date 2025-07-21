@@ -206,6 +206,14 @@ public class Scene1 extends JPanel {
 
             // Play game over sound 
             if (!gameOverSoundPlayed) {
+                // Stop background music first, then play game over sound
+                if (audioPlayer != null) {
+                    try {
+                        audioPlayer.stop();
+                    } catch (Exception e) {
+                        System.err.println("Error stopping audio: " + e.getMessage());
+                    }
+                }
                 SoundEffectPlayer.playGameOverSound();
                 gameOverSoundPlayed = true;
             }
@@ -616,6 +624,14 @@ public class Scene1 extends JPanel {
 
                     // Play game over sound 
                     if (!gameOverSoundPlayed) {
+                        // Stop background music first, then play game over sound
+                        if (audioPlayer != null) {
+                            try {
+                                audioPlayer.stop();
+                            } catch (Exception e) {
+                                System.err.println("Error stopping audio: " + e.getMessage());
+                            }
+                        }
                         SoundEffectPlayer.playGameOverSound();
                         gameOverSoundPlayed = true;
             }

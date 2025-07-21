@@ -30,11 +30,11 @@ public class EnemyBomb extends Sprite {
             : Global.IMG_BOMB;
         var ii = new ImageIcon(bombImg);
         
-        // Apply color tinting for vertical mode only
+        // Apply bright color tinting for better contrast in both modes
         if (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) {
-            setImage(applyColorTint(ii.getImage(), Color.ORANGE));
+            setImage(applyColorTint(ii.getImage(), Color.YELLOW)); // Bright yellow for vertical
         } else {
-            setImage(ii.getImage());
+            setImage(applyColorTint(ii.getImage(), Color.RED)); // Bright red for horizontal
         }
     }
     
@@ -48,8 +48,8 @@ public class EnemyBomb extends Sprite {
         // Draw the original image
         g2d.drawImage(originalImage, 0, 0, null);
         
-        // Apply the tint with multiply blend mode effect
-        g2d.setColor(new Color(tintColor.getRed(), tintColor.getGreen(), tintColor.getBlue(), 120));
+        // Apply the tint with multiply blend mode effect - stronger contrast
+        g2d.setColor(new Color(tintColor.getRed(), tintColor.getGreen(), tintColor.getBlue(), 180));
         g2d.fillRect(0, 0, width, height);
         
         g2d.dispose();

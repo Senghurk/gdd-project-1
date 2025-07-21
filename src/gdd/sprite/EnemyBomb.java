@@ -21,7 +21,10 @@ public class EnemyBomb extends Sprite {
         this.speed = speed;
         this.destroyed = true;
         
-        var bombImg = "src/images/bomb.png";
+        // Use appropriate bomb image based on game mode
+        var bombImg = (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) 
+            ? Global.IMG_BOMB_VERTICAL 
+            : Global.IMG_BOMB;
         var ii = new ImageIcon(bombImg);
         setImage(ii.getImage());
     }

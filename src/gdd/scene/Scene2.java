@@ -529,9 +529,11 @@ public class Scene2 extends JPanel {
         if (bossDefeated && gameTimeSeconds >= 240 && gameTimeSeconds < 300) {
             // Spawn additional aliens every 2 seconds after boss defeat
             if (frame % 120 == 0) { // Every 2 seconds at 60 FPS
-                int y = 100 + randomizer.nextInt(400);
                 String enemyType = randomizer.nextInt(2) == 0 ? "Alien2" : "Alien1"; // 50% each
-                Enemy enemy = enemyType.equals("Alien2") ? new Alien2(BOARD_WIDTH, y) : new Alien1(BOARD_WIDTH, y);
+                // Use mode-aware positioning
+                Enemy enemy = enemyType.equals("Alien2") ? 
+                    new Alien2(Global.getEnemySpawnX(), Global.getEnemySpawnY()) : 
+                    new Alien1(Global.getEnemySpawnX(), Global.getEnemySpawnY());
                 enemies.add(enemy);
                 System.out.println("Frame " + frame + ": Spawning post-boss " + enemyType);
             }
@@ -552,7 +554,18 @@ public class Scene2 extends JPanel {
 
         // Boss spawning logic - spawn boss at 4 minutes (240 seconds)
         if (!bossSpawned && gameTimeSeconds >= 240) {
-            boss = new Boss(BOARD_WIDTH - 300, BOARD_HEIGHT / 2 - 50);
+            // Mode-aware boss positioning
+            int bossX, bossY;
+            if (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) {
+                // Vertical mode: boss spawns at top center of screen
+                bossX = BOARD_WIDTH / 2 - 50;
+                bossY = -100; // Start above screen, will move down
+            } else {
+                // Horizontal mode: boss spawns at right side
+                bossX = BOARD_WIDTH - 300;
+                bossY = BOARD_HEIGHT / 2 - 50;
+            }
+            boss = new Boss(bossX, bossY);
             bossSpawned = true;
             System.out.println("BOSS SPAWNED!");
         }

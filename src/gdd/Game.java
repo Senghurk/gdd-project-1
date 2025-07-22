@@ -16,11 +16,11 @@ public class Game extends JFrame  {
     private Player playerFromScene1 = null;
     
     // NEW: Mode management
-    private int gameMode = Global.MODE_HORIZONTAL; // Default to horizontal
+    private int gameMode = Global.MODE_VERTICAL; // Default to horizontal
     
     // TESTING: Set mode for direct scene testing (when skipping title screen)
     // Change this to Global.MODE_VERTICAL to test Scene2 in vertical mode
-    private static final int TESTING_MODE = Global.MODE_VERTICAL;
+    private static final int TESTING_MODE = Global.MODE_HORIZONTAL;
 
     public Game() {
         titleScene = new TitleScene(this);

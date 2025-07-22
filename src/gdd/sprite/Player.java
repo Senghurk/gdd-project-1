@@ -21,7 +21,8 @@ public class Player extends Sprite {
     private int extraShots = 0;
     private int autoFireCooldown = 0;
     
-
+    private int frameCounter = 0; // For sprite animation
+    private java.awt.Image scaledImgH1, scaledImgH2, scaledImgV1, scaledImgV2;
 
 
     public Player() {
@@ -31,17 +32,30 @@ public class Player extends Sprite {
     }
 
     private void initPlayer() {
-        // Use mode-aware player sprite
-        String playerImage = Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL ? 
-            "src/images/playerVertical.png" : IMG_PLAYER;
-        var ii = new ImageIcon(playerImage);
-
-        // Scale the image to use the global scaling factor
-        var scaledImage = ii.getImage().getScaledInstance(ii.getIconWidth() * SCALE_FACTOR,
-                ii.getIconHeight() * SCALE_FACTOR,
+        // Preload and scale both animation frames for both modes
+        var iiH1 = new ImageIcon(IMG_PLAYER_H1);
+        var iiH2 = new ImageIcon(IMG_PLAYER_H2);
+        var iiV1 = new ImageIcon(IMG_PLAYER_V1);
+        var iiV2 = new ImageIcon(IMG_PLAYER_V2);
+        scaledImgH1 = iiH1.getImage().getScaledInstance(iiH1.getIconWidth() * SCALE_FACTOR,
+                iiH1.getIconHeight() * SCALE_FACTOR,
+                java.awt.Image.SCALE_SMOOTH);
+        scaledImgH2 = iiH2.getImage().getScaledInstance(iiH2.getIconWidth() * SCALE_FACTOR,
+                iiH2.getIconHeight() * SCALE_FACTOR,
+                java.awt.Image.SCALE_SMOOTH);
+        scaledImgV1 = iiV1.getImage().getScaledInstance(iiV1.getIconWidth() * SCALE_FACTOR,
+                iiV1.getIconHeight() * SCALE_FACTOR,
+                java.awt.Image.SCALE_SMOOTH);
+        scaledImgV2 = iiV2.getImage().getScaledInstance(iiV2.getIconWidth() * SCALE_FACTOR,
+                iiV2.getIconHeight() * SCALE_FACTOR,
                 java.awt.Image.SCALE_SMOOTH);
 
-        setImage(scaledImage);
+        // Set initial image
+        if (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) {
+            setImage(scaledImgV1);
+        } else {
+            setImage(scaledImgH1);
+        }
 
         // Use mode-aware positioning
         setX(Global.getPlayerStartX());
@@ -61,6 +75,21 @@ public class Player extends Sprite {
     }
 
     public void act() {
+        frameCounter++;
+        // Animate every 20 frames
+        if (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) {
+            if ((frameCounter / 20) % 2 == 0) {
+                setImage(scaledImgV1);
+            } else {
+                setImage(scaledImgV2);
+            }
+        } else {
+            if ((frameCounter / 20) % 2 == 0) {
+                setImage(scaledImgH1);
+            } else {
+                setImage(scaledImgH2);
+            }
+        }
         // Mode-aware movement
         if (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) {
             // Horizontal movement for vertical mode

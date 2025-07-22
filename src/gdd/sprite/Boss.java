@@ -25,7 +25,7 @@ public class Boss extends Sprite {
     // Player has 5 bullets, can fire continuously for 1 minute
     // At 60 FPS, that's 3600 frames, so approximately 3600 shots
     // But we'll make it more reasonable - about 300 shots to kill the boss
-    private static final int BOSS_HEALTH = 100;
+    private static final int BOSS_HEALTH = 150;
     
     public Boss(int x, int y) {
         // Set collision bounds for boss - larger than regular enemies

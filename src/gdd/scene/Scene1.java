@@ -324,9 +324,9 @@ public class Scene1 extends JPanel {
         if (player.hasMultishot()) {
             int remainingSeconds = player.getMultishotFramesRemaining() / 60;
             g.setColor(Color.yellow);
-            g.drawString("🔥 MULTISHOT: " + remainingSeconds + "s", 450, 20);
+            g.drawString("🔥 MULTISHOT: " + remainingSeconds + "s", 400, 20);
             g.setColor(Color.red);
-            g.drawString("AUTO-FIRE ACTIVE!", 450, 40);
+            g.drawString("AUTO-FIRE ACTIVE!", 400, 40);
         }
         
         // Phase information
@@ -480,10 +480,17 @@ public class Scene1 extends JPanel {
 
             // Add spread shots for even more firepower during multishot
             if (player.hasMultishot()) {
-                Shot spreadShot1 = new Shot(x, y - 15); // Above
-                Shot spreadShot2 = new Shot(x, y + 15); // Below
-                shots.add(spreadShot1);
-                shots.add(spreadShot2);
+                if (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) {
+                    Shot spreadShot1 = new Shot(x - 10, y); // Left
+                    Shot spreadShot2 = new Shot(x + 10, y); // Right
+                    shots.add(spreadShot1);
+                    shots.add(spreadShot2);
+                } else {
+                    Shot spreadShot1 = new Shot(x, y - 10); // Above
+                    Shot spreadShot2 = new Shot(x, y + 10); // Below
+                    shots.add(spreadShot1);
+                    shots.add(spreadShot2);
+                }
             }
 
             // Only play sound occasionally to avoid audio spam

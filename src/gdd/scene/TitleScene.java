@@ -111,6 +111,7 @@ public class TitleScene extends JPanel {
             g.setColor(Color.white);
         }
 
+        /* 
         g.setFont(g.getFont().deriveFont(32f));
         String text = "Press SPACE to Start";
         int stringWidth = g.getFontMetrics().stringWidth(text);
@@ -118,6 +119,7 @@ public class TitleScene extends JPanel {
         // int stringHeight = g.getFontMetrics().getAscent();
         // int y = (d.height + stringHeight) / 2;
         g.drawString(text, x, 600);
+        */
 
         g.setColor(Color.white);
         g.setFont(g.getFont().deriveFont(16f));
@@ -138,11 +140,11 @@ public class TitleScene extends JPanel {
         // Mode selector controls
         g.setColor(Color.cyan);
         g.setFont(g.getFont().deriveFont(12f));
-        g.drawString("Mode Controls: UP/DOWN arrows to select", 10, 620);
+        g.drawString("Mode Controls: UP/DOWN arrows to select", 10, d.height - 50);
         
         g.setColor(Color.gray);
         g.setFont(g.getFont().deriveFont(10f));
-        g.drawString("Game by UbiRiotHoyoverse", 10, 670);
+        g.drawString("Game by UbiRiotHoyoverse", 10, 20);
 
         Toolkit.getDefaultToolkit().sync();
     }
@@ -155,7 +157,7 @@ public class TitleScene extends JPanel {
         g.setFont(g.getFont().deriveFont(18f));
         String modeTitle = "Game Mode:";
         int titleX = (d.width - g.getFontMetrics().stringWidth(modeTitle)) / 2;
-        g.drawString(modeTitle, titleX, 550);
+        g.drawString(modeTitle, titleX - 5, 550);
         
         // Draw mode options with selection highlighting
         g.setFont(g.getFont().deriveFont(16f));

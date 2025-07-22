@@ -8,20 +8,24 @@ import java.awt.Image;
 public class Missile extends Sprite {
     
     private boolean destroyed;
-    private int speed;
+    private double speed; // Changed to double for smooth acceleration
+    private double acceleration = 0.15; // Acceleration per frame
+    private double maxSpeed = 8.0; // Maximum speed
     private MissileParticleEffect particleEffect;
+    private int frameCount = 0; // Track frames for particle generation
 
     public Missile(int x, int y, int speed) {
         setCollisionBounds(10, 12); // Slightly larger than bomb collision
         initMissile(x, y, speed);
     }
     
-    private void initMissile(int x, int y, int speed) {
+    private void initMissile(int x, int y, int initialSpeed) {
         this.x = x;
         this.y = y;
-        this.speed = speed;
+        this.speed = 1.0; // Start slow regardless of initialSpeed parameter
         this.destroyed = true;
         this.particleEffect = new MissileParticleEffect();
+        this.frameCount = 0;
         
         var missileImg = new ImageIcon(Global.IMG_MISSILE);
         Image scaledImage;
@@ -52,9 +56,10 @@ public class Missile extends Sprite {
 
     public void setDestroyed(boolean destroyed) {
         this.destroyed = destroyed;
-        // Create particle effect when missile is fired (not destroyed becomes active)
         if (!destroyed) {
-            particleEffect.createMissileExhaust(this.x, this.y);
+            // Reset speed and frame count when missile becomes active
+            this.speed = 1.0;
+            this.frameCount = 0;
         }
     }
 
@@ -63,22 +68,41 @@ public class Missile extends Sprite {
     }
 
     public void act() {
-        // Always update particle effects
-        particleEffect.update();
-        
         if (!destroyed) {
+            frameCount++;
+            
+            // Accelerate missile - starts slow, speeds up
+            if (speed < maxSpeed) {
+                speed += acceleration;
+                if (speed > maxSpeed) {
+                    speed = maxSpeed;
+                }
+            }
+            
+            // Generate particles continuously - less frequent for subtle effect
+            double speedRatio = speed / maxSpeed;
+            int particleFrequency = Math.max(3, (int)(8 - 5 * speedRatio)); // Every 8 frames when slow, every 3 frames when fast
+            
+            if (frameCount % particleFrequency == 0) {
+                particleEffect.createMissileExhaust(this.x + getCollisionWidth()/2, this.y + getCollisionHeight()/2, speedRatio);
+            }
+            
+            // Move missile
             if (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) {
-                this.y += speed; // Move down toward player in vertical mode
+                this.y += (int)speed; // Move down toward player in vertical mode
                 if (this.y > BOARD_HEIGHT + 50) {
                     setDestroyed(true);
                 }
             } else {
-                this.x -= speed; // Move left toward player in horizontal mode
+                this.x -= (int)speed; // Move left toward player in horizontal mode
                 if (this.x < -50) {
                     setDestroyed(true);
                 }
             }
         }
+        
+        // Always update particle effects
+        particleEffect.update();
     }
 
     public void act(int direction) {
@@ -93,5 +117,10 @@ public class Missile extends Sprite {
     // Method to get particle effect object (for external drawing)
     public MissileParticleEffect getParticleEffect() {
         return particleEffect;
+    }
+    
+    // Get current speed for debugging
+    public double getCurrentSpeed() {
+        return speed;
     }
 }

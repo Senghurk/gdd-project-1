@@ -36,8 +36,8 @@ public class Game extends JFrame  {
          *  3. Comment out loadTitle() line below
          */
 
-        loadTitle(); // Start with title screen
-        //loadScene2(); // Uncomment to test Scene2 directly
+        //loadTitle(); // Start with title screen
+        loadScene2(); // Uncomment to test Scene2 directly
     }
 
     private void initUI() {

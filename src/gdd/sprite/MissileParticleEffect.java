@@ -47,7 +47,7 @@ public class MissileParticleEffect {
 
         public void draw(Graphics g) {
             g.setColor(color);
-            g.fillOval((int) x, (int) y, 4, 4); // Draw as a 4x4 circle for better visibility
+            g.fillOval((int) x, (int) y, 2, 2); // Much smaller 2x2 pixels for subtle effect
         }
 
         public boolean isAlive() {
@@ -57,28 +57,46 @@ public class MissileParticleEffect {
 
     private List<Particle> particles = new ArrayList<>();
 
-    // Call this when the missile is fired - adapted for our game modes
-    public void createMissileExhaust(double missileX, double missileY) {
-        int numParticles = 25; // Increased for better trail effect
-        double spreadAngle = Math.PI / 3; // 60-degree spread for wider exhaust cone
+    // Updated method with speedRatio parameter for intensity scaling
+    public void createMissileExhaust(double missileX, double missileY, double speedRatio) {
+        // Much fewer particles to avoid visual obstruction (3-8 particles)
+        int baseParticles = 3;
+        int bonusParticles = (int)(5 * speedRatio);
+        int numParticles = baseParticles + bonusParticles;
+        
+        double spreadAngle = Math.PI / 6; // Narrower 30-degree spread for more focused exhaust
 
         for (int i = 0; i < numParticles; i++) {
             double angle, speed;
+            double particleX = missileX;
+            double particleY = missileY;
             
             if (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) {
-                // Vertical mode: particles shoot upward (opposite of missile direction)
-                angle = -Math.PI/2 + (Math.random() - 0.5) * spreadAngle; // Upward with spread
-                speed = 2 + Math.random() * 3; // Random speed between 2 and 5
+                // Vertical mode: particles shoot upward, slightly to the right of missile center
+                particleX += 4; // Reduced offset - less to the right
+                particleY += 5; // Offset slightly down from missile tip
+                angle = -Math.PI/2 + (Math.random() - 0.5) * spreadAngle; // Upward with narrow spread
+                speed = (1 + Math.random() * 2) * (0.3 + speedRatio * 0.4); // Slower, subtler particles
             } else {
-                // Horizontal mode: particles shoot to the right (opposite of missile direction)  
-                angle = 0 + (Math.random() - 0.5) * spreadAngle; // Rightward with spread
-                speed = 2 + Math.random() * 3;
+                // Horizontal mode: particles shoot to the right (opposite of missile direction)
+                particleX += 5; // Offset from missile tip  
+                particleY += 6; // Center vertically
+                angle = 0 + (Math.random() - 0.5) * spreadAngle; // Rightward with narrow spread
+                speed = (1 + Math.random() * 2) * (0.3 + speedRatio * 0.4); // Slower, subtler particles
             }
             
             double vx = Math.cos(angle) * speed;
             double vy = Math.sin(angle) * speed;
-            particles.add(new Particle(missileX, missileY, vx, vy, 25)); // 25-frame lifetime for longer trail
+            
+            // Shorter lifetime for subtler effect (10-20 frames)
+            int lifetime = (int)(10 + 10 * speedRatio);
+            particles.add(new Particle(particleX, particleY, vx, vy, lifetime));
         }
+    }
+    
+    // Keep old method for backwards compatibility
+    public void createMissileExhaust(double missileX, double missileY) {
+        createMissileExhaust(missileX, missileY, 0.5); // Default to medium intensity
     }
 
     // Update all particles in the game loop

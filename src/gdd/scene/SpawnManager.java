@@ -253,12 +253,11 @@ public class SpawnManager {
         spawnMap.put(250, new SpawnDetails("PowerUp-SpeedUp", 0, 0));
         spawnMap.put(500, new SpawnDetails("PowerUp-AddBullet", 0, 0));
         
-        // Add MultiShot powerups earlier than before (15-20 seconds earlier)
-        // First MultiShot at ~30 seconds instead of ~47 seconds
-        spawnMap.put(1800, new SpawnDetails("PowerUp-MultiShot", 0, 0)); // 30 seconds
-        spawnMap.put(4800, new SpawnDetails("PowerUp-MultiShot", 0, 0)); // 80 seconds
-        spawnMap.put(9000, new SpawnDetails("PowerUp-MultiShot", 0, 0)); // 150 seconds
-        spawnMap.put(13200, new SpawnDetails("PowerUp-MultiShot", 0, 0)); // 220 seconds
+        // REMOVED: MultiShot powerup spawns for Scene1
+        // spawnMap.put(1800, new SpawnDetails("PowerUp-MultiShot", 0, 0)); // 30 seconds
+        // spawnMap.put(4800, new SpawnDetails("PowerUp-MultiShot", 0, 0)); // 80 seconds
+        // spawnMap.put(9000, new SpawnDetails("PowerUp-MultiShot", 0, 0)); // 150 seconds
+        // spawnMap.put(13200, new SpawnDetails("PowerUp-MultiShot", 0, 0)); // 220 seconds
         
         // Add Health pickups at specified times for Scene1
         spawnMap.put(10200, new SpawnDetails("PowerUp-Health", 0, 0)); // 2:50 (170 seconds)

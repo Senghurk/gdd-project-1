@@ -241,8 +241,13 @@ public class Scene1 extends JPanel {
                 }
             } else if (e instanceof Alien2) {
                 Missile missile = ((Alien2) e).getMissile();
-                if (missile != null && !missile.isDestroyed()) {
-                    g.drawImage(missile.getImage(), missile.getX(), missile.getY(), this);
+                if (missile != null) {
+                    // Draw missile particle effects first (behind missile)
+                    missile.drawParticleEffects(g);
+                    
+                    if (!missile.isDestroyed()) {
+                        g.drawImage(missile.getImage(), missile.getX(), missile.getY(), this);
+                    }
                 }
             }
         }
@@ -460,9 +465,14 @@ public class Scene1 extends JPanel {
         
         // Auto-fire for multishot powerup (machinegun mode)
         if (player.canAutoFire()) {
-            // Calculate shot origin from center of player sprite
-            int x = player.getX() + PLAYER_WIDTH / 2;
-            int y = player.getY() + (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL ? PLAYER_HEIGHT : PLAYER_HEIGHT / 2);
+            // Calculate shot origin from tip of player sprite, slightly right of center
+            int x = player.getX() + (PLAYER_WIDTH / 2) + 3; // Slightly right of center
+            int y;
+            if (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) {
+                y = player.getY(); // Top of sprite in vertical mode (shots go up)
+            } else {
+                y = player.getY() + PLAYER_HEIGHT / 2; // Middle height in horizontal mode (shots go right)
+            }
             
             // Main shot
             Shot autoShot = new Shot(x, y);
@@ -897,9 +907,14 @@ public class Scene1 extends JPanel {
             if (inGame) {
                 player.keyPressed(e);
 
-                // Calculate shot origin from center of player sprite
-                int x = player.getX() + PLAYER_WIDTH / 2;
-                int y = player.getY() + (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL ? PLAYER_HEIGHT : PLAYER_HEIGHT / 2);
+                // Calculate shot origin from tip of player sprite, slightly right of center
+                int x = player.getX() + (PLAYER_WIDTH / 2) + 3; // Slightly right of center
+                int y;
+                if (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) {
+                    y = player.getY(); // Top of sprite in vertical mode (shots go up)
+                } else {
+                    y = player.getY() + PLAYER_HEIGHT / 2; // Middle height in horizontal mode (shots go right)
+                }
 
                 // One bullet per space press, but more bullets can be on screen
                 if (key == KeyEvent.VK_SPACE) {

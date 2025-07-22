@@ -9,6 +9,7 @@ public class Missile extends Sprite {
     
     private boolean destroyed;
     private int speed;
+    private MissileParticleEffect particleEffect;
 
     public Missile(int x, int y, int speed) {
         setCollisionBounds(10, 12); // Slightly larger than bomb collision
@@ -20,6 +21,7 @@ public class Missile extends Sprite {
         this.y = y;
         this.speed = speed;
         this.destroyed = true;
+        this.particleEffect = new MissileParticleEffect();
         
         var missileImg = new ImageIcon(Global.IMG_MISSILE);
         Image scaledImage;
@@ -50,6 +52,10 @@ public class Missile extends Sprite {
 
     public void setDestroyed(boolean destroyed) {
         this.destroyed = destroyed;
+        // Create particle effect when missile is fired (not destroyed becomes active)
+        if (!destroyed) {
+            particleEffect.createMissileExhaust(this.x, this.y);
+        }
     }
 
     public boolean isDestroyed() {
@@ -57,6 +63,9 @@ public class Missile extends Sprite {
     }
 
     public void act() {
+        // Always update particle effects
+        particleEffect.update();
+        
         if (!destroyed) {
             if (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) {
                 this.y += speed; // Move down toward player in vertical mode
@@ -74,5 +83,15 @@ public class Missile extends Sprite {
 
     public void act(int direction) {
         act();
+    }
+    
+    // Method to draw particle effects
+    public void drawParticleEffects(java.awt.Graphics g) {
+        particleEffect.draw(g);
+    }
+    
+    // Method to get particle effect object (for external drawing)
+    public MissileParticleEffect getParticleEffect() {
+        return particleEffect;
     }
 }

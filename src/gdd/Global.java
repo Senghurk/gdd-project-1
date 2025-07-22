@@ -58,6 +58,7 @@ public class Global {
     public static final String IMG_BOSS_SHOT_VERTICAL = "src/images/boss_shot-vertical.png";
     public static final String IMG_BOMB = "src/images/bomb.png";
     public static final String IMG_BOMB_VERTICAL = "src/images/bomb-vertical.png";
+    public static final String IMG_MISSILE = "src/images/missile.PNG";
     
     // Power-up constants (rebalanced for better gameplay)
     public static final int MULTISHOT_DURATION_FRAMES = 600; // 10 seconds at 60 FPS

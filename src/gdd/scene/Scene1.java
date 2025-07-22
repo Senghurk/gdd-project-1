@@ -12,6 +12,7 @@ import gdd.sprite.Alien1;
 import gdd.sprite.Alien2;
 import gdd.sprite.Enemy;
 import gdd.sprite.EnemyBomb;
+import gdd.sprite.Missile;
 import gdd.sprite.Explosion;
 import gdd.sprite.Player;
 import gdd.sprite.Shot;
@@ -233,15 +234,16 @@ public class Scene1 extends JPanel {
 
     private void drawBombing(Graphics g) {
         for (Enemy e : enemies) {
-            EnemyBomb bomb = null;
             if (e instanceof Alien1) {
-                bomb = ((Alien1) e).getBomb();
+                EnemyBomb bomb = ((Alien1) e).getBomb();
+                if (bomb != null && !bomb.isDestroyed()) {
+                    g.drawImage(bomb.getImage(), bomb.getX(), bomb.getY(), this);
+                }
             } else if (e instanceof Alien2) {
-                bomb = ((Alien2) e).getBomb();
-            }
-            
-            if (bomb != null && !bomb.isDestroyed()) {
-                g.drawImage(bomb.getImage(), bomb.getX(), bomb.getY(), this);
+                Missile missile = ((Alien2) e).getMissile();
+                if (missile != null && !missile.isDestroyed()) {
+                    g.drawImage(missile.getImage(), missile.getX(), missile.getY(), this);
+                }
             }
         }
     }
@@ -657,32 +659,28 @@ public class Scene1 extends JPanel {
                 }
             }
             
-            // Handle Alien2 bombs
+            // Handle Alien2 missiles
             if (enemy instanceof Alien2) {
                 Alien2 alien = (Alien2) enemy;
-                EnemyBomb bomb = alien.getBomb();
+                Missile missile = alien.getMissile();
 
-                if (canShoot && chance == CHANCE && enemy.isVisible() && bomb.isDestroyed()) {
-
-                    bomb.setDestroyed(false);
-                    bomb.setX(enemy.getX());
-                    bomb.setY(enemy.getY());
-                }
-
-                int bombX = bomb.getX();
-                int bombY = bomb.getY();
+                // Missile collision detection with player
+                int missileX = missile.getX();
+                int missileY = missile.getY();
                 int playerX = player.getX();
                 int playerY = player.getY();
 
-                if (player.isVisible() && !player.isInvincible() && !bomb.isDestroyed()
-                        && bombX >= (playerX)
-                        && bombX <= (playerX + PLAYER_WIDTH)
-                        && bombY >= (playerY)
-                        && bombY <= (playerY + PLAYER_HEIGHT)) {
+                if (player.isVisible() && !player.isInvincible() && !missile.isDestroyed()
+                        && missileX >= (playerX)
+                        && missileX <= (playerX + PLAYER_WIDTH)
+                        && missileY >= (playerY)
+                        && missileY <= (playerY + PLAYER_HEIGHT)) {
 
-                    bomb.setDestroyed(true);
+                    missile.setDestroyed(true);
                     explosions.add(new Explosion(playerX, playerY));
                     player.takeDamage();
+                    
+                    SoundEffectPlayer.playPlayerHitSound();
                     
                     // Decrement lives instead of instant death
                     lives--;
@@ -695,12 +693,8 @@ public class Scene1 extends JPanel {
                     }
                 }
 
-                if (!bomb.isDestroyed()) {
-                    bomb.act();
-                    // Remove bombs that go off the left side
-                    if (bomb.getX() < 0) {
-                        bomb.setDestroyed(true);
-                    }
+                if (!missile.isDestroyed()) {
+                    missile.act();
                 }
             }
         }

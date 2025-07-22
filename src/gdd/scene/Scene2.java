@@ -14,6 +14,7 @@ import gdd.sprite.Boss;
 import gdd.sprite.BossBomb;
 import gdd.sprite.Enemy;
 import gdd.sprite.EnemyBomb;
+import gdd.sprite.Missile;
 import gdd.sprite.Explosion;
 import gdd.sprite.Player;
 import gdd.sprite.Shot;
@@ -93,6 +94,7 @@ public class Scene2 extends JPanel {
 
 
     private List<EnemyBomb> bombs = new ArrayList<>();
+    private List<Missile> missiles = new ArrayList<>();
     private List<BossBomb> bossBombs = new ArrayList<>();
 
     public Scene2(Game game) {
@@ -462,6 +464,13 @@ public class Scene2 extends JPanel {
             }
         }
         
+        // Draw all missiles from the missiles list
+        for (Missile missile : missiles) {
+            if (!missile.isDestroyed()) {
+                g.drawImage(missile.getImage(), missile.getX(), missile.getY(), this);
+            }
+        }
+        
         // Draw boss bombs
         for (BossBomb bossBomb : bossBombs) {
             if (!bossBomb.isDestroyed()) {
@@ -699,6 +708,7 @@ public class Scene2 extends JPanel {
 
         // Enemies with mode-aware cleanup
         bombs.clear();
+        missiles.clear();
         for (Enemy enemy : enemies) {
             if (enemy.isVisible()) {
                 enemy.act(direction);
@@ -716,13 +726,13 @@ public class Scene2 extends JPanel {
                     }
                 }
             }
-            // Collect bombs from Alien1 and Alien2
+            // Collect bombs from Alien1 and missiles from Alien2
             if (enemy instanceof Alien1) {
                 EnemyBomb bomb = ((Alien1) enemy).getBomb();
                 if (bomb != null) bombs.add(bomb);
             } else if (enemy instanceof Alien2) {
-                EnemyBomb bomb = ((Alien2) enemy).getBomb();
-                if (bomb != null) bombs.add(bomb);
+                Missile missile = ((Alien2) enemy).getMissile();
+                if (missile != null) missiles.add(missile);
             }
         }
         // Update all bombs
@@ -735,6 +745,47 @@ public class Scene2 extends JPanel {
                 && bomb.getY() >= player.getY()
                 && bomb.getY() <= (player.getY() + PLAYER_HEIGHT)) {
                 bomb.setDestroyed(true);
+                explosions.add(new Explosion(player.getX(), player.getY()));
+
+                SoundEffectPlayer.playPlayerHitSound(); // Play player hit sound
+
+                player.takeDamage();
+                lives--;
+                if (lives <= 0) {
+                    var ii = new ImageIcon(IMG_EXPLOSION);
+                    player.setImage(ii.getImage());
+                    player.setDying(true);
+                    inGame = false;
+                    message = "Game Over!";
+                
+                // Play game over sound
+                if (!gameOverSoundPlayed) {
+                    // Stop background music first, then play game over sound
+                    if (audioPlayer != null) {
+                        try {
+                            audioPlayer.stop();
+                        } catch (Exception e) {
+                            System.err.println("Error stopping audio: " + e.getMessage());
+                        }
+                    }
+                    SoundEffectPlayer.playGameOverSound();
+                    gameOverSoundPlayed = true;
+                    }    
+
+                }
+            }
+        }
+        
+        // Update all missiles
+        for (Missile missile : missiles) {
+            missile.act();
+            // Check collision with player
+            if (!missile.isDestroyed() && player.isVisible() && !player.isInvincible()
+                && missile.getX() >= player.getX()
+                && missile.getX() <= (player.getX() + PLAYER_WIDTH)
+                && missile.getY() >= player.getY()
+                && missile.getY() <= (player.getY() + PLAYER_HEIGHT)) {
+                missile.setDestroyed(true);
                 explosions.add(new Explosion(player.getX(), player.getY()));
 
                 SoundEffectPlayer.playPlayerHitSound(); // Play player hit sound

@@ -15,7 +15,7 @@ public class EnemyBomb extends Sprite {
     public EnemyBomb(int x, int y, int speed) {
         // Set fixed collision bounds for enemy bombs
         setCollisionBounds(8, 8); // Small collision box for bombs
-        initBomb(x, y, speed);
+        initBomb(x, y, Math.max(speed + 1, 4)); // Increase speed by 1, minimum 4
     }
     
     private void initBomb(int x, int y, int speed) {

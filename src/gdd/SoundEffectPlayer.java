@@ -8,18 +8,18 @@ import javax.sound.sampled.*;
 
 public class SoundEffectPlayer {
     
-    // Thread pool for playing sounds asynchronously
+    // Thread pool for playing sounds 
     private static final ExecutorService soundExecutor = Executors.newCachedThreadPool();
     
     // Static method to play a sound effect once (NON-BLOCKING)
     public static void playSound(String filePath) {
-        // Run sound loading and playing in a separate thread
+        // Sound loading and playing
         soundExecutor.submit(() -> {
             try {
                 // Check if file exists
                 File audioFile = new File(filePath);
                 if (!audioFile.exists()) {
-                    return; // Silently fail if file doesn't exist
+                    return; 
                 }
                 
                 // Create AudioInputStream object
@@ -31,13 +31,13 @@ public class SoundEffectPlayer {
                 // Open audioInputStream to the clip
                 clip.open(audioInputStream);
                 
-                // Set volume to a lower level (30%) to avoid overwhelming background music
+                
                 if (clip.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
                     FloatControl gainControl = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);
                     float min = gainControl.getMinimum();
                     float max = gainControl.getMaximum();
                     float range = max - min;
-                    float gain = min + (range * 1.0f); // 100% volume for sound effects
+                    float gain = min + (range * 1.0f); // 100% volume 
                     gainControl.setValue(gain);
                 }
                 
@@ -63,7 +63,7 @@ public class SoundEffectPlayer {
         });
     }
     
-    // Convenience methods for specific sound effects
+    // Methods for specific sound effects
     public static void playShootSound() {
         playSound("src/audio/Shoot.wav");
     }

@@ -15,7 +15,7 @@ public class Global {
     public static int CURRENT_GAME_MODE = MODE_HORIZONTAL; // Default horizontal
     
     // TESTING MODE - set to true for quick testing (boss spawns at 10 seconds)
-    public static final boolean TESTING_MODE = true;
+    public static final boolean TESTING_MODE = false;
     
     private static final Random modeRandom = new Random();
 

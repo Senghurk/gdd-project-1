@@ -297,30 +297,81 @@ public class SpawnManager {
     }
 
     private void generatePhase1Spawns() {
-        // Phase 1: Frames 0-5400 (0-90 seconds) - Learning phase with sparse Alien1 only
+        // Phase 1: Frames 0-5400 (0-90 seconds) - Learning phase with gradually increasing Alien1
+        int frameCounter = 0;
+        
         for (int frame = 600; frame <= 5400; frame += 150) { // Start at 10 seconds, every 2.5 seconds
-            // Only spawn Alien1 enemies - no Alien2 in phase 1
-            // Position will be handled by createAlien1 method
+            frameCounter++;
+            
+            // Gradually increase enemy count as phase progresses
+            // First 10 spawns (25 seconds): single enemies
+            // Next 10 spawns (25 seconds): occasional doubles (20% chance)
+            // Final 12 spawns (40 seconds): more doubles (40% chance) and rare triples (10% chance)
+            
+            // Always spawn at least one Alien1
             spawnMap.put(frame, new SpawnDetails("Alien1", 0, 0));
             
-            // No formations in Phase 1 - single enemies only for learning
+            if (frameCounter > 10 && frameCounter <= 20) {
+                // Middle of phase 1: 20% chance for a second enemy
+                if (randomizer.nextInt(5) == 0) {
+                    spawnMap.put(frame + 40, new SpawnDetails("Alien1", 0, 0));
+                }
+            } else if (frameCounter > 20) {
+                // End of phase 1: more aggressive spawning
+                if (randomizer.nextInt(5) < 2) { // 40% chance for second enemy
+                    spawnMap.put(frame + 40, new SpawnDetails("Alien1", 0, 0));
+                }
+                if (randomizer.nextInt(10) == 0) { // 10% chance for third enemy
+                    spawnMap.put(frame + 80, new SpawnDetails("Alien1", 0, 0));
+                }
+            }
         }
     }
     
     private void generatePhase2Spawns() {
-        // Phase 2: Frames 5400-12600 (90-210 seconds) - Threat introduction with Alien1 only
+        // Phase 2: Frames 5400-12600 (90-210 seconds) - Threat introduction with moderate formations
         
-        // Remove complex wave events for Phase 2 - keep it simple
+        int spawnCounter = 0;
         
-        for (int frame = 5400; frame <= 12600; frame += 120) { // Every 2 seconds (sparser than before)
-            // Only spawn Alien1 enemies - no Alien2 in phase 2
-            // Position will be handled by createAlien1 method
+        for (int frame = 5400; frame <= 12600; frame += 120) { // Every 2 seconds
+            spawnCounter++;
+            
+            // Always spawn at least one Alien1
             spawnMap.put(frame, new SpawnDetails("Alien1", 0, 0));
             
-            // Simple pair formations occasionally (10% chance)
-            if (randomizer.nextInt(10) == 0) {
-                // Create simple pair formation
-                spawnMap.put(frame + 30, new SpawnDetails("Alien1", 0, 0));
+            // Gradually increase formation complexity and frequency
+            // First third (30 spawns): 15% chance for pairs
+            // Second third (30 spawns): 25% chance for pairs, 5% chance for triangle formation
+            // Final third (30 spawns): 30% chance for pairs, 10% chance for triangle, 5% chance for line formation
+            
+            if (spawnCounter <= 30) {
+                // Early Phase 2: simple pairs occasionally
+                if (randomizer.nextInt(20) < 3) { // 15% chance
+                    spawnMap.put(frame + 30, new SpawnDetails("Alien1", 0, 0));
+                }
+            } else if (spawnCounter <= 60) {
+                // Mid Phase 2: more pairs and triangle formations
+                if (randomizer.nextInt(20) < 5) { // 25% chance for pair
+                    spawnMap.put(frame + 30, new SpawnDetails("Alien1", 0, 0));
+                }
+                if (randomizer.nextInt(20) == 0) { // 5% chance for triangle
+                    spawnMap.put(frame + 20, new SpawnDetails("Alien1", 0, 0));
+                    spawnMap.put(frame + 50, new SpawnDetails("Alien1", 0, 0));
+                }
+            } else {
+                // Late Phase 2: more complex formations but not overwhelming
+                if (randomizer.nextInt(20) < 6) { // 30% chance for pair
+                    spawnMap.put(frame + 30, new SpawnDetails("Alien1", 0, 0));
+                }
+                if (randomizer.nextInt(20) < 2) { // 10% chance for triangle
+                    spawnMap.put(frame + 20, new SpawnDetails("Alien1", 0, 0));
+                    spawnMap.put(frame + 50, new SpawnDetails("Alien1", 0, 0));
+                }
+                if (randomizer.nextInt(20) == 0) { // 5% chance for line formation
+                    spawnMap.put(frame + 15, new SpawnDetails("Alien1", 0, 0));
+                    spawnMap.put(frame + 45, new SpawnDetails("Alien1", 0, 0));
+                    spawnMap.put(frame + 75, new SpawnDetails("Alien1", 0, 0));
+                }
             }
         }
     }

@@ -458,20 +458,27 @@ public class Scene1 extends JPanel {
         // player
         player.act();
         
-        // Auto-fire for multishot powerup
-        if (player.canAutoFire() && shots.size() < player.getMaxShots() - 2) {
-            int x = player.getX();
-            int y = player.getY();
+        // Auto-fire for multishot powerup (machinegun mode)
+        if (player.canAutoFire()) {
+            // Calculate shot origin from center of player sprite
+            int x = player.getX() + PLAYER_WIDTH / 2;
+            int y = player.getY() + (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL ? PLAYER_HEIGHT : PLAYER_HEIGHT / 2);
             
+            // Main shot
             Shot autoShot = new Shot(x, y);
             shots.add(autoShot);
 
-            SoundEffectPlayer.playShootSound(); // Play shooting sound
-            
-            // Create additional spread shot
-            if (player.hasMultishot() && shots.size() < player.getMaxShots()) {
-                Shot spreadShot = new Shot(x, y + 25);
-                shots.add(spreadShot);
+            // Add spread shots for even more firepower during multishot
+            if (player.hasMultishot()) {
+                Shot spreadShot1 = new Shot(x, y - 15); // Above
+                Shot spreadShot2 = new Shot(x, y + 15); // Below
+                shots.add(spreadShot1);
+                shots.add(spreadShot2);
+            }
+
+            // Only play sound occasionally to avoid audio spam
+            if (shots.size() % 3 == 0) {
+                SoundEffectPlayer.playShootSound();
             }
             
             player.triggerAutoFire();
@@ -890,8 +897,9 @@ public class Scene1 extends JPanel {
             if (inGame) {
                 player.keyPressed(e);
 
-                int x = player.getX();
-                int y = player.getY();
+                // Calculate shot origin from center of player sprite
+                int x = player.getX() + PLAYER_WIDTH / 2;
+                int y = player.getY() + (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL ? PLAYER_HEIGHT : PLAYER_HEIGHT / 2);
 
                 // One bullet per space press, but more bullets can be on screen
                 if (key == KeyEvent.VK_SPACE) {

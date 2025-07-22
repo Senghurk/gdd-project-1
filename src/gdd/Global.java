@@ -60,9 +60,9 @@ public class Global {
     public static final String IMG_BOMB_VERTICAL = "src/images/bomb-vertical.png";
     public static final String IMG_MISSILE = "src/images/missile.PNG";
     
-    // Power-up constants (rebalanced for better gameplay)
+    // Power-up constants (overpowered multishot for machinegun mode)
     public static final int MULTISHOT_DURATION_FRAMES = 600; // 10 seconds at 60 FPS
-    public static final int MULTISHOT_EXTRA_SHOTS = 3; // Additional shots per fire (4 total shots)
+    public static final int MULTISHOT_EXTRA_SHOTS = 10; // Additional shots per fire (11 total shots)
     
     // Speed PowerUp constants
     public static final int INITIAL_PLAYER_SPEED = 3;

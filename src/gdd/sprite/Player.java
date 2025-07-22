@@ -190,11 +190,15 @@ public class Player extends Sprite {
     }
     
     public void triggerAutoFire() {
-        autoFireCooldown = 15; // 15 frames between auto-shots
+        autoFireCooldown = 8; // 8 frames between auto-shots (reasonable machinegun speed)
     }
     
     // UPDATED: Max shots based on current bullet count (for Scene 1)
     public int getMaxShots() {
+        // During multishot, allow unlimited bullets (machinegun mode)
+        if (hasMultishot()) {
+            return 999; // Effectively unlimited
+        }
         return currentBulletCount;
     }
     

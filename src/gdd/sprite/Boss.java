@@ -1,8 +1,8 @@
 package gdd.sprite;
 
+import gdd.Global;
 import static gdd.Global.*;
 import javax.swing.ImageIcon;
-import java.awt.Image;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,7 +25,7 @@ public class Boss extends Sprite {
     // Player has 5 bullets, can fire continuously for 1 minute
     // At 60 FPS, that's 3600 frames, so approximately 3600 shots
     // But we'll make it more reasonable - about 300 shots to kill the boss
-    private static final int BOSS_HEALTH = 100;
+    private static final int BOSS_HEALTH = 150;
     
     public Boss(int x, int y) {
         // Set collision bounds for boss - larger than regular enemies
@@ -64,28 +64,47 @@ public class Boss extends Sprite {
             loadBossImage(usingBoss1);
         }
         
-        // Boss moves up and down near the right margin
+        // Mode-aware boss movement
         moveCounter++;
         if (moveCounter >= MOVE_INTERVAL) {
             moveCounter = 0;
             moveDirection *= -1; // Reverse direction
         }
         
-        // Move up or down
-        this.y += moveDirection * MOVE_SPEED;
-        
-        // Keep boss within screen bounds
-        if (this.y < 50) {
-            this.y = 50;
-            moveDirection = 1; // Start moving down
-        } else if (this.y > BOARD_HEIGHT - 150) {
-            this.y = BOARD_HEIGHT - 150;
-            moveDirection = -1; // Start moving up
-        }
-        
-        // Keep boss near the right margin (don't move left)
-        if (this.x < BOARD_WIDTH - 150) {
-            this.x = BOARD_WIDTH - 150;
+        if (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) {
+            // Vertical mode: boss moves left and right at top of screen
+            this.x += moveDirection * MOVE_SPEED;
+            
+            // Keep boss within screen bounds horizontally
+            if (this.x < 50) {
+                this.x = 50;
+                moveDirection = 1; // Start moving right
+            } else if (this.x > BOARD_WIDTH - 150) {
+                this.x = BOARD_WIDTH - 150;
+                moveDirection = -1; // Start moving left
+            }
+            
+            // Keep boss near the top (move down slowly toward battle position)
+            if (this.y < 100) {
+                this.y += 1; // Slowly enter the screen
+            }
+        } else {
+            // Horizontal mode: boss moves up and down near the right margin
+            this.y += moveDirection * MOVE_SPEED;
+            
+            // Keep boss within screen bounds vertically
+            if (this.y < 50) {
+                this.y = 50;
+                moveDirection = 1; // Start moving down
+            } else if (this.y > BOARD_HEIGHT - 150) {
+                this.y = BOARD_HEIGHT - 150;
+                moveDirection = -1; // Start moving up
+            }
+            
+            // Keep boss near the right margin (don't move left)
+            if (this.x < BOARD_WIDTH - 150) {
+                this.x = BOARD_WIDTH - 150;
+            }
         }
         
         // Shooting logic
@@ -102,10 +121,19 @@ public class Boss extends Sprite {
     
     public List<BossBomb> shoot() {
         List<BossBomb> bombs = new ArrayList<>();
-        // 5-way spread: center, up, down, far up, far down
-        bombs.add(new BossBomb(this.x, this.y + 40)); // center
-        bombs.add(new BossBomb(this.x, this.y + 10)); // up
-        bombs.add(new BossBomb(this.x, this.y + 70)); // down
+        
+        if (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) {
+            // Vertical mode: 3-way horizontal spread downward
+            bombs.add(new BossBomb(this.x + 40, this.y + 100)); // center down
+            bombs.add(new BossBomb(this.x + 10, this.y + 100)); // left down
+            bombs.add(new BossBomb(this.x + 70, this.y + 100)); // right down
+        } else {
+            // Horizontal mode: 3-way vertical spread leftward
+            bombs.add(new BossBomb(this.x, this.y + 40)); // center
+            bombs.add(new BossBomb(this.x, this.y + 10)); // up
+            bombs.add(new BossBomb(this.x, this.y + 70)); // down
+        }
+        
         return bombs;
     }
     

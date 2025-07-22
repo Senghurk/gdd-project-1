@@ -2,16 +2,19 @@ package gdd.scene;
 
 import gdd.AudioPlayer;
 import gdd.Game;
+import gdd.Global;
 import static gdd.Global.*;
 import gdd.SoundEffectPlayer;
 import gdd.SpawnDetails;
 import gdd.powerup.PowerUp;
+import gdd.powerup.HealthPickup;
 import gdd.sprite.Alien1;
 import gdd.sprite.Alien2;
 import gdd.sprite.Boss;
 import gdd.sprite.BossBomb;
 import gdd.sprite.Enemy;
 import gdd.sprite.EnemyBomb;
+import gdd.sprite.Missile;
 import gdd.sprite.Explosion;
 import gdd.sprite.Player;
 import gdd.sprite.Shot;
@@ -88,9 +91,10 @@ public class Scene2 extends JPanel {
     private AudioPlayer audioPlayer;
     private SpawnManager spawnManager;
 
-    private boolean isDirectAccess = false;
+
 
     private List<EnemyBomb> bombs = new ArrayList<>();
+    private List<Missile> missiles = new ArrayList<>();
     private List<BossBomb> bossBombs = new ArrayList<>();
 
     public Scene2(Game game) {
@@ -156,26 +160,49 @@ public class Scene2 extends JPanel {
 
         initStarField();
 
-        // Always create a new player with speed 8 and bullet 5
-        player = new Player();
-        // Set speed to 8
-        while (player.getCurrentSpeed() < 8) {
-            player.increaseSpeed();
+        // Check if we have player data from Scene1
+        Player playerFromScene1 = game.getPlayerFromScene1();
+        if (playerFromScene1 != null) {
+            // Use player from Scene1 but reset position for current mode
+            player = playerFromScene1;
+            player.setX(Global.getPlayerStartX());
+            player.setY(Global.getPlayerStartY());
+            // Keep all powerups and stats from Scene1
+        } else {
+            // TESTING: Create new player with Scene2 default stats (speed 8, bullet 5)
+            player = new Player();
+            // Set speed to 8
+            while (player.getCurrentSpeed() < 8) {
+                player.increaseSpeed();
+            }
+            // Set bullet count to 5
+            while (player.getCurrentBulletCount() < 5) {
+                player.increaseBulletCount();
+            }
         }
-        // Set bullet count to 5
-        while (player.getCurrentBulletCount() < 5) {
-            player.increaseBulletCount();
-        }
-        // If player stats are higher, do not decrease (just cap at 8/5 by not increasing further)
     }
 
+    /**
+     * Initialize star field background with mode-aware positioning for Scene2
+     */
     private void initStarField() {
         // Initialize star field with more stars and different colors for level 2
         for (int i = 0; i < 100; i++) {
-            int x = randomizer.nextInt(BOARD_WIDTH);
-            int y = randomizer.nextInt(BOARD_HEIGHT);
+            int x, y, speed;
+            
+            if (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) {
+                // Vertical mode: stars spawn across width and fall downward
+                x = randomizer.nextInt(BOARD_WIDTH);
+                y = randomizer.nextInt(BOARD_HEIGHT + 200); // Some start above screen
+                speed = randomizer.nextInt(3) + 2; // Variable speed 2-4 for vertical Scene2
+            } else {
+                // Horizontal mode: stars spawn across height and move leftward
+                x = randomizer.nextInt(BOARD_WIDTH);
+                y = randomizer.nextInt(BOARD_HEIGHT);
+                speed = randomizer.nextInt(3) + 2; // Variable speed 2-4 for horizontal Scene2
+            }
+            
             int size = randomizer.nextInt(3) + 1;
-            int speed = randomizer.nextInt(3) + 2;
             
             // Level 2 uses more reddish colors for stars
             Color[] colors = {
@@ -189,12 +216,27 @@ public class Scene2 extends JPanel {
         }
     }
 
+    /**
+     * Update star field movement with mode-aware direction for Scene2
+     */
     private void updateStarField() {
         for (Star star : stars) {
-            star.x -= star.speed;
-            if (star.x < 0) {
-                star.x = BOARD_WIDTH;
-                star.y = randomizer.nextInt(BOARD_HEIGHT);
+            if (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) {
+                // Vertical mode: stars fall downward
+                star.y += star.speed;
+                
+                // If star goes off the bottom, respawn it at the top
+                if (star.y > BOARD_HEIGHT + 10) {
+                    star.y = -10;
+                    star.x = randomizer.nextInt(BOARD_WIDTH);
+                }
+            } else {
+                // Horizontal mode: stars move leftward (current behavior)
+                star.x -= star.speed;
+                if (star.x < 0) {
+                    star.x = BOARD_WIDTH;
+                    star.y = randomizer.nextInt(BOARD_HEIGHT);
+                }
             }
         }
     }
@@ -304,6 +346,12 @@ public class Scene2 extends JPanel {
             }
             g.drawString(phaseText, 550, 20);
         }
+        
+        // Testing mode indicator
+        if (Global.TESTING_MODE) {
+            g.setColor(Color.MAGENTA);
+            g.drawString("TESTING MODE", 550, 40);
+        }
     }
 
     @Override
@@ -379,6 +427,14 @@ public class Scene2 extends JPanel {
 
             // Play game over sound 
             if (!gameOverSoundPlayed) {
+                // Stop background music first, then play game over sound
+                if (audioPlayer != null) {
+                    try {
+                        audioPlayer.stop();
+                    } catch (Exception e) {
+                        System.err.println("Error stopping audio: " + e.getMessage());
+                    }
+                }
                 SoundEffectPlayer.playGameOverSound();
                 gameOverSoundPlayed = true;
             }
@@ -405,6 +461,16 @@ public class Scene2 extends JPanel {
         for (EnemyBomb bomb : bombs) {
             if (!bomb.isDestroyed()) {
                 g.drawImage(bomb.getImage(), bomb.getX(), bomb.getY(), this);
+            }
+        }
+        
+        // Draw all missiles from the missiles list with particle effects
+        for (Missile missile : missiles) {
+            // Draw missile particle effects first (behind missile)
+            missile.drawParticleEffects(g);
+            
+            if (!missile.isDestroyed()) {
+                g.drawImage(missile.getImage(), missile.getX(), missile.getY(), this);
             }
         }
         
@@ -486,15 +552,26 @@ public class Scene2 extends JPanel {
             powerups.addAll(spawnResult.powerups);
         }
         
-        // Dynamic spawning after boss defeat - continue spawning aliens until 5 minutes
-        if (bossDefeated && gameTimeSeconds >= 240 && gameTimeSeconds < 300) {
-            // Spawn additional aliens every 2 seconds after boss defeat
-            if (frame % 120 == 0) { // Every 2 seconds at 60 FPS
-                int y = 100 + randomizer.nextInt(400);
-                String enemyType = randomizer.nextInt(2) == 0 ? "Alien2" : "Alien1"; // 50% each
-                Enemy enemy = enemyType.equals("Alien2") ? new Alien2(BOARD_WIDTH, y) : new Alien1(BOARD_WIDTH, y);
+        // Dynamic spawning after boss defeat - continue spawning easier aliens until 5 minutes
+        int postBossStartTime = Global.TESTING_MODE ? 10 : 180; // Start after boss spawn time
+        if (bossDefeated && gameTimeSeconds >= postBossStartTime && gameTimeSeconds < 300) {
+            // Spawn easier aliens every 3 seconds after boss defeat (more manageable)
+            if (frame % 180 == 0) { // Every 3 seconds at 60 FPS
+                // 75% Alien1, 25% Alien2 - easier than regular gameplay
+                String enemyType = randomizer.nextInt(4) < 3 ? "Alien1" : "Alien2";
+                // Use mode-aware positioning
+                Enemy enemy = enemyType.equals("Alien2") ? 
+                    new Alien2(Global.getEnemySpawnX(), Global.getEnemySpawnY()) : 
+                    new Alien1(Global.getEnemySpawnX(), Global.getEnemySpawnY());
                 enemies.add(enemy);
-                System.out.println("Frame " + frame + ": Spawning post-boss " + enemyType);
+                System.out.println("Frame " + frame + ": Spawning easier post-boss " + enemyType);
+            }
+            
+            // Occasional double spawns to maintain some challenge (every 10 seconds)
+            if (frame % 600 == 0) { // Every 10 seconds
+                Enemy extraEnemy = new Alien1(Global.getEnemySpawnX(), Global.getEnemySpawnY());
+                enemies.add(extraEnemy);
+                System.out.println("Frame " + frame + ": Extra post-boss Alien1");
             }
         }
         
@@ -504,16 +581,31 @@ public class Scene2 extends JPanel {
             message = spawnResult.victoryMessage;
         }
 
-        if (!bossIntroPlayed && gameTimeSeconds >= 9) {
+        // Testing mode or normal boss intro timing
+        int bossIntroTime = Global.TESTING_MODE ? 9 : 179; // 9 seconds in testing, 179 in normal
+        int bossSpawnTime = Global.TESTING_MODE ? 10 : 180; // 10 seconds in testing, 180 in normal
+        
+        if (!bossIntroPlayed && gameTimeSeconds >= bossIntroTime) {
             // Play boss intro sound if not already played
             SoundEffectPlayer.playBossIntroSound(); // Play 1 second before boss spawn
             bossIntroPlayed = true;
 
         }
 
-        // Boss spawning logic - spawn boss at 4 minutes (240 seconds)
-        if (!bossSpawned && gameTimeSeconds >= 10) {
-            boss = new Boss(BOARD_WIDTH - 300, BOARD_HEIGHT / 2 - 50);
+        // Boss spawning logic - spawn boss at 10 seconds (testing) or 3 minutes (normal)
+        if (!bossSpawned && gameTimeSeconds >= bossSpawnTime) {
+            // Mode-aware boss positioning
+            int bossX, bossY;
+            if (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) {
+                // Vertical mode: boss spawns at top center of screen
+                bossX = BOARD_WIDTH / 2 - 50;
+                bossY = -100; // Start above screen, will move down
+            } else {
+                // Horizontal mode: boss spawns at right side
+                bossX = BOARD_WIDTH - 300;
+                bossY = BOARD_HEIGHT / 2 - 50;
+            }
+            boss = new Boss(bossX, bossY);
             bossSpawned = true;
             System.out.println("BOSS SPAWNED!");
         }
@@ -543,12 +635,20 @@ public class Scene2 extends JPanel {
         // Simple Victory/Defeat conditions
         if (gameTimeSeconds >= 300) { // 5 minutes reached
             if (bossSpawned && !bossDefeated) {
-                // Boss not defeated - player loses
+                // Boss not defeated - player loses (had 2 minutes to fight boss)
                 inGame = false;
                 timer.stop();
                 message = "Game Over! Boss was not defeated in time!";
                 
                 if (!gameOverSoundPlayed) {
+                    // Stop background music first, then play game over sound
+                    if (audioPlayer != null) {
+                        try {
+                            audioPlayer.stop();
+                        } catch (Exception e) {
+                            System.err.println("Error stopping audio: " + e.getMessage());
+                        }
+                    }
                     SoundEffectPlayer.playGameOverSound(); // Play game over sound
                     gameOverSoundPlayed = true;
                 }
@@ -568,20 +668,39 @@ public class Scene2 extends JPanel {
         // player
         player.act();
         
-        // Auto-fire for multishot powerup
-        if (player.canAutoFire() && shots.size() < player.getMaxShots() - 2) {
-            int x = player.getX();
-            int y = player.getY();
+        // Auto-fire for multishot powerup (machinegun mode)
+        if (player.canAutoFire()) {
+            // Calculate shot origin from tip of player sprite, slightly right of center
+            int x = player.getX() + (PLAYER_WIDTH / 2) + 3; // Slightly right of center
+            int y;
+            if (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) {
+                y = player.getY(); // Top of sprite in vertical mode (shots go up)
+            } else {
+                y = player.getY() + PLAYER_HEIGHT / 2; // Middle height in horizontal mode (shots go right)
+            }
             
+            // Main shot
             Shot autoShot = new Shot(x, y);
             shots.add(autoShot);
 
-            SoundEffectPlayer.playShootSound(); // Play shooting sound
+            // Add spread shots for even more firepower during multishot
+            if (player.hasMultishot()) {
+                if (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) {
+                    Shot spreadShot1 = new Shot(x - 10, y); // Left
+                    Shot spreadShot2 = new Shot(x + 10, y); // Right
+                    shots.add(spreadShot1);
+                    shots.add(spreadShot2);
+                } else {
+                    Shot spreadShot1 = new Shot(x, y - 10); // Above
+                    Shot spreadShot2 = new Shot(x, y + 10); // Below
+                    shots.add(spreadShot1);
+                    shots.add(spreadShot2);
+                }
+            }
 
-            
-            if (player.hasMultishot() && shots.size() < player.getMaxShots()) {
-                Shot spreadShot = new Shot(x, y + 25);
-                shots.add(spreadShot);
+            // Only play sound occasionally to avoid audio spam
+            if (shots.size() % 3 == 0) {
+                SoundEffectPlayer.playShootSound();
             }
             
             player.triggerAutoFire();
@@ -595,27 +714,47 @@ public class Scene2 extends JPanel {
 
                     SoundEffectPlayer.playCatchPowerUpSound(); // Play power-up sound
 
-                    powerup.upgrade(player);
+                    // Special handling for health pickup
+                    if (powerup instanceof HealthPickup && lives < 3) {
+                        lives++; // Restore one life
+                        powerup.die();
+                    } else if (!(powerup instanceof HealthPickup)) {
+                        powerup.upgrade(player);
+                    } else {
+                        // Health pickup when already at max lives - just remove it
+                        powerup.die();
+                    }
                 }
             }
         }
 
-        // Enemies
+        // Enemies with mode-aware cleanup
         bombs.clear();
+        missiles.clear();
         for (Enemy enemy : enemies) {
             if (enemy.isVisible()) {
                 enemy.act(direction);
-                if (enemy.getX() < -50) {
-                    enemy.die();
+                
+                // Mode-aware enemy cleanup when they go offscreen
+                if (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) {
+                    // Vertical mode: remove enemies that fall off bottom
+                    if (enemy.getY() > BOARD_HEIGHT + 50) {
+                        enemy.die(); // Mark enemy as invisible so it gets cleaned up
+                    }
+                } else {
+                    // Horizontal mode: remove enemies that go off left side (current behavior)
+                    if (enemy.getX() < -50) {
+                        enemy.die();
+                    }
                 }
             }
-            // Collect bombs from Alien1 and Alien2
+            // Collect bombs from Alien1 and missiles from Alien2
             if (enemy instanceof Alien1) {
                 EnemyBomb bomb = ((Alien1) enemy).getBomb();
                 if (bomb != null) bombs.add(bomb);
             } else if (enemy instanceof Alien2) {
-                EnemyBomb bomb = ((Alien2) enemy).getBomb();
-                if (bomb != null) bombs.add(bomb);
+                Missile missile = ((Alien2) enemy).getMissile();
+                if (missile != null) missiles.add(missile);
             }
         }
         // Update all bombs
@@ -643,6 +782,55 @@ public class Scene2 extends JPanel {
                 
                 // Play game over sound
                 if (!gameOverSoundPlayed) {
+                    // Stop background music first, then play game over sound
+                    if (audioPlayer != null) {
+                        try {
+                            audioPlayer.stop();
+                        } catch (Exception e) {
+                            System.err.println("Error stopping audio: " + e.getMessage());
+                        }
+                    }
+                    SoundEffectPlayer.playGameOverSound();
+                    gameOverSoundPlayed = true;
+                    }    
+
+                }
+            }
+        }
+        
+        // Update all missiles
+        for (Missile missile : missiles) {
+            missile.act();
+            // Check collision with player
+            if (!missile.isDestroyed() && player.isVisible() && !player.isInvincible()
+                && missile.getX() >= player.getX()
+                && missile.getX() <= (player.getX() + PLAYER_WIDTH)
+                && missile.getY() >= player.getY()
+                && missile.getY() <= (player.getY() + PLAYER_HEIGHT)) {
+                missile.setDestroyed(true);
+                explosions.add(new Explosion(player.getX(), player.getY()));
+
+                SoundEffectPlayer.playPlayerHitSound(); // Play player hit sound
+
+                player.takeDamage();
+                lives--;
+                if (lives <= 0) {
+                    var ii = new ImageIcon(IMG_EXPLOSION);
+                    player.setImage(ii.getImage());
+                    player.setDying(true);
+                    inGame = false;
+                    message = "Game Over!";
+                
+                // Play game over sound
+                if (!gameOverSoundPlayed) {
+                    // Stop background music first, then play game over sound
+                    if (audioPlayer != null) {
+                        try {
+                            audioPlayer.stop();
+                        } catch (Exception e) {
+                            System.err.println("Error stopping audio: " + e.getMessage());
+                        }
+                    }
                     SoundEffectPlayer.playGameOverSound();
                     gameOverSoundPlayed = true;
                     }    
@@ -677,6 +865,14 @@ public class Scene2 extends JPanel {
                     message = "Game Over!";
 
                     if (!gameOverSoundPlayed) {
+                        // Stop background music first, then play game over sound
+                        if (audioPlayer != null) {
+                            try {
+                                audioPlayer.stop();
+                            } catch (Exception e) {
+                                System.err.println("Error stopping audio: " + e.getMessage());
+                            }
+                        }
                         SoundEffectPlayer.playGameOverSound();
                         gameOverSoundPlayed = true;
                     }
@@ -736,9 +932,19 @@ public class Scene2 extends JPanel {
                     }
                 }
 
-                if (shot.getX() > BOARD_WIDTH) {
-                    shot.die();
-                    shotsToRemove.add(shot);
+                // Mode-aware shot cleanup when they go offscreen
+                if (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) {
+                    // Vertical mode: remove shots that go off top
+                    if (shot.getY() < -10) {
+                        shot.die();
+                        shotsToRemove.add(shot);
+                    }
+                } else {
+                    // Horizontal mode: remove shots that go off right side (current behavior)
+                    if (shot.getX() > BOARD_WIDTH) {
+                        shot.die();
+                        shotsToRemove.add(shot);
+                    }
                 }
             }
         }
@@ -752,14 +958,14 @@ public class Scene2 extends JPanel {
     }
     
     private void updateEnemyPhase() {
-        // Level 2 phases for 5-minute duration
+        // Level 2 phases for 5-minute duration with boss at 3:00
         if (gameTimeSeconds < 120) { // First 2 minutes
             currentPhase = 1;
-        } else if (gameTimeSeconds < 240) { // Minutes 2-4
+        } else if (gameTimeSeconds < 180) { // Minutes 2-3
             currentPhase = 2;
-        } else if (gameTimeSeconds >= 240 && !bossSpawned) { // Boss spawns at 4 minutes
+        } else if (gameTimeSeconds >= 180 && !bossSpawned) { // Boss spawns at 3 minutes
             currentPhase = 3;
-        } else if (bossSpawned && !bossDefeated) { // Boss fight phase
+        } else if (bossSpawned && !bossDefeated) { // Boss fight phase (2 minutes)
             currentPhase = 4;
         } else if (bossDefeated && gameTimeSeconds < 300) { // Continue fighting until 5 minutes
             currentPhase = 5;
@@ -794,8 +1000,14 @@ public class Scene2 extends JPanel {
             if (inGame) {
                 player.keyPressed(e);
 
-                int x = player.getX();
-                int y = player.getY();
+                // Calculate shot origin from tip of player sprite, slightly right of center
+                int x = player.getX() + (PLAYER_WIDTH / 2) + 3; // Slightly right of center
+                int y;
+                if (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) {
+                    y = player.getY(); // Top of sprite in vertical mode (shots go up)
+                } else {
+                    y = player.getY() + PLAYER_HEIGHT / 2; // Middle height in horizontal mode (shots go right)
+                }
 
                 // One bullet per space press, but more bullets can be on screen
                 if (key == KeyEvent.VK_SPACE) {

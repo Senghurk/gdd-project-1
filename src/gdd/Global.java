@@ -1,11 +1,23 @@
 package gdd;
 
+import java.util.Random;
+
 public class Global {
     private Global() {
         // Prevent instantiation
     }
 
     public static final int SCALE_FACTOR = 3; // Scaling factor for sprites
+    
+    // NEW: Game mode constants
+    public static final int MODE_HORIZONTAL = 0;
+    public static final int MODE_VERTICAL = 1;
+    public static int CURRENT_GAME_MODE = MODE_HORIZONTAL; // Default horizontal
+    
+    // TESTING MODE - set to true for quick testing (boss spawns at 10 seconds)
+    public static final boolean TESTING_MODE = false;
+    
+    private static final Random modeRandom = new Random();
 
     public static final int BOARD_WIDTH = 716; // Doubled from 358
     public static final int BOARD_HEIGHT = 700; // Doubled from 350
@@ -39,13 +51,18 @@ public class Global {
     public static final String IMG_POWERUP_SPEEDUP = "src/images/powerup-s.png";
     public static final String IMG_POWERUP_ADDBULLET = "src/images/powerup_bullet.png";
     public static final String IMG_POWERUP_MULTISHOT = "src/images/powerup_autoshot.png";
+    public static final String IMG_POWERUP_HEALTH = "src/images/health-pickup.png";
     public static final String IMG_BOSS1 = "src/images/boss1.png";
     public static final String IMG_BOSS2 = "src/images/boss2.png";
     public static final String IMG_BOSS_SHOT = "src/images/boss_shot.png";
+    public static final String IMG_BOSS_SHOT_VERTICAL = "src/images/boss_shot-vertical.png";
+    public static final String IMG_BOMB = "src/images/bomb.png";
+    public static final String IMG_BOMB_VERTICAL = "src/images/bomb-vertical.png";
+    public static final String IMG_MISSILE = "src/images/missile.PNG";
     
-    // Power-up constants (rebalanced for better gameplay)
+    // Power-up constants (overpowered multishot for machinegun mode)
     public static final int MULTISHOT_DURATION_FRAMES = 600; // 10 seconds at 60 FPS
-    public static final int MULTISHOT_EXTRA_SHOTS = 3; // Additional shots per fire (4 total shots)
+    public static final int MULTISHOT_EXTRA_SHOTS = 10; // Additional shots per fire (11 total shots)
     
     // Speed PowerUp constants
     public static final int INITIAL_PLAYER_SPEED = 3;
@@ -58,4 +75,23 @@ public class Global {
     public static final int BULLET_COUNT_INCREASE = 1; // Bullet increase per powerup
     public static final int MAX_BULLET_COUNT = 5; // Maximum bullets (1 + 4*1)
     public static final int TOTAL_BULLET_POWERUPS = 4; // Total bullet powerups in game
+    
+    // NEW: Mode-specific helper methods
+    public static int getEnemySpawnX() {
+        return CURRENT_GAME_MODE == MODE_VERTICAL ? 
+            100 + modeRandom.nextInt(BOARD_WIDTH - 200) : BOARD_WIDTH;
+    }
+    
+    public static int getEnemySpawnY() {
+        return CURRENT_GAME_MODE == MODE_VERTICAL ? -50 : 
+            100 + modeRandom.nextInt(BOARD_HEIGHT - 200);
+    }
+    
+    public static int getPlayerStartX() {
+        return CURRENT_GAME_MODE == MODE_VERTICAL ? BOARD_WIDTH/2 : 50;
+    }
+    
+    public static int getPlayerStartY() {
+        return CURRENT_GAME_MODE == MODE_VERTICAL ? BOARD_HEIGHT - 100 : BOARD_HEIGHT/2;
+    }
 }

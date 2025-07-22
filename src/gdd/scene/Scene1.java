@@ -2,14 +2,17 @@ package gdd.scene;
 
 import gdd.AudioPlayer;
 import gdd.Game;
+import gdd.Global;
 import static gdd.Global.*;
 import gdd.SoundEffectPlayer;
 import gdd.SpawnDetails;
 import gdd.powerup.PowerUp;
+import gdd.powerup.HealthPickup;
 import gdd.sprite.Alien1;
 import gdd.sprite.Alien2;
 import gdd.sprite.Enemy;
 import gdd.sprite.EnemyBomb;
+import gdd.sprite.Missile;
 import gdd.sprite.Explosion;
 import gdd.sprite.Player;
 import gdd.sprite.Shot;
@@ -127,6 +130,11 @@ public class Scene1 extends JPanel {
             System.err.println("Error closing audio player.");
         }
     }
+    
+    // NEW: Method to get player data for Scene2 transition
+    public Player getPlayer() {
+        return player;
+    }
 
     private void gameInit() {
 
@@ -200,6 +208,14 @@ public class Scene1 extends JPanel {
 
             // Play game over sound 
             if (!gameOverSoundPlayed) {
+                // Stop background music first, then play game over sound
+                if (audioPlayer != null) {
+                    try {
+                        audioPlayer.stop();
+                    } catch (Exception e) {
+                        System.err.println("Error stopping audio: " + e.getMessage());
+                    }
+                }
                 SoundEffectPlayer.playGameOverSound();
                 gameOverSoundPlayed = true;
             }
@@ -218,15 +234,21 @@ public class Scene1 extends JPanel {
 
     private void drawBombing(Graphics g) {
         for (Enemy e : enemies) {
-            EnemyBomb bomb = null;
             if (e instanceof Alien1) {
-                bomb = ((Alien1) e).getBomb();
+                EnemyBomb bomb = ((Alien1) e).getBomb();
+                if (bomb != null && !bomb.isDestroyed()) {
+                    g.drawImage(bomb.getImage(), bomb.getX(), bomb.getY(), this);
+                }
             } else if (e instanceof Alien2) {
-                bomb = ((Alien2) e).getBomb();
-            }
-            
-            if (bomb != null && !bomb.isDestroyed()) {
-                g.drawImage(bomb.getImage(), bomb.getX(), bomb.getY(), this);
+                Missile missile = ((Alien2) e).getMissile();
+                if (missile != null) {
+                    // Draw missile particle effects first (behind missile)
+                    missile.drawParticleEffects(g);
+                    
+                    if (!missile.isDestroyed()) {
+                        g.drawImage(missile.getImage(), missile.getX(), missile.getY(), this);
+                    }
+                }
             }
         }
     }
@@ -302,9 +324,9 @@ public class Scene1 extends JPanel {
         if (player.hasMultishot()) {
             int remainingSeconds = player.getMultishotFramesRemaining() / 60;
             g.setColor(Color.yellow);
-            g.drawString("🔥 MULTISHOT: " + remainingSeconds + "s", 450, 20);
+            g.drawString("🔥 MULTISHOT: " + remainingSeconds + "s", 400, 20);
             g.setColor(Color.red);
-            g.drawString("AUTO-FIRE ACTIVE!", 450, 40);
+            g.drawString("AUTO-FIRE ACTIVE!", 400, 40);
         }
         
         // Phase information
@@ -441,20 +463,39 @@ public class Scene1 extends JPanel {
         // player
         player.act();
         
-        // Auto-fire for multishot powerup
-        if (player.canAutoFire() && shots.size() < player.getMaxShots() - 2) {
-            int x = player.getX();
-            int y = player.getY();
+        // Auto-fire for multishot powerup (machinegun mode)
+        if (player.canAutoFire()) {
+            // Calculate shot origin from tip of player sprite, slightly right of center
+            int x = player.getX() + (PLAYER_WIDTH / 2) + 3; // Slightly right of center
+            int y;
+            if (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) {
+                y = player.getY(); // Top of sprite in vertical mode (shots go up)
+            } else {
+                y = player.getY() + PLAYER_HEIGHT / 2; // Middle height in horizontal mode (shots go right)
+            }
             
+            // Main shot
             Shot autoShot = new Shot(x, y);
             shots.add(autoShot);
 
-            SoundEffectPlayer.playShootSound(); // Play shooting sound
-            
-            // Create additional spread shot
-            if (player.hasMultishot() && shots.size() < player.getMaxShots()) {
-                Shot spreadShot = new Shot(x, y + 25);
-                shots.add(spreadShot);
+            // Add spread shots for even more firepower during multishot
+            if (player.hasMultishot()) {
+                if (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) {
+                    Shot spreadShot1 = new Shot(x - 10, y); // Left
+                    Shot spreadShot2 = new Shot(x + 10, y); // Right
+                    shots.add(spreadShot1);
+                    shots.add(spreadShot2);
+                } else {
+                    Shot spreadShot1 = new Shot(x, y - 10); // Above
+                    Shot spreadShot2 = new Shot(x, y + 10); // Below
+                    shots.add(spreadShot1);
+                    shots.add(spreadShot2);
+                }
+            }
+
+            // Only play sound occasionally to avoid audio spam
+            if (shots.size() % 3 == 0) {
+                SoundEffectPlayer.playShootSound();
             }
             
             player.triggerAutoFire();
@@ -468,18 +509,36 @@ public class Scene1 extends JPanel {
 
                     SoundEffectPlayer.playCatchPowerUpSound(); // Play power-up sound
 
-                    powerup.upgrade(player);
+                    // Special handling for health pickup
+                    if (powerup instanceof HealthPickup && lives < 3) {
+                        lives++; // Restore one life
+                        powerup.die();
+                    } else if (!(powerup instanceof HealthPickup)) {
+                        powerup.upgrade(player);
+                    } else {
+                        // Health pickup when already at max lives - just remove it
+                        powerup.die();
+                    }
                 }
             }
         }
 
-        // Enemies
+        // Enemies with mode-aware cleanup
         for (Enemy enemy : enemies) {
             if (enemy.isVisible()) {
                 enemy.act(direction);
-                // Remove enemies that have gone off the left side of the screen
-                if (enemy.getX() < -50) { // Give some buffer for image width
-                    enemy.die(); // Mark enemy as invisible so it gets cleaned up
+                
+                // Mode-aware enemy cleanup when they go offscreen
+                if (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) {
+                    // Vertical mode: remove enemies that fall off bottom
+                    if (enemy.getY() > BOARD_HEIGHT + 50) {
+                        enemy.die(); // Mark enemy as invisible so it gets cleaned up
+                    }
+                } else {
+                    // Horizontal mode: remove enemies that go off left side (current behavior)
+                    if (enemy.getX() < -50) { // Give some buffer for image width
+                        enemy.die(); // Mark enemy as invisible so it gets cleaned up
+                    }
                 }
             }
         }
@@ -517,11 +576,19 @@ public class Scene1 extends JPanel {
                     }
                 }
 
-                int x = shot.getX();
-                // Remove shots that go off the right side
-                if (x > BOARD_WIDTH) {
-                    shot.die();
-                    shotsToRemove.add(shot);
+                // Mode-aware shot cleanup when they go offscreen
+                if (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) {
+                    // Vertical mode: remove shots that go off top
+                    if (shot.getY() < -10) {
+                        shot.die();
+                        shotsToRemove.add(shot);
+                    }
+                } else {
+                    // Horizontal mode: remove shots that go off right side (current behavior)
+                    if (shot.getX() > BOARD_WIDTH) {
+                        shot.die();
+                        shotsToRemove.add(shot);
+                    }
                 }
             }
         }
@@ -536,18 +603,18 @@ public class Scene1 extends JPanel {
             
             switch (currentPhase) {
                 case 1:
-                    // Phase 1: No shooting (0-90 seconds)
+                    // Phase 1: No shooting (0-90 seconds) - pure learning
                     canShoot = false;
                     break;
                 case 2:
-                    // Phase 2: Occasional shooting (90-210 seconds)
+                    // Phase 2: Very occasional shooting (90-210 seconds) - introduce threat
                     canShoot = true;
-                    shootChance = 800; // Very rare shooting
+                    shootChance = 1200; // Very rare shooting (~20 second intervals)
                     break;
                 case 3:
-                    // Phase 3: Regular shooting every 5 seconds (210-300 seconds)
+                    // Phase 3: More frequent shooting (210-300 seconds) - escalation
                     canShoot = true;
-                    shootChance = 500; // More frequent shooting
+                    shootChance = 600; // More frequent shooting (~10 second intervals)
                     break;
             }
             
@@ -593,6 +660,14 @@ public class Scene1 extends JPanel {
 
                     // Play game over sound 
                     if (!gameOverSoundPlayed) {
+                        // Stop background music first, then play game over sound
+                        if (audioPlayer != null) {
+                            try {
+                                audioPlayer.stop();
+                            } catch (Exception e) {
+                                System.err.println("Error stopping audio: " + e.getMessage());
+                            }
+                        }
                         SoundEffectPlayer.playGameOverSound();
                         gameOverSoundPlayed = true;
             }
@@ -608,32 +683,28 @@ public class Scene1 extends JPanel {
                 }
             }
             
-            // Handle Alien2 bombs
+            // Handle Alien2 missiles
             if (enemy instanceof Alien2) {
                 Alien2 alien = (Alien2) enemy;
-                EnemyBomb bomb = alien.getBomb();
+                Missile missile = alien.getMissile();
 
-                if (canShoot && chance == CHANCE && enemy.isVisible() && bomb.isDestroyed()) {
-
-                    bomb.setDestroyed(false);
-                    bomb.setX(enemy.getX());
-                    bomb.setY(enemy.getY());
-                }
-
-                int bombX = bomb.getX();
-                int bombY = bomb.getY();
+                // Missile collision detection with player
+                int missileX = missile.getX();
+                int missileY = missile.getY();
                 int playerX = player.getX();
                 int playerY = player.getY();
 
-                if (player.isVisible() && !player.isInvincible() && !bomb.isDestroyed()
-                        && bombX >= (playerX)
-                        && bombX <= (playerX + PLAYER_WIDTH)
-                        && bombY >= (playerY)
-                        && bombY <= (playerY + PLAYER_HEIGHT)) {
+                if (player.isVisible() && !player.isInvincible() && !missile.isDestroyed()
+                        && missileX >= (playerX)
+                        && missileX <= (playerX + PLAYER_WIDTH)
+                        && missileY >= (playerY)
+                        && missileY <= (playerY + PLAYER_HEIGHT)) {
 
-                    bomb.setDestroyed(true);
+                    missile.setDestroyed(true);
                     explosions.add(new Explosion(playerX, playerY));
                     player.takeDamage();
+                    
+                    SoundEffectPlayer.playPlayerHitSound();
                     
                     // Decrement lives instead of instant death
                     lives--;
@@ -646,12 +717,8 @@ public class Scene1 extends JPanel {
                     }
                 }
 
-                if (!bomb.isDestroyed()) {
-                    bomb.act();
-                    // Remove bombs that go off the left side
-                    if (bomb.getX() < 0) {
-                        bomb.setDestroyed(true);
-                    }
+                if (!missile.isDestroyed()) {
+                    missile.act();
                 }
             }
         }
@@ -678,58 +745,95 @@ public class Scene1 extends JPanel {
         }
     }
 
+    /**
+     * Initialize star field background with mode-aware positioning
+     */
     private void initStarField() {
         // Initialize random stars across the screen
         for (int i = 0; i < 100; i++) {
-            int x = randomizer.nextInt(BOARD_WIDTH + 200); // Start some stars off-screen
-            int y = randomizer.nextInt(BOARD_HEIGHT);
+            int x, y, speed;
+            
+            if (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) {
+                // Vertical mode: stars spawn across width and fall downward
+                x = randomizer.nextInt(BOARD_WIDTH);
+                y = randomizer.nextInt(BOARD_HEIGHT + 200); // Some start above screen
+                speed = 1 + randomizer.nextInt(3); // Variable speed 1-3 for vertical
+            } else {
+                // Horizontal mode: stars spawn across height and move leftward
+                x = randomizer.nextInt(BOARD_WIDTH + 200); // Start some stars off-screen
+                y = randomizer.nextInt(BOARD_HEIGHT);
+                speed = 1; // Constant speed for horizontal
+            }
+            
             int size = randomizer.nextInt(3) + 1; // Stars size 1-3
-            int speed = 1; // All stars move at the same slow speed
             
             // Create different colored stars
-            Color color = Color.WHITE;
-            int colorChoice = randomizer.nextInt(10);
-            if (colorChoice < 7) {
-                color = Color.WHITE;
-            } else if (colorChoice < 9) {
-                color = new Color(200, 200, 255); // Light blue
-            } else {
-                color = new Color(255, 255, 200); // Light yellow
-            }
+            Color color = getRandomStarColor();
             
             stars.add(new Star(x, y, size, speed, color));
         }
     }
+    
+    /**
+     * Generate random star colors following the established distribution
+     */
+    private Color getRandomStarColor() {
+        int colorChoice = randomizer.nextInt(10);
+        if (colorChoice < 7) {
+            return Color.WHITE;
+        } else if (colorChoice < 9) {
+            return new Color(200, 200, 255); // Light blue
+        } else {
+            return new Color(255, 255, 200); // Light yellow
+        }
+    }
 
+    /**
+     * Update star field movement with mode-aware direction
+     */
     private void updateStarField() {
-        // Move stars from right to left (simulating forward movement)
         for (Star star : stars) {
-            star.x -= star.speed;
-            
-            // If star goes off the left side, respawn it on the right side
-            if (star.x < -10) {
-                star.x = BOARD_WIDTH + randomizer.nextInt(100);
-                star.y = randomizer.nextInt(BOARD_HEIGHT);
+            if (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) {
+                // Vertical mode: stars fall downward
+                star.y += star.speed;
+                
+                // If star goes off the bottom, respawn it at the top
+                if (star.y > BOARD_HEIGHT + 10) {
+                    star.y = -10;
+                    star.x = randomizer.nextInt(BOARD_WIDTH);
+                }
+            } else {
+                // Horizontal mode: stars move leftward (current behavior)
+                star.x -= star.speed;
+                
+                // If star goes off the left side, respawn it on the right side
+                if (star.x < -10) {
+                    star.x = BOARD_WIDTH + randomizer.nextInt(100);
+                    star.y = randomizer.nextInt(BOARD_HEIGHT);
+                }
             }
         }
         
-        // Occasionally add new stars from the right
+        // Occasionally add new stars with mode-aware positioning
         if (randomizer.nextInt(20) == 0) {
-            int y = randomizer.nextInt(BOARD_HEIGHT);
-            int size = randomizer.nextInt(3) + 1;
-            int speed = 1; // All new stars also move at speed 1
+            int x, y, size, speed;
             
-            Color color = Color.WHITE;
-            int colorChoice = randomizer.nextInt(10);
-            if (colorChoice < 7) {
-                color = Color.WHITE;
-            } else if (colorChoice < 9) {
-                color = new Color(200, 200, 255);
+            if (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) {
+                // Vertical mode: spawn from top
+                x = randomizer.nextInt(BOARD_WIDTH);
+                y = -10;
+                size = randomizer.nextInt(3) + 1;
+                speed = 1 + randomizer.nextInt(3); // Variable speed for vertical
             } else {
-                color = new Color(255, 255, 200);
+                // Horizontal mode: spawn from right
+                x = BOARD_WIDTH + 10;
+                y = randomizer.nextInt(BOARD_HEIGHT);
+                size = randomizer.nextInt(3) + 1;
+                speed = 1; // Constant speed for horizontal
             }
             
-            stars.add(new Star(BOARD_WIDTH + 10, y, size, speed, color));
+            Color color = getRandomStarColor();
+            stars.add(new Star(x, y, size, speed, color));
         }
         
         // Remove excess stars to prevent memory issues
@@ -810,8 +914,14 @@ public class Scene1 extends JPanel {
             if (inGame) {
                 player.keyPressed(e);
 
-                int x = player.getX();
-                int y = player.getY();
+                // Calculate shot origin from tip of player sprite, slightly right of center
+                int x = player.getX() + (PLAYER_WIDTH / 2) + 3; // Slightly right of center
+                int y;
+                if (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) {
+                    y = player.getY(); // Top of sprite in vertical mode (shots go up)
+                } else {
+                    y = player.getY() + PLAYER_HEIGHT / 2; // Middle height in horizontal mode (shots go right)
+                }
 
                 // One bullet per space press, but more bullets can be on screen
                 if (key == KeyEvent.VK_SPACE) {

@@ -1,9 +1,7 @@
 package gdd.sprite;
 
+import gdd.Global;
 import static gdd.Global.*;
-import java.awt.Graphics2D;
-import java.awt.image.BufferedImage;
-import java.awt.geom.AffineTransform;
 import javax.swing.ImageIcon;
 
 public class Shot extends Sprite {
@@ -25,8 +23,10 @@ public class Shot extends Sprite {
     }
 
     private void initShot(int x, int y) {
-
-        var ii = new ImageIcon(IMG_SHOT);
+        // Use mode-aware shot sprite
+        String shotImage = Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL ? 
+            "src/images/shotVertical.png" : IMG_SHOT;
+        var ii = new ImageIcon(shotImage);
 
         // Scale the image to use the global scaling factor
         var scaledImage = ii.getImage().getScaledInstance(ii.getIconWidth() * SCALE_FACTOR,
@@ -43,52 +43,15 @@ public class Shot extends Sprite {
         framesSinceFired = 0; // Reset frame counter
     }
 
-    private BufferedImage rotateImage(java.awt.Image image, double angle) {
-        // Ensure the image is fully loaded
-        if (image.getWidth(null) <= 0 || image.getHeight(null) <= 0) {
-            // If dimensions are not available, return a simple BufferedImage conversion
-            BufferedImage bufferedImage = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
-            Graphics2D g = bufferedImage.createGraphics();
-            g.drawImage(image, 0, 0, 16, 16, null);
-            g.dispose();
-            image = bufferedImage;
-        }
-        
-        // Convert to BufferedImage if needed
-        BufferedImage bufferedImage;
-        if (image instanceof BufferedImage) {
-            bufferedImage = (BufferedImage) image;
-        } else {
-            int width = image.getWidth(null);
-            int height = image.getHeight(null);
-            bufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-            Graphics2D g = bufferedImage.createGraphics();
-            g.drawImage(image, 0, 0, null);
-            g.dispose();
-        }
 
-        int width = bufferedImage.getWidth();
-        int height = bufferedImage.getHeight();
-
-        // Create new image with swapped dimensions for 90-degree rotation
-        BufferedImage rotatedImage = new BufferedImage(height, width, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g2d = rotatedImage.createGraphics();
-
-        // Rotate around center
-        AffineTransform transform = new AffineTransform();
-        transform.translate(height / 2.0, width / 2.0);
-        transform.rotate(Math.toRadians(angle));
-        transform.translate(-width / 2.0, -height / 2.0);
-
-        g2d.setTransform(transform);
-        g2d.drawImage(bufferedImage, 0, 0, null);
-        g2d.dispose();
-
-        return rotatedImage;
-    }
 
     public void act() {
-        this.x += 12; // Super fast shots for intense gameplay
+        // Mode-aware shot movement
+        if (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) {
+            this.y -= 12; // Move up in vertical mode
+        } else {
+            this.x += 12; // Move right in horizontal mode (current)
+        }
         framesSinceFired++; // Increment frame counter
     }
 
@@ -105,5 +68,14 @@ public class Shot extends Sprite {
             return false;
         }
         return super.collidesWith(other);
+    }
+    
+    // NEW: Mode-aware boundary checking
+    public boolean isOffScreen() {
+        if (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) {
+            return y < -10; // Off top edge
+        } else {
+            return x > BOARD_WIDTH + 10; // Off right edge
+        }
     }
 }

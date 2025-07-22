@@ -26,7 +26,7 @@ public class TitleScene extends JPanel {
     private final Dimension d = new Dimension(BOARD_WIDTH, BOARD_HEIGHT);
     private Timer timer;
     private Game game;
-    private float currentVolume = 0.5f; // Track current volume
+    private float currentVolume = 0.25f; // Track current volume
     
     // NEW: Mode selection variables
     private int selectedMode = Global.MODE_HORIZONTAL; // Default to horizontal

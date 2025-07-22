@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Java-based Space Invaders game built with Swing. The project is based on a Space Invaders repository and modified for game development project purposes. The game has been adapted for sideways/horizontal scrolling gameplay instead of traditional vertical movement.
+This is a Java-based Space Invaders game built with Swing. The project is based on a Space Invaders repository and modified for game development project purposes. The game features **dual gameplay modes**: traditional horizontal scrolling and vertical scrolling, with a mode selection system that allows players to choose their preferred play style.
 
 ## Development Commands
 
@@ -27,15 +27,15 @@ java -jar game.jar
 - `src/gdd/Main.java` - Application entry point that creates and displays the Game window
 
 ### Core Game Structure
-- `src/gdd/Game.java` - Main game window (JFrame) that manages scene transitions
-- `src/gdd/Global.java` - Central configuration class containing all game constants, dimensions, image paths, and gameplay parameters
+- `src/gdd/Game.java` - Main game window (JFrame) that manages scene transitions and mode selection
+- `src/gdd/Global.java` - Central configuration class containing all game constants, dimensions, image paths, gameplay parameters, and mode management system
 
 ### Scene System
 The game uses a scene-based architecture:
-- `src/gdd/scene/TitleScene.java` - Title screen with animated "Press SPACE to Start" text and background music
-- `src/gdd/scene/Scene1.java` - Stage 1 gameplay scene with sideways scrolling mechanics (5-minute survival)
-- `src/gdd/scene/Scene2.java` - Stage 2 gameplay scene with boss battle mechanics (5-minute boss fight)
-- `src/gdd/scene/SpawnManager.java` - Centralized enemy and powerup spawning logic for both scenes
+- `src/gdd/scene/TitleScene.java` - Title screen with animated "Press SPACE to Start" text, background music, and mode selection (horizontal/vertical)
+- `src/gdd/scene/Scene1.java` - Stage 1 gameplay scene with mode-aware mechanics (5-minute survival)
+- `src/gdd/scene/Scene2.java` - Stage 2 gameplay scene with boss battle mechanics and mode-aware positioning (5-minute boss fight)
+- `src/gdd/scene/SpawnManager.java` - Centralized enemy and powerup spawning logic for both scenes with mode-aware positioning
 
 ### Sprite System
 All game entities inherit from a common sprite base:
@@ -65,16 +65,29 @@ All game entities inherit from a common sprite base:
 
 ## Key Features
 
-### Sideways Gameplay
-The game has been modified from traditional Space Invaders to use horizontal movement:
+### Dual Mode Gameplay System
+**NEW**: The game now supports both horizontal and vertical scrolling modes:
+
+**Horizontal Mode (Original)**:
 - Player moves vertically on the left side of screen
 - Enemies spawn from the right side and move left
 - Shots travel from left to right
 - Enemy bombs travel from right to left
 
+**Vertical Mode (New)**:
+- Player moves horizontally at the bottom of screen
+- Enemies spawn from the top and move down
+- Shots travel upward
+- Enemy bombs fall downward
+- Visual distinction: enemy bombs have bright yellow/orange tinting
+
+**Mode Selection**: Players can choose their preferred mode on the title screen using arrow keys
+
 ### Dynamic Background
-- Scrolling star field with randomly generated stars of different sizes and colors
-- Stars move from right to left to simulate forward movement
+- **Mode-aware star field**: Scrolling star field with randomly generated stars of different sizes and colors
+- **Horizontal mode**: Stars move from right to left to simulate forward movement
+- **Vertical mode**: Stars fall downward to simulate descent
+- **Scene-specific colors**: Scene1 uses white/blue/yellow stars, Scene2 uses reddish tones
 
 ### Spawn System
 Enemies and power-ups are spawned based on frame timing using `spawnMap` in Scene1. Features a 3-phase difficulty progression system:

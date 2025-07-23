@@ -443,6 +443,16 @@ public class Scene1 extends JPanel {
         if (gameTimeSeconds >= 300) {
             inGame = false;
             timer.stop();
+            // Stop scene1 music and play victory sound
+            try {
+                if (audioPlayer != null) {
+                    audioPlayer.stop();
+                }
+                SoundEffectPlayer.playVictorySound();
+            } catch (Exception e) {
+                System.out.println("Error playing victory sound: " + e.getMessage());
+            }
+            
             message = "Level 1 Complete!You survived 5 minutes!Press SPACE to continue to Level 2";
         }
 

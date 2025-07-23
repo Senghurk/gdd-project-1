@@ -298,18 +298,6 @@ public class SpawnManager {
     private void generatePhase1Spawns() {
         // Phase 1: Frames 0-5400 (0-90 seconds) - Learning phase with gradually increasing Alien1
         
-        // ADD EARLY ALIEN2 SPAWNS FOR TESTING
-        spawnMap.put(300, new SpawnDetails("Alien2", 0, 0)); // 5 seconds
-        spawnMap.put(400, new SpawnDetails("Alien2", 0, 0)); // 10 seconds
-        spawnMap.put(600, new SpawnDetails("Alien2", 0, 0)); // 15 seconds
-        spawnMap.put(800, new SpawnDetails("Alien2", 0, 0)); // 20 seconds
-        spawnMap.put(1000, new SpawnDetails("Alien2", 0, 0)); // 25 seconds
-        spawnMap.put(1200, new SpawnDetails("Alien2", 0, 0)); // 30 seconds
-        spawnMap.put(1400, new SpawnDetails("Alien2", 0, 0)); // 35 seconds
-        spawnMap.put(1600, new SpawnDetails("Alien2", 0, 0)); // 40 seconds
-        spawnMap.put(1800, new SpawnDetails("Alien2", 0, 0)); // 45 seconds
-        spawnMap.put(2000, new SpawnDetails("Alien2", 0, 0)); // 50 seconds
-        
         int frameCounter = 0;
         
         for (int frame = 600; frame <= 5400; frame += 150) { // Start at 10 seconds, every 2.5 seconds

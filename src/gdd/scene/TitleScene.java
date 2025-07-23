@@ -140,7 +140,7 @@ public class TitleScene extends JPanel {
         // Mode selector controls
         g.setColor(Color.cyan);
         g.setFont(g.getFont().deriveFont(12f));
-        g.drawString("Mode Controls: UP/DOWN arrows to select", 10, d.height - 50);
+        g.drawString("Mode Controls: UP/DOWN arrows to move and ENTER to select", 10, d.height - 50);
         
         g.setColor(Color.gray);
         g.setFont(g.getFont().deriveFont(10f));
@@ -205,7 +205,7 @@ public class TitleScene extends JPanel {
         public void keyPressed(KeyEvent e) {
             System.out.println("Title.keyPressed: " + e.getKeyCode());
             int key = e.getKeyCode();
-            if (key == KeyEvent.VK_SPACE) {
+            if (key == KeyEvent.VK_ENTER) {
                 // Set the selected mode in the game and load Scene1
                 game.setGameMode(selectedMode);
                 game.loadScene1();

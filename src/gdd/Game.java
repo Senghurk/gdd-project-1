@@ -59,6 +59,12 @@ public class Game extends JFrame  {
 
     public void loadScene1() {
         getContentPane().removeAll();
+        // If scene1 was previously started, create new instance
+        if (scene1Started) {
+            scene1.stop();
+            scene1 = new Scene1(this);
+        }
+        
         add(scene1);
         if (titleStarted) {
             titleScene.stop();

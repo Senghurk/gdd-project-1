@@ -39,7 +39,11 @@ public class Shot extends Sprite {
         setImage(scaledImage);
 
         setX(x + H_SPACE); // Spawn shot slightly to the right of player
-        setY(y + V_SPACE); // Spawn shot at player's vertical center
+        if (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) {
+            setY(y + V_SPACE); // Spawn shot at player's vertical center (vertical mode)
+        } else {
+            setY(y + V_SPACE - 6); // Move shot up by 6 pixels in horizontal mode for better centering
+        }
         framesSinceFired = 0; // Reset frame counter
     }
 

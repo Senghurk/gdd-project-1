@@ -16,11 +16,11 @@ public class Game extends JFrame  {
     private Player playerFromScene1 = null;
     
     // NEW: Mode management
-    private int gameMode = Global.MODE_HORIZONTAL; // Default to horizontal
+    private int gameMode = Global.MODE_VERTICAL; // Default to horizontal
     
     // TESTING: Set mode for direct scene testing (when skipping title screen)
     // Change this to Global.MODE_VERTICAL to test Scene2 in vertical mode
-    private static final int TESTING_MODE = Global.MODE_VERTICAL;
+    private static final int TESTING_MODE = Global.MODE_HORIZONTAL;
 
     public Game() {
         titleScene = new TitleScene(this);
@@ -36,8 +36,8 @@ public class Game extends JFrame  {
          *  3. Comment out loadTitle() line below
          */
 
-        //loadTitle(); // Start with title screen
-        loadScene2(); // Uncomment to test Scene2 directly
+        loadTitle(); // Start with title screen
+        //loadScene2(); // Uncomment to test Scene2 directly
     }
 
     private void initUI() {
@@ -59,6 +59,12 @@ public class Game extends JFrame  {
 
     public void loadScene1() {
         getContentPane().removeAll();
+        // If scene1 was previously started, create new instance
+        if (scene1Started) {
+            scene1.stop();
+            scene1 = new Scene1(this);
+        }
+        
         add(scene1);
         if (titleStarted) {
             titleScene.stop();

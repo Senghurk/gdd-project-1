@@ -7,6 +7,9 @@ public class Enemy extends Sprite {
 
     // private Bomb bomb;
 
+    private java.awt.Image scaledImg1;
+    private java.awt.Image scaledImg2;
+    
     public Enemy(int x, int y) {
         // Set fixed collision bounds for enemies - smaller than visual size to prevent false collisions
         setCollisionBounds(20, 20); // Enemy collision box - smaller than visual
@@ -20,13 +23,21 @@ public class Enemy extends Sprite {
 
         // bomb = new Bomb(x, y);
 
-        var ii = new ImageIcon(IMG_ENEMY);
+        // Load both animation frames
+        var ii1 = new ImageIcon(IMG_ENEMY1_1);
+        var ii2 = new ImageIcon(IMG_ENEMY1_2);
 
-        // Scale the image to use the global scaling factor
-        var scaledImage = ii.getImage().getScaledInstance(ii.getIconWidth() * SCALE_FACTOR,
-                ii.getIconHeight() * SCALE_FACTOR,
+        // Scale both images
+        scaledImg1 = ii1.getImage().getScaledInstance(ii1.getIconWidth() * SCALE_FACTOR,
+                ii1.getIconHeight() * SCALE_FACTOR,
                 java.awt.Image.SCALE_SMOOTH);
-        setImage(scaledImage);
+        scaledImg2 = ii2.getImage().getScaledInstance(ii2.getIconWidth() * SCALE_FACTOR,
+                ii2.getIconHeight() * SCALE_FACTOR,
+                java.awt.Image.SCALE_SMOOTH);
+
+
+        // Set initial image
+        setImage(scaledImg1);
     }
 
     public void act(int direction) {

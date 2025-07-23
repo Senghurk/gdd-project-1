@@ -41,17 +41,21 @@ public class Global {
     public static final int PLAYER_HEIGHT = 20; // Doubled from 10
 
     // Images
-    public static final String IMG_ENEMY = "src/images/alien.png";
+    public static final String IMG_ENEMY1_1 = "src/images/ufo-1.png";
+    public static final String IMG_ENEMY1_2 = "src/images/ufo-2.png";
     public static final String IMG_ENEMY2_1 = "src/images/alien2-1.png";
     public static final String IMG_ENEMY2_2 = "src/images/alien2-2.png";
-    public static final String IMG_PLAYER = "src/images/player.png";
+    public static final String IMG_PLAYER_H1 = "src/images/player-h1.png";
+    public static final String IMG_PLAYER_H2 = "src/images/player-h2.png";
+    public static final String IMG_PLAYER_V1 = "src/images/player-v1.png";
+    public static final String IMG_PLAYER_V2 = "src/images/player-v2.png";
     public static final String IMG_SHOT = "src/images/shot.png";
     public static final String IMG_EXPLOSION = "src/images/explosion.png";
     public static final String IMG_TITLE = "src/images/title.png";
     public static final String IMG_POWERUP_SPEEDUP = "src/images/powerup-s.png";
     public static final String IMG_POWERUP_ADDBULLET = "src/images/powerup_bullet.png";
     public static final String IMG_POWERUP_MULTISHOT = "src/images/powerup_autoshot.png";
-    public static final String IMG_POWERUP_HEALTH = "src/images/health-pickup.png";
+    public static final String IMG_POWERUP_HEALTH = "src/images/healthup.png";
     public static final String IMG_BOSS1 = "src/images/boss1.png";
     public static final String IMG_BOSS2 = "src/images/boss2.png";
     public static final String IMG_BOSS_SHOT = "src/images/boss_shot.png";

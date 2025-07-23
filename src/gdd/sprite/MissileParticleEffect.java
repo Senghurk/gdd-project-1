@@ -122,4 +122,9 @@ public class MissileParticleEffect {
     public int getParticleCount() {
         return particles.size();
     }
+    
+    // Clear all particles immediately (for when missile is destroyed)
+    public void clearAllParticles() {
+        particles.clear();
+    }
 }

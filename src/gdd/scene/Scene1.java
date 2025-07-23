@@ -84,6 +84,7 @@ public class Scene1 extends JPanel {
     private HashMap<Integer, SpawnDetails> spawnMap = new HashMap<>();
     private AudioPlayer audioPlayer;
     private SpawnManager spawnManager;
+    private List<EnemyBomb> bombs; // NEW: Central bomb list
 
     public Scene1(Game game) {
         this.game = game;
@@ -142,6 +143,7 @@ public class Scene1 extends JPanel {
         powerups = new ArrayList<>();
         explosions = new ArrayList<>();
         shots = new ArrayList<>();
+        bombs = new ArrayList<>(); // NEW: Initialize bomb list
 
         // Initialize the star field for background
         initStarField();
@@ -202,23 +204,9 @@ public class Scene1 extends JPanel {
         }
 
         if (player.isDying()) {
-
             player.die();
             inGame = false;
-
-            // Play game over sound 
-            if (!gameOverSoundPlayed) {
-                // Stop background music first, then play game over sound
-                if (audioPlayer != null) {
-                    try {
-                        audioPlayer.stop();
-                    } catch (Exception e) {
-                        System.err.println("Error stopping audio: " + e.getMessage());
-                    }
-                }
-                SoundEffectPlayer.playGameOverSound();
-                gameOverSoundPlayed = true;
-            }
+            handleGameOverSound();
         }
     }
 
@@ -233,18 +221,18 @@ public class Scene1 extends JPanel {
     }
 
     private void drawBombing(Graphics g) {
+        // Draw all bombs in the central list
+        for (EnemyBomb bomb : bombs) {
+            if (!bomb.isDestroyed()) {
+                g.drawImage(bomb.getImage(), bomb.getX(), bomb.getY(), this);
+            }
+        }
+        // Draw Alien2 missiles as before
         for (Enemy e : enemies) {
-            if (e instanceof Alien1) {
-                EnemyBomb bomb = ((Alien1) e).getBomb();
-                if (bomb != null && !bomb.isDestroyed()) {
-                    g.drawImage(bomb.getImage(), bomb.getX(), bomb.getY(), this);
-                }
-            } else if (e instanceof Alien2) {
+            if (e instanceof Alien2) {
                 Missile missile = ((Alien2) e).getMissile();
                 if (missile != null) {
-                    // Draw missile particle effects first (behind missile)
                     missile.drawParticleEffects(g);
-                    
                     if (!missile.isDestroyed()) {
                         g.drawImage(missile.getImage(), missile.getX(), missile.getY(), this);
                     }
@@ -457,6 +445,16 @@ public class Scene1 extends JPanel {
         if (gameTimeSeconds >= 300) {
             inGame = false;
             timer.stop();
+            // Stop scene1 music and play victory sound
+            try {
+                if (audioPlayer != null) {
+                    audioPlayer.stop();
+                }
+                SoundEffectPlayer.playVictorySound();
+            } catch (Exception e) {
+                System.out.println("Error playing victory sound: " + e.getMessage());
+            }
+            
             message = "Level 1 Complete!You survived 5 minutes!Press SPACE to continue to Level 2";
         }
 
@@ -527,17 +525,21 @@ public class Scene1 extends JPanel {
         for (Enemy enemy : enemies) {
             if (enemy.isVisible()) {
                 enemy.act(direction);
-                
+                // If Alien1 just shot a bomb, add it to bombs list if not already present and not destroyed
+                if (enemy instanceof Alien1) {
+                    EnemyBomb bomb = ((Alien1) enemy).getBomb();
+                    if (!bomb.isDestroyed() && !bombs.contains(bomb)) {
+                        bombs.add(bomb);
+                    }
+                }
                 // Mode-aware enemy cleanup when they go offscreen
                 if (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) {
-                    // Vertical mode: remove enemies that fall off bottom
                     if (enemy.getY() > BOARD_HEIGHT + 50) {
-                        enemy.die(); // Mark enemy as invisible so it gets cleaned up
+                        enemy.die();
                     }
                 } else {
-                    // Horizontal mode: remove enemies that go off left side (current behavior)
-                    if (enemy.getX() < -50) { // Give some buffer for image width
-                        enemy.die(); // Mark enemy as invisible so it gets cleaned up
+                    if (enemy.getX() < -50) {
+                        enemy.die();
                     }
                 }
             }
@@ -566,6 +568,7 @@ public class Scene1 extends JPanel {
                         // Add score based on enemy type
                         if (enemy instanceof Alien2) {
                             score += 200; // Alien2 worth more points
+                            // Missile continues even after enemy is destroyed
                         } else {
                             score += 100; // Alien1 base points
                         }
@@ -657,22 +660,9 @@ public class Scene1 extends JPanel {
                         player.setDying(true);
                         inGame = false;
                         message = "Game Over!";
-
-                    // Play game over sound 
-                    if (!gameOverSoundPlayed) {
-                        // Stop background music first, then play game over sound
-                        if (audioPlayer != null) {
-                            try {
-                                audioPlayer.stop();
-                            } catch (Exception e) {
-                                System.err.println("Error stopping audio: " + e.getMessage());
-                            }
-                        }
-                        SoundEffectPlayer.playGameOverSound();
-                        gameOverSoundPlayed = true;
-            }
-        }
-    }
+                        handleGameOverSound();
+                    }
+                }
 
                 if (!bomb.isDestroyed()) {
                     bomb.act();
@@ -714,15 +704,29 @@ public class Scene1 extends JPanel {
                         player.setDying(true);
                         inGame = false;
                         message = "Game Over!";
+                        handleGameOverSound();
                     }
                 }
 
                 if (!missile.isDestroyed()) {
                     missile.act();
+                } else {
+                    // Ensure particle effects are cleared when missile is destroyed
+                    missile.getParticleEffect().clearAllParticles();
                 }
             }
         }
         
+        // Update and cleanup bombs independently
+        List<EnemyBomb> bombsToRemove = new ArrayList<>();
+        for (EnemyBomb bomb : bombs) {
+            bomb.act();
+            if (bomb.isDestroyed()) {
+                bombsToRemove.add(bomb);
+            }
+        }
+        bombs.removeAll(bombsToRemove);
+
         // Update and remove completed explosions
         for (Explosion explosion : explosions) {
             explosion.act();
@@ -843,6 +847,15 @@ public class Scene1 extends JPanel {
     }
 
     private void restartGame() {
+        // Stop any currently playing audio (scene1.wav or gameOver.wav)
+        try {
+            if (audioPlayer != null) {
+                audioPlayer.stop();
+            }
+        } catch (Exception e) {
+            System.err.println("Error stopping audio during restart: " + e.getMessage());
+        }
+
         // Reset game state
         inGame = true;
         deaths = 0;
@@ -863,13 +876,32 @@ public class Scene1 extends JPanel {
         explosions.clear();
         shots.clear();
         stars.clear();
+        bombs.clear(); // Clear bombs list
 
         // Reinitialize everything
         gameInit();
 
+        // Restart scene1.wav
+        initAudio();
+
         // Restart timer if it was stopped
         if (!timer.isRunning()) {
             timer.start();
+        }
+    }
+
+    private void handleGameOverSound() {
+        if (!gameOverSoundPlayed) {
+            // Stop background music first, then play game over sound
+            if (audioPlayer != null) {
+                try {
+                    audioPlayer.stop();
+                } catch (Exception e) {
+                    System.err.println("Error stopping audio: " + e.getMessage());
+                }
+            }
+            SoundEffectPlayer.playGameOverSound();
+            gameOverSoundPlayed = true;
         }
     }
 
@@ -904,7 +936,7 @@ public class Scene1 extends JPanel {
                 if (key == KeyEvent.VK_R) {
                     restartGame();
                     return;
-                } else if (key == KeyEvent.VK_SPACE && message.contains("Level 2")) {
+                } else if (key == KeyEvent.VK_SPACE && (message.contains("Level 2") || message.contains("Level 1 Complete"))) {
                     game.loadScene2(); // Move to Scene2
                     return;
                 }

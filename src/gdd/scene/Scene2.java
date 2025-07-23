@@ -424,21 +424,7 @@ public class Scene2 extends JPanel {
         if (player.isDying()) {
             player.die();
             inGame = false;
-
-            // Play game over sound 
-            if (!gameOverSoundPlayed) {
-                // Stop background music first, then play game over sound
-                if (audioPlayer != null) {
-                    try {
-                        audioPlayer.stop();
-                    } catch (Exception e) {
-                        System.err.println("Error stopping audio: " + e.getMessage());
-                    }
-                }
-                SoundEffectPlayer.playGameOverSound();
-                gameOverSoundPlayed = true;
-            }
-
+            handleGameOverSound();
         }
     }
 
@@ -625,9 +611,7 @@ public class Scene2 extends JPanel {
                 boss.die();
                 bossDefeated = true;
                 explosions.add(new Explosion(boss.getX(), boss.getY()));
-
-                SoundEffectPlayer.playVictorySound(); // Play victory sound
-
+                handleVictorySound();
                 System.out.println("BOSS DEFEATED!");
             }
         }
@@ -639,29 +623,13 @@ public class Scene2 extends JPanel {
                 inGame = false;
                 timer.stop();
                 message = "Game Over! Boss was not defeated in time!";
-                
-                if (!gameOverSoundPlayed) {
-                    // Stop background music first, then play game over sound
-                    if (audioPlayer != null) {
-                        try {
-                            audioPlayer.stop();
-                        } catch (Exception e) {
-                            System.err.println("Error stopping audio: " + e.getMessage());
-                        }
-                    }
-                    SoundEffectPlayer.playGameOverSound(); // Play game over sound
-                    gameOverSoundPlayed = true;
-                }
+                handleGameOverSound();
             } else {
                 // Boss defeated or no boss spawned - player wins
                 inGame = false;
                 timer.stop();
                 message = "Congratulations! You've completed Scene 2!";
-
-                if (!bossDefeated) {
-                    SoundEffectPlayer.playVictorySound();
-                }
-
+                handleVictorySound();
             }
         }
 
@@ -740,11 +708,13 @@ public class Scene2 extends JPanel {
                     // Vertical mode: remove enemies that fall off bottom
                     if (enemy.getY() > BOARD_HEIGHT + 50) {
                         enemy.die(); // Mark enemy as invisible so it gets cleaned up
+                        // Missile continues even after enemy goes offscreen
                     }
                 } else {
                     // Horizontal mode: remove enemies that go off left side (current behavior)
                     if (enemy.getX() < -50) {
                         enemy.die();
+                        // Missile continues even after enemy goes offscreen
                     }
                 }
             }
@@ -779,28 +749,19 @@ public class Scene2 extends JPanel {
                     player.setDying(true);
                     inGame = false;
                     message = "Game Over!";
-                
-                // Play game over sound
-                if (!gameOverSoundPlayed) {
-                    // Stop background music first, then play game over sound
-                    if (audioPlayer != null) {
-                        try {
-                            audioPlayer.stop();
-                        } catch (Exception e) {
-                            System.err.println("Error stopping audio: " + e.getMessage());
-                        }
-                    }
-                    SoundEffectPlayer.playGameOverSound();
-                    gameOverSoundPlayed = true;
-                    }    
-
+                    handleGameOverSound();
                 }
             }
         }
         
         // Update all missiles
         for (Missile missile : missiles) {
-            missile.act();
+            if (!missile.isDestroyed()) {
+                missile.act();
+            } else {
+                // Ensure particle effects are cleared when missile is destroyed
+                missile.getParticleEffect().clearAllParticles();
+            }
             // Check collision with player
             if (!missile.isDestroyed() && player.isVisible() && !player.isInvincible()
                 && missile.getX() >= player.getX()
@@ -820,21 +781,7 @@ public class Scene2 extends JPanel {
                     player.setDying(true);
                     inGame = false;
                     message = "Game Over!";
-                
-                // Play game over sound
-                if (!gameOverSoundPlayed) {
-                    // Stop background music first, then play game over sound
-                    if (audioPlayer != null) {
-                        try {
-                            audioPlayer.stop();
-                        } catch (Exception e) {
-                            System.err.println("Error stopping audio: " + e.getMessage());
-                        }
-                    }
-                    SoundEffectPlayer.playGameOverSound();
-                    gameOverSoundPlayed = true;
-                    }    
-
+                    handleGameOverSound();
                 }
             }
         }
@@ -922,6 +869,7 @@ public class Scene2 extends JPanel {
                         
                         if (enemy instanceof Alien2) {
                             score += 300; // More points in level 2
+                            // Missile continues even after enemy is destroyed
                         } else {
                             score += 150; // More points in level 2
                         }
@@ -975,7 +923,32 @@ public class Scene2 extends JPanel {
     }
 
     private void restartGame() {
-        game.loadScene2();
+        game.loadScene1();
+    }
+
+    private void handleGameOverSound() {
+        if (!gameOverSoundPlayed) {
+            if (audioPlayer != null) {
+                try {
+                    audioPlayer.stop();
+                } catch (Exception e) {
+                    System.err.println("Error stopping audio: " + e.getMessage());
+                }
+            }
+            SoundEffectPlayer.playGameOverSound();
+            gameOverSoundPlayed = true;
+        }
+    }
+
+    private void handleVictorySound() {
+        if (audioPlayer != null) {
+            try {
+                audioPlayer.stop();
+            } catch (Exception e) {
+                System.err.println("Error stopping audio: " + e.getMessage());
+            }
+        }
+        SoundEffectPlayer.playVictorySound();
     }
 
     private class TAdapter extends KeyAdapter {

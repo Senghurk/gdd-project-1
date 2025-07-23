@@ -99,10 +99,13 @@ public class Missile extends Sprite {
                     setDestroyed(true);
                 }
             }
+            
+            // Update particle effects only when missile is active
+            particleEffect.update();
+        } else {
+            // When missile is destroyed, clear all particles immediately
+            particleEffect.clearAllParticles();
         }
-        
-        // Always update particle effects
-        particleEffect.update();
     }
 
     public void act(int direction) {

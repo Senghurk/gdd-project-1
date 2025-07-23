@@ -27,7 +27,7 @@ public class Player extends Sprite {
 
     public Player() {
         // Set fixed collision bounds for player - smaller than visual size to prevent false collisions
-        setCollisionBounds(25, 15); // Player collision box - smaller than visual
+        setCollisionBounds(30, 25); // Player collision box - smaller than visual
         initPlayer();
     }
 
@@ -78,13 +78,13 @@ public class Player extends Sprite {
         frameCounter++;
         // Animate every 20 frames
         if (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) {
-            if ((frameCounter / 20) % 2 == 0) {
+            if ((frameCounter / 30) % 2 == 0) {
                 setImage(scaledImgV1);
             } else {
                 setImage(scaledImgV2);
             }
         } else {
-            if ((frameCounter / 20) % 2 == 0) {
+            if ((frameCounter / 30) % 2 == 0) {
                 setImage(scaledImgH1);
             } else {
                 setImage(scaledImgH2);

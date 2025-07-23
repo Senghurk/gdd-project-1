@@ -84,6 +84,7 @@ public class Scene1 extends JPanel {
     private HashMap<Integer, SpawnDetails> spawnMap = new HashMap<>();
     private AudioPlayer audioPlayer;
     private SpawnManager spawnManager;
+    private List<EnemyBomb> bombs; // NEW: Central bomb list
 
     public Scene1(Game game) {
         this.game = game;
@@ -142,6 +143,7 @@ public class Scene1 extends JPanel {
         powerups = new ArrayList<>();
         explosions = new ArrayList<>();
         shots = new ArrayList<>();
+        bombs = new ArrayList<>(); // NEW: Initialize bomb list
 
         // Initialize the star field for background
         initStarField();
@@ -219,18 +221,18 @@ public class Scene1 extends JPanel {
     }
 
     private void drawBombing(Graphics g) {
+        // Draw all bombs in the central list
+        for (EnemyBomb bomb : bombs) {
+            if (!bomb.isDestroyed()) {
+                g.drawImage(bomb.getImage(), bomb.getX(), bomb.getY(), this);
+            }
+        }
+        // Draw Alien2 missiles as before
         for (Enemy e : enemies) {
-            if (e instanceof Alien1) {
-                EnemyBomb bomb = ((Alien1) e).getBomb();
-                if (bomb != null && !bomb.isDestroyed()) {
-                    g.drawImage(bomb.getImage(), bomb.getX(), bomb.getY(), this);
-                }
-            } else if (e instanceof Alien2) {
+            if (e instanceof Alien2) {
                 Missile missile = ((Alien2) e).getMissile();
                 if (missile != null) {
-                    // Draw missile particle effects first (behind missile)
                     missile.drawParticleEffects(g);
-                    
                     if (!missile.isDestroyed()) {
                         g.drawImage(missile.getImage(), missile.getX(), missile.getY(), this);
                     }
@@ -523,19 +525,21 @@ public class Scene1 extends JPanel {
         for (Enemy enemy : enemies) {
             if (enemy.isVisible()) {
                 enemy.act(direction);
-                
+                // If Alien1 just shot a bomb, add it to bombs list if not already present and not destroyed
+                if (enemy instanceof Alien1) {
+                    EnemyBomb bomb = ((Alien1) enemy).getBomb();
+                    if (!bomb.isDestroyed() && !bombs.contains(bomb)) {
+                        bombs.add(bomb);
+                    }
+                }
                 // Mode-aware enemy cleanup when they go offscreen
                 if (Global.CURRENT_GAME_MODE == Global.MODE_VERTICAL) {
-                    // Vertical mode: remove enemies that fall off bottom
                     if (enemy.getY() > BOARD_HEIGHT + 50) {
-                        enemy.die(); // Mark enemy as invisible so it gets cleaned up
-                        // Missile continues even after enemy goes offscreen
+                        enemy.die();
                     }
                 } else {
-                    // Horizontal mode: remove enemies that go off left side (current behavior)
-                    if (enemy.getX() < -50) { // Give some buffer for image width
-                        enemy.die(); // Mark enemy as invisible so it gets cleaned up
-                        // Missile continues even after enemy goes offscreen
+                    if (enemy.getX() < -50) {
+                        enemy.die();
                     }
                 }
             }
@@ -713,6 +717,16 @@ public class Scene1 extends JPanel {
             }
         }
         
+        // Update and cleanup bombs independently
+        List<EnemyBomb> bombsToRemove = new ArrayList<>();
+        for (EnemyBomb bomb : bombs) {
+            bomb.act();
+            if (bomb.isDestroyed()) {
+                bombsToRemove.add(bomb);
+            }
+        }
+        bombs.removeAll(bombsToRemove);
+
         // Update and remove completed explosions
         for (Explosion explosion : explosions) {
             explosion.act();
@@ -862,6 +876,7 @@ public class Scene1 extends JPanel {
         explosions.clear();
         shots.clear();
         stars.clear();
+        bombs.clear(); // Clear bombs list
 
         // Reinitialize everything
         gameInit();
@@ -921,7 +936,7 @@ public class Scene1 extends JPanel {
                 if (key == KeyEvent.VK_R) {
                     restartGame();
                     return;
-                } else if (key == KeyEvent.VK_SPACE && message.contains("Level 2")) {
+                } else if (key == KeyEvent.VK_SPACE && (message.contains("Level 2") || message.contains("Level 1 Complete"))) {
                     game.loadScene2(); // Move to Scene2
                     return;
                 }

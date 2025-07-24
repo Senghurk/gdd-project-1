@@ -6,16 +6,16 @@ import gdd.Global;
 import static gdd.Global.*;
 import gdd.SoundEffectPlayer;
 import gdd.SpawnDetails;
-import gdd.powerup.PowerUp;
 import gdd.powerup.HealthPickup;
+import gdd.powerup.PowerUp;
 import gdd.sprite.Alien1;
 import gdd.sprite.Alien2;
 import gdd.sprite.Boss;
 import gdd.sprite.BossBomb;
 import gdd.sprite.Enemy;
 import gdd.sprite.EnemyBomb;
-import gdd.sprite.Missile;
 import gdd.sprite.Explosion;
+import gdd.sprite.Missile;
 import gdd.sprite.Player;
 import gdd.sprite.Shot;
 import java.awt.Color;
@@ -611,13 +611,12 @@ public class Scene2 extends JPanel {
                 boss.die();
                 bossDefeated = true;
                 explosions.add(new Explosion(boss.getX(), boss.getY()));
-                handleVictorySound();
                 System.out.println("BOSS DEFEATED!");
             }
         }
         
         // Simple Victory/Defeat conditions
-        if (gameTimeSeconds >= 300) { // 5 minutes reached
+        if (gameTimeSeconds >= 300) { // 5 minutes reached default 300
             if (bossSpawned && !bossDefeated) {
                 // Boss not defeated - player loses (had 2 minutes to fight boss)
                 inGame = false;
@@ -628,7 +627,7 @@ public class Scene2 extends JPanel {
                 // Boss defeated or no boss spawned - player wins
                 inGame = false;
                 timer.stop();
-                message = "Congratulations! You've completed Scene 2!";
+                message = "Congratulations! You've completed Scene 2!";              
                 handleVictorySound();
             }
         }

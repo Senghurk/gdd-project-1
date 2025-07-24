@@ -2,9 +2,9 @@ package gdd.sprite;
 
 import gdd.Global;
 import static gdd.Global.*;
-import javax.swing.ImageIcon;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.ImageIcon;
 
 public class Boss extends Sprite {
     

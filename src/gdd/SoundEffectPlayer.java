@@ -31,13 +31,13 @@ public class SoundEffectPlayer {
                 // Open audioInputStream to the clip
                 clip.open(audioInputStream);
                 
-                // Set volume to a lower level (30%) to avoid overwhelming background music
+                // Set volume to 90% for audible sound effects
                 if (clip.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
                     FloatControl gainControl = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);
                     float min = gainControl.getMinimum();
                     float max = gainControl.getMaximum();
                     float range = max - min;
-                    float gain = min + (range * 1.0f); // 100% volume for sound effects
+                    float gain = min + (range * 0.9f); // 90% volume for sound effects
                     gainControl.setValue(gain);
                 }
                 
@@ -57,8 +57,8 @@ public class SoundEffectPlayer {
                 });
                 
             } catch (Exception e) {
-                // Silently ignore sound errors to not disrupt gameplay
-                // System.err.println("Sound error: " + e.getMessage());
+                // Print sound errors to help debug audio issues
+                System.err.println("SoundEffect error loading " + filePath + ": " + e.getMessage());
             }
         });
     }

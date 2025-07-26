@@ -20,7 +20,7 @@ public class Game extends JFrame  {
     
     // TESTING: Set mode for direct scene testing (when skipping title screen)
     // Change this to Global.MODE_VERTICAL to test Scene2 in vertical mode
-    private static final int TESTING_MODE = Global.MODE_HORIZONTAL;
+    private static final int TESTING_MODE = Global.MODE_VERTICAL;
 
     public Game() {
         titleScene = new TitleScene(this);

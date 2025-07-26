@@ -90,6 +90,11 @@ public class Scene2 extends JPanel {
     private HashMap<Integer, SpawnDetails> spawnMap = new HashMap<>();
     private AudioPlayer audioPlayer;
     private SpawnManager spawnManager;
+    private AudioPlayer bossIntroAudioPlayer;
+    
+    // Boss intro timing (11 seconds = 660 frames at 60fps)
+    private static final int BOSS_INTRO_DURATION_FRAMES = 460; // 11 seconds
+    private int bossIntroFramesRemaining = 0;
 
 
 
@@ -105,11 +110,15 @@ public class Scene2 extends JPanel {
 
     private void initAudio() {
         try {
-            String filePath = "src/audio/scene2.wav";
+            String filePath = "src/audio/new_ost/stage2.wav";
+            System.out.println("Scene2: Loading audio from: " + filePath);
             audioPlayer = new AudioPlayer(filePath);
+            System.out.println("Scene2: AudioPlayer created successfully");
             audioPlayer.play();
+            System.out.println("Scene2: Audio started playing");
         } catch (Exception e) {
-            System.err.println("Error initializing audio player: " + e.getMessage());
+            System.err.println("Scene2: Error initializing audio player: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -144,6 +153,15 @@ public class Scene2 extends JPanel {
         try {
             if (audioPlayer != null) {
                 audioPlayer.stop();
+            }
+            if (bossIntroAudioPlayer != null) {
+                bossIntroAudioPlayer.stop();
+                bossIntroAudioPlayer = null;
+            }
+            
+            // Restore background music volume if it was ducked
+            if (audioPlayer != null && audioPlayer.isDucked()) {
+                audioPlayer.unduck();
             }
         } catch (Exception e) {
             System.err.println("Error closing audio player.");
@@ -510,6 +528,30 @@ public class Scene2 extends JPanel {
         // Update frame counter first
         frame++;
         
+        // Update boss intro audio timing (13-second duration)
+        if (bossIntroFramesRemaining > 0) {
+            bossIntroFramesRemaining--;
+            
+            // When boss intro finishes, restore background music volume
+            if (bossIntroFramesRemaining <= 0) {
+                if (audioPlayer != null && audioPlayer.isDucked()) {
+                    audioPlayer.unduck();
+                    System.out.println("Scene2: Restored background music volume after boss intro");
+                }
+                
+                // Stop boss intro audio
+                if (bossIntroAudioPlayer != null) {
+                    try {
+                        bossIntroAudioPlayer.stop();
+                        bossIntroAudioPlayer = null;
+                        System.out.println("Scene2: Boss intro audio completed and stopped");
+                    } catch (Exception e) {
+                        System.err.println("Error stopping boss intro audio: " + e.getMessage());
+                    }
+                }
+            }
+        }
+        
         // Update game timer
         framesSinceLastSecond++;
         if (framesSinceLastSecond >= 60) {
@@ -572,10 +614,26 @@ public class Scene2 extends JPanel {
         int bossSpawnTime = Global.TESTING_MODE ? 10 : 180; // 10 seconds in testing, 180 in normal
         
         if (!bossIntroPlayed && gameTimeSeconds >= bossIntroTime) {
-            // Play boss intro sound if not already played
-            SoundEffectPlayer.playBossIntroSound(); // Play 1 second before boss spawn
-            bossIntroPlayed = true;
-
+            // Start boss intro audio transition
+            try {
+                // Duck the stage2 background music to 30% volume
+                if (audioPlayer != null) {
+                    audioPlayer.duck();
+                    System.out.println("Scene2: Ducked background music for boss intro");
+                }
+                
+                // Play boss intro from original file for 13 seconds at high volume
+                bossIntroAudioPlayer = new AudioPlayer("src/audio/new_ost/boss_intro.wav");
+                bossIntroAudioPlayer.play();
+                bossIntroFramesRemaining = BOSS_INTRO_DURATION_FRAMES;
+                bossIntroPlayed = true;
+                System.out.println("Scene2: Started boss intro audio for 11 seconds");
+            } catch (Exception e) {
+                System.err.println("Error playing boss intro audio: " + e.getMessage());
+                // Fallback to sound effect if file loading fails
+                SoundEffectPlayer.playBossIntroSound();
+                bossIntroPlayed = true;
+            }
         }
 
         // Boss spawning logic - spawn boss at 10 seconds (testing) or 3 minutes (normal)

@@ -90,9 +90,9 @@ This level is broken down into three phases:
 ## How to Play
 
 The controls are simple and intuitive:
-* **Move Ship**: Arrow Keys or WASD
+* **Select Mode**: Up/Down to move the selection and Enter to select
+* **Move Ship**: Arrow Keys
 * **Shoot**: Spacebar
-* **Pause Game**: ESC (optional, can be implemented)
 
 ## Getting Started
 
@@ -105,14 +105,7 @@ You need to have the Java Development Kit (JDK) installed on your system. Versio
 
 ### Running the Game
 
-**Option 1: From an Executable .jar file**
-
-If an executable .jar file is provided, you can run the game with a single command:
-```bash
-java -jar GalacticDefender.jar
-```
-
-**Option 2: Compiling from Source**
+**Compiling from Source**
 
 1. Clone the repository:
    ```bash

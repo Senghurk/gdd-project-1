@@ -90,6 +90,7 @@ public class Scene2 extends JPanel {
     private HashMap<Integer, SpawnDetails> spawnMap = new HashMap<>();
     private AudioPlayer audioPlayer;
     private SpawnManager spawnManager;
+    private AudioPlayer bossIntroAudioPlayer;
 
 
 
@@ -105,11 +106,15 @@ public class Scene2 extends JPanel {
 
     private void initAudio() {
         try {
-            String filePath = "src/audio/scene2.wav";
+            String filePath = "src/audio/new_ost/stage2.wav";
+            System.out.println("Scene2: Loading audio from: " + filePath);
             audioPlayer = new AudioPlayer(filePath);
+            System.out.println("Scene2: AudioPlayer created successfully");
             audioPlayer.play();
+            System.out.println("Scene2: Audio started playing");
         } catch (Exception e) {
-            System.err.println("Error initializing audio player: " + e.getMessage());
+            System.err.println("Scene2: Error initializing audio player: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -144,6 +149,10 @@ public class Scene2 extends JPanel {
         try {
             if (audioPlayer != null) {
                 audioPlayer.stop();
+            }
+            if (bossIntroAudioPlayer != null) {
+                bossIntroAudioPlayer.stop();
+                bossIntroAudioPlayer = null;
             }
         } catch (Exception e) {
             System.err.println("Error closing audio player.");
@@ -510,6 +519,11 @@ public class Scene2 extends JPanel {
         // Update frame counter first
         frame++;
         
+        // Update boss intro audio (fade-out effect)
+        if (bossIntroAudioPlayer != null) {
+            bossIntroAudioPlayer.update();
+        }
+        
         // Update game timer
         framesSinceLastSecond++;
         if (framesSinceLastSecond >= 60) {
@@ -572,10 +586,17 @@ public class Scene2 extends JPanel {
         int bossSpawnTime = Global.TESTING_MODE ? 10 : 180; // 10 seconds in testing, 180 in normal
         
         if (!bossIntroPlayed && gameTimeSeconds >= bossIntroTime) {
-            // Play boss intro sound if not already played
-            SoundEffectPlayer.playBossIntroSound(); // Play 1 second before boss spawn
-            bossIntroPlayed = true;
-
+            // Play boss intro sound with 10-second fade-out using integrated AudioPlayer
+            try {
+                bossIntroAudioPlayer = new AudioPlayer("src/audio/new_ost/boss_intro.wav", true);
+                bossIntroAudioPlayer.play();
+                bossIntroPlayed = true;
+            } catch (Exception e) {
+                System.err.println("Error playing boss intro audio: " + e.getMessage());
+                // Fallback to original boss intro if new one fails
+                SoundEffectPlayer.playBossIntroSound();
+                bossIntroPlayed = true;
+            }
         }
 
         // Boss spawning logic - spawn boss at 10 seconds (testing) or 3 minutes (normal)

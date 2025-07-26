@@ -108,6 +108,13 @@ public class AudioPlayer {
         clip.start();
 
         status = "play";
+        
+        // Reset boss intro counters
+        if (isBossIntro) {
+            playFrames = 0;
+            fadingOut = false;
+            fadeFrames = 0;
+        }
     }
 
 
@@ -211,6 +218,7 @@ import java.util.Scanner;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
+import javax.sound.sampled.FloatControl;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
@@ -225,6 +233,14 @@ public class AudioPlayer {
 
     AudioInputStream audioInputStream;
     String filePath;
+    
+    // Boss intro fade-out functionality
+    private boolean isBossIntro = false;
+    private boolean fadingOut = false;
+    private int fadeFrames = 0;
+    private static final int FADE_DURATION_FRAMES = 600; // 10 seconds at 60 FPS
+    private static final int MAX_PLAY_FRAMES = 600; // Play for exactly 10 seconds
+    private int playFrames = 0;
 
     // constructor to initialize streams and clip
     public AudioPlayer(String filePath)
@@ -242,6 +258,29 @@ public class AudioPlayer {
         clip.open(audioInputStream);
 
         clip.loop(Clip.LOOP_CONTINUOUSLY);
+        
+        // Set volume to 80% for audible background music
+        setVolume(0.8f);
+    }
+    
+    // Boss intro constructor - no looping, fade-out enabled
+    public AudioPlayer(String filePath, boolean bossIntroMode)
+            throws UnsupportedAudioFileException,
+            IOException, LineUnavailableException {
+        this.filePath = filePath;
+        this.isBossIntro = bossIntroMode;
+        
+        audioInputStream = AudioSystem.getAudioInputStream(new File(filePath).getAbsoluteFile());
+        clip = AudioSystem.getClip();
+        clip.open(audioInputStream);
+        
+        // Boss intro doesn't loop
+        if (!isBossIntro) {
+            clip.loop(Clip.LOOP_CONTINUOUSLY);
+        }
+        
+        // Set volume to 80% for boss intro
+        setVolume(0.8f);
     }
 
     public static void main(String[] args) {
@@ -306,6 +345,13 @@ public class AudioPlayer {
         clip.start();
 
         status = "play";
+        
+        // Reset boss intro counters
+        if (isBossIntro) {
+            playFrames = 0;
+            fadingOut = false;
+            fadeFrames = 0;
+        }
     }
 
 
@@ -374,6 +420,61 @@ public class AudioPlayer {
                 new File(filePath).getAbsoluteFile());
         clip.open(audioInputStream);
         clip.loop(Clip.LOOP_CONTINUOUSLY);
+        // Restore volume after reset
+        setVolume(0.8f);
+    }
+    
+    // Method to set volume (0.0f to 1.0f)
+    public void setVolume(float volume) {
+        if (clip != null && clip.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
+            FloatControl gainControl = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);
+            float min = gainControl.getMinimum();
+            float max = gainControl.getMaximum();
+            
+            // Convert linear volume (0.0 to 1.0) to decibel range
+            float range = max - min;
+            float gain = min + (range * volume);
+            
+            // Clamp the gain value to valid range
+            gain = Math.max(min, Math.min(max, gain));
+            gainControl.setValue(gain);
+        }
+    }
+    
+    // Update method for boss intro fade-out (call this every frame)
+    public void update() {
+        if (isBossIntro && clip != null && clip.isRunning()) {
+            playFrames++;
+            
+            // Start fade-out immediately since we only want 10 seconds
+            if (playFrames >= MAX_PLAY_FRAMES - FADE_DURATION_FRAMES && !fadingOut) {
+                fadingOut = true;
+                fadeFrames = 0;
+            }
+            
+            // Apply fade-out effect
+            if (fadingOut) {
+                fadeFrames++;
+                float fadeRatio = 1.0f - ((float) fadeFrames / FADE_DURATION_FRAMES);
+                fadeRatio = Math.max(0.0f, fadeRatio); // Clamp to 0
+                
+                // Apply fade volume (base 80% * fade ratio)
+                setVolume(0.8f * fadeRatio);
+                
+                // Stop when fade is complete or max time reached
+                if (fadeFrames >= FADE_DURATION_FRAMES || playFrames >= MAX_PLAY_FRAMES) {
+                    try {
+                        stop();
+                    } catch (Exception e) {
+                        // Ignore stop errors during fade
+                    }
+                }
+            }
+        }
+    }
+    
+    public boolean isPlaying() {
+        return clip != null && clip.isRunning();
     }
 
 }

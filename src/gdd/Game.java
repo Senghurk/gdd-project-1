@@ -20,7 +20,7 @@ public class Game extends JFrame  {
     
     // TESTING: Set mode for direct scene testing (when skipping title screen)
     // Change this to Global.MODE_VERTICAL to test Scene2 in vertical mode
-    private static final int TESTING_MODE = Global.MODE_HORIZONTAL;
+    private static final int TESTING_MODE = Global.MODE_VERTICAL;
 
     public Game() {
         titleScene = new TitleScene(this);
@@ -36,8 +36,8 @@ public class Game extends JFrame  {
          *  3. Comment out loadTitle() line below
          */
 
-        loadTitle(); // Start with title screen
-        //loadScene2(); // Uncomment to test Scene2 directly
+        //loadTitle(); // Start with title screen
+        loadScene2(); // Uncomment to test Scene2 directly
     }
 
     private void initUI() {

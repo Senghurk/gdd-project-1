@@ -94,12 +94,15 @@ public class Scene1 extends JPanel {
 
     private void initAudio() {
         try {
-            String filePath = "src/audio/scene1.wav";
+            String filePath = "src/audio/new_ost/stage1.wav";
+            System.out.println("Scene1: Loading audio from: " + filePath);
             audioPlayer = new AudioPlayer(filePath);
-            // Volume is already set to 50% in AudioPlayer constructor
+            System.out.println("Scene1: AudioPlayer created successfully");
             audioPlayer.play();
+            System.out.println("Scene1: Audio started playing");
         } catch (Exception e) {
-            System.err.println("Error initializing audio player: " + e.getMessage());
+            System.err.println("Scene1: Error initializing audio player: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 

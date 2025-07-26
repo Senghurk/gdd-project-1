@@ -18,9 +18,11 @@ import gdd.sprite.Explosion;
 import gdd.sprite.Missile;
 import gdd.sprite.Player;
 import gdd.sprite.Shot;
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
@@ -288,87 +290,256 @@ public class Scene2 extends JPanel {
     }
 
     private void drawDashboard(Graphics g) {
-        // Dashboard background
-        g.setColor(new Color(0, 0, 0, 150));
-        g.fillRect(0, 0, BOARD_WIDTH, 60);
+        // Modern dashboard background with gradient effect
+        Graphics2D g2d = (Graphics2D) g;
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         
-        g.setColor(Color.white);
-        g.setFont(g.getFont().deriveFont(14f));
+        // Main dashboard background
+        g2d.setColor(new Color(0, 0, 0, 180));
+        g2d.fillRoundRect(0, 0, BOARD_WIDTH, 80, 0, 0);
         
-        // Score
-        g.drawString("Score: " + score, 10, 20);
+        // Top accent line (red for Scene2)
+        g2d.setColor(new Color(255, 50, 50, 200));
+        g2d.fillRect(0, 0, BOARD_WIDTH, 3);
         
-        // Lives
-        g.drawString("Lives: " + lives, 10, 40);
+        // === LEFT SECTION: Core Stats ===
+        drawStatsSection(g2d, 15, 15);
         
-        // Time
+        // === CENTER SECTION: Progress Bars ===
+        drawProgressSection(g2d, 220, 15);
+        
+        // === RIGHT SECTION: Status/Boss ===
+        drawStatusSection(g2d, 450, 15);
+        
+        // === BOTTOM SECTION: Multishot Status ===
+        if (player.hasMultishot()) {
+            drawMultishotStatus(g2d);
+        }
+        
+        // === BOSS SECTION: Boss Health Bar ===
+        if (boss != null && boss.isVisible()) {
+            drawBossHealthBar(g2d);
+        }
+    }
+    
+    private void drawStatsSection(Graphics2D g2d, int x, int y) {
+        Font boldFont = new Font("Arial", Font.BOLD, 13); // Slightly smaller
+        Font regularFont = new Font("Arial", Font.PLAIN, 11); // Slightly smaller
+        
+        // Score with icon
+        g2d.setColor(new Color(255, 215, 0)); // Gold
+        g2d.setFont(boldFont);
+        g2d.drawString("★ " + score, x, y + 15);
+        
+        // Lives with heart icons
+        g2d.setColor(new Color(255, 100, 100)); // Light red
+        StringBuilder livesDisplay = new StringBuilder();
+        for (int i = 0; i < lives; i++) {
+            livesDisplay.append("♥ ");
+        }
+        if (lives == 0) livesDisplay.append("☠");
+        g2d.drawString(livesDisplay.toString(), x, y + 35);
+        
+        // Time with clock icon
         int minutes = gameTimeSeconds / 60;
         int seconds = gameTimeSeconds % 60;
-        g.drawString(String.format("Time: %d:%02d", minutes, seconds), 150, 20);
+        g2d.setColor(Color.WHITE);
+        g2d.setFont(regularFont);
+        g2d.drawString(String.format("⏰ %d:%02d", minutes, seconds), x, y + 50);
+    }
+    
+    private void drawProgressSection(Graphics2D g2d, int x, int y) {
+        Font labelFont = new Font("Arial", Font.PLAIN, 10); // Smaller labels
+        g2d.setFont(labelFont);
         
-        // Shots info
+        // Bullets progress bar (fixed at max for Scene2)
+        g2d.setColor(new Color(200, 200, 200));
+        g2d.drawString("BULLETS", x, y + 10);
+        drawProgressBar(g2d, x, y + 15, 120, 8, 5, 5, new Color(255, 215, 0), new Color(100, 100, 0));
+        
+        // Speed progress bar (fixed at max for Scene2)
+        g2d.setColor(new Color(200, 200, 200));
+        g2d.drawString("SPEED", x, y + 35);
+        drawProgressBar(g2d, x, y + 40, 120, 8, 5, 5, new Color(0, 255, 255), new Color(0, 100, 100));
+        
+        // Active shots indicator
+        int activeShots = shots.size();
         int maxShots = player.getMaxShots();
-        g.drawString("Shots: " + shots.size() + "/" + maxShots, 150, 40);
+        g2d.setColor(new Color(200, 200, 200));
+        g2d.drawString("SHOTS", x + 130, y + 10); // Shorter label
+        drawProgressBar(g2d, x + 130, y + 15, 80, 8, activeShots, maxShots, new Color(255, 100, 255), new Color(100, 0, 100));
+    }
+    
+    private void drawStatusSection(Graphics2D g2d, int x, int y) {
+        Font statusFont = new Font("Arial", Font.BOLD, 11); // Smaller
+        g2d.setFont(statusFont);
         
-        // Show fixed powerup status
-        g.setColor(Color.yellow);
-        g.drawString("Bullets: 5", 300, 20);
+        // Phase indicator (consistent with Scene1)
+        int currentPhase = getScene2Phase();
+        String phaseText = "PHASE " + currentPhase;
+        g2d.setColor(getScene2PhaseColor(currentPhase));
+        g2d.drawString(phaseText, x, y + 15);
         
-        g.setColor(Color.cyan);
-        g.drawString("Speed: 8", 300, 40);
-        
-        // Multishot status
-        g.setColor(Color.white);
-        if (player.hasMultishot()) {
-            int remainingSeconds = player.getMultishotFramesRemaining() / 60;
-            g.setColor(Color.yellow);
-            g.drawString("≡ MULTISHOT: " + remainingSeconds + "s", 10, 60);
-            g.setColor(Color.red);
-            g.drawString("AUTO-FIRE ACTIVE!", 10, 80);
-        }
-        
-        // Boss status
+        // Boss status or phase info
         if (boss != null && boss.isVisible()) {
-            g.setColor(Color.red);
-            g.drawString("BOSS HEALTH: " + boss.getHealth() + "/" + boss.getMaxHealth(), 400, 20);
-            g.setColor(Color.orange);
-            g.drawString("BOSS INCOMING!", 400, 40);
+            g2d.setColor(new Color(255, 50, 50));
+            g2d.drawString("⚠ BOSS FIGHT", x, y + 35);
         } else if (bossDefeated) {
-            g.setColor(Color.green);
-            g.drawString("BOSS DEFEATED!", 400, 20);
+            g2d.setColor(new Color(50, 255, 50));
+            g2d.drawString("✓ BOSS DEFEATED", x, y + 35);
+        } else {
+            // Show phase description
+            drawPhaseDescription(g2d, x, y + 35);
+        }
+    }
+    
+    private int getScene2Phase() {
+        if (gameTimeSeconds < 180) { // First 3 minutes
+            return 1; // Combat Phase
+        } else { // After 3 minutes
+            return 2; // Final Phase
+        }
+    }
+    
+    private Color getScene2PhaseColor(int phase) {
+        switch (phase) {
+            case 1: return new Color(255, 200, 100); // Orange for Scene2 Phase 1
+            case 2: return new Color(255, 100, 100); // Red for Scene2 Phase 2
+            default: return Color.WHITE;
+        }
+    }
+    
+    private void drawPhaseDescription(Graphics2D g2d, int x, int y) {
+        Font phaseFont = new Font("Arial", Font.PLAIN, 10);
+        g2d.setFont(phaseFont);
+        
+        // Show phase names based on game time
+        String phaseDescription;
+        Color phaseColor;
+        
+        if (gameTimeSeconds < 180) { // First 3 minutes
+            phaseDescription = "Combat Phase";
+            phaseColor = new Color(255, 200, 100, 180); // Light orange
+        } else { // After 3 minutes
+            phaseDescription = "Final Phase";
+            phaseColor = new Color(255, 100, 100, 180); // Light red
         }
         
-        // Phase information - only show if boss is not present
-        if (boss == null || !boss.isVisible()) {
-            g.setColor(Color.red); // Red for level 2
-            String phaseText = "Phase " + currentPhase;
-            switch (currentPhase) {
-                case 1:
-                    phaseText += " (Warm Up)";
-                    break;
-                case 2:
-                    phaseText += " (Attack!)";
-                    break;
-                case 3:
-                    phaseText += " (BOSS SPAWN!)";
-                    break;
-                case 4:
-                    phaseText += " (BOSS FIGHT!)";
-                    break;
-                case 5:
-                    phaseText += " (VICTORY!)";
-                    break;
-                case 6:
-                    phaseText += " (COMPLETE!)";
-                    break;
+        g2d.setColor(phaseColor);
+        g2d.drawString(phaseDescription, x, y);
+    }
+    
+    private void drawMultishotStatus(Graphics2D g2d) {
+        int remainingSeconds = player.getMultishotFramesRemaining() / 60;
+        
+        // Much smaller, compact multishot status bar
+        g2d.setColor(new Color(255, 165, 0, 180)); // More transparent
+        g2d.fillRoundRect(10, 85, 200, 18, 6, 6); // Smaller: 200x18 (was 300x25)
+        
+        // Thinner border
+        g2d.setColor(new Color(255, 215, 0));
+        g2d.setStroke(new BasicStroke(1));
+        g2d.drawRoundRect(10, 85, 200, 18, 6, 6);
+        
+        // Smaller text
+        g2d.setColor(Color.BLACK);
+        g2d.setFont(new Font("Arial", Font.BOLD, 10)); // Much smaller font (was 14)
+        g2d.drawString("≡ MULTISHOT: " + remainingSeconds + "s", 15, 96);
+        
+        // Compact auto-fire indicator
+        if (frame % 30 < 15) { // Blinking effect
+            g2d.setColor(Color.RED);
+            g2d.setFont(new Font("Arial", Font.BOLD, 9)); // Even smaller
+            g2d.drawString("● AUTO", 145, 96);
+        }
+    }
+    
+    private void drawBossHealthBar(Graphics2D g2d) {
+        // Ultra-compact boss bar
+        int barWidth = 300; // Much smaller (was 400)
+        int barHeight = 12; // Much thinner (was 15)
+        int barX = (BOARD_WIDTH - barWidth) / 2; // Center it
+        int barY = player.hasMultishot() ? 110 : 90; // Higher, less obstructive
+        
+        // Boss health bar background - very transparent
+        g2d.setColor(new Color(60, 0, 0, 120)); // Much more transparent
+        g2d.fillRoundRect(barX, barY, barWidth, barHeight, 6, 6);
+        
+        // Boss health fill
+        if (boss != null) {
+            double healthPercent = (double) boss.getHealth() / boss.getMaxHealth();
+            int fillWidth = (int) (barWidth * healthPercent);
+            
+            // Subtler colors
+            Color healthColor;
+            if (healthPercent > 0.6) {
+                healthColor = new Color(255, 60, 60, 180); // More subtle
+            } else if (healthPercent > 0.3) {
+                healthColor = new Color(255, 100, 0, 180); // More subtle
+            } else {
+                healthColor = new Color(255, 30, 30, 180); // More subtle
             }
-            g.drawString(phaseText, 550, 20);
+            
+            g2d.setColor(healthColor);
+            g2d.fillRoundRect(barX, barY, fillWidth, barHeight, 6, 6);
         }
         
-        // Testing mode indicator
-        if (Global.TESTING_MODE) {
-            g.setColor(Color.MAGENTA);
-            g.drawString("TESTING MODE", 550, 40);
+        // Very thin, subtle border
+        g2d.setColor(new Color(255, 0, 0, 150));
+        g2d.setStroke(new BasicStroke(0.5f));
+        g2d.drawRoundRect(barX, barY, barWidth, barHeight, 6, 6);
+        
+        // Much smaller boss health text
+        g2d.setColor(Color.WHITE);
+        g2d.setFont(new Font("Arial", Font.BOLD, 9)); // Much smaller font
+        String healthText = boss != null ? 
+            "BOSS: " + boss.getHealth() + "/" + boss.getMaxHealth() : // Removed emoji
+            "BOSS INCOMING";
+        
+        FontMetrics fm = g2d.getFontMetrics();
+        int textX = barX + (barWidth - fm.stringWidth(healthText)) / 2;
+        g2d.drawString(healthText, textX, barY + 9);
+    }
+    
+    private void drawProgressBar(Graphics2D g2d, int x, int y, int width, int height, int current, int max, Color fillColor, Color bgColor) {
+        // Background
+        g2d.setColor(bgColor);
+        g2d.fillRoundRect(x, y, width, height, 4, 4);
+        
+        // Fill
+        if (max > 0) {
+            int fillWidth = (int) ((double) current / max * width);
+            g2d.setColor(fillColor);
+            g2d.fillRoundRect(x, y, fillWidth, height, 4, 4);
+        }
+        
+        // Border
+        g2d.setColor(new Color(100, 100, 100));
+        g2d.setStroke(new BasicStroke(1));
+        g2d.drawRoundRect(x, y, width, height, 4, 4);
+        
+        // Value text with contrasting colors
+        g2d.setFont(new Font("Arial", Font.BOLD, 10));
+        String valueText = current + "/" + max;
+        FontMetrics fm = g2d.getFontMetrics();
+        int textX = x + (width - fm.stringWidth(valueText)) / 2;
+        int textY = y + height - 2;
+        
+        // Use contrasting text color based on fill percentage
+        double fillPercent = max > 0 ? (double) current / max : 0;
+        if (fillPercent > 0.5) {
+            g2d.setColor(Color.BLACK); // Dark text on bright fill
+        } else {
+            g2d.setColor(Color.WHITE); // Light text on dark background
+        }
+        g2d.drawString(valueText, textX, textY);
+    }
+    
+    private String getEnemyPhaseText() {
+        if (gameTimeSeconds < 180) { // First 3 minutes
+            return "⚔ COMBAT PHASE";
+        } else { // After 3 minutes
+            return "🏁 FINAL PHASE";
         }
     }
 

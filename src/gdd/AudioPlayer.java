@@ -241,6 +241,11 @@ public class AudioPlayer {
     private static final int FADE_DURATION_FRAMES = 600; // 10 seconds at 60 FPS
     private static final int MAX_PLAY_FRAMES = 600; // Play for exactly 10 seconds
     private int playFrames = 0;
+    
+    // Volume ducking functionality for background music during boss intro
+    private boolean isDucked = false;
+    private float originalVolume = 0.8f;
+    private float duckedVolume = 0.3f; // 30% volume when ducked
 
     // constructor to initialize streams and clip
     public AudioPlayer(String filePath)
@@ -475,6 +480,25 @@ public class AudioPlayer {
     
     public boolean isPlaying() {
         return clip != null && clip.isRunning();
+    }
+    
+    // Volume ducking methods for smooth audio transitions
+    public void duck() {
+        if (!isDucked) {
+            isDucked = true;
+            setVolume(duckedVolume);
+        }
+    }
+    
+    public void unduck() {
+        if (isDucked) {
+            isDucked = false;
+            setVolume(originalVolume);
+        }
+    }
+    
+    public boolean isDucked() {
+        return isDucked;
     }
 
 }

@@ -16,9 +16,11 @@ import gdd.sprite.Missile;
 import gdd.sprite.Explosion;
 import gdd.sprite.Player;
 import gdd.sprite.Shot;
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
@@ -281,64 +283,195 @@ public class Scene1 extends JPanel {
     }
 
     private void drawDashboard(Graphics g) {
-        // Dashboard background
-        g.setColor(new Color(0, 0, 0, 150)); // Semi-transparent black
-        g.fillRect(0, 0, BOARD_WIDTH, 60);
+        // Modern dashboard background with gradient effect
+        Graphics2D g2d = (Graphics2D) g;
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         
-        g.setColor(Color.white);
-        g.setFont(g.getFont().deriveFont(14f));
+        // Main dashboard background
+        g2d.setColor(new Color(0, 0, 0, 180));
+        g2d.fillRoundRect(0, 0, BOARD_WIDTH, 80, 0, 0);
         
-        // Score
-        g.drawString("Score: " + score, 10, 20);
+        // Top accent line
+        g2d.setColor(new Color(0, 150, 255, 200));
+        g2d.fillRect(0, 0, BOARD_WIDTH, 3);
         
-        // Lives
-        g.drawString("Lives: " + lives, 10, 40);
+        // === LEFT SECTION: Core Stats ===
+        drawStatsSection(g2d, 15, 15);
         
-        // Time
+        // === CENTER SECTION: Progress Bars ===
+        drawProgressSection(g2d, 220, 15);
+        
+        // === RIGHT SECTION: Status/Powerups ===
+        drawStatusSection(g2d, 450, 15);
+        
+        // === BOTTOM SECTION: Multishot Status ===
+        if (player.hasMultishot()) {
+            drawMultishotStatus(g2d);
+        }
+    }
+    
+    private void drawStatsSection(Graphics2D g2d, int x, int y) {
+        Font boldFont = new Font("Arial", Font.BOLD, 13); // Slightly smaller
+        Font regularFont = new Font("Arial", Font.PLAIN, 11); // Slightly smaller
+        
+        // Score with icon
+        g2d.setColor(new Color(255, 215, 0)); // Gold
+        g2d.setFont(boldFont);
+        g2d.drawString("★ " + score, x, y + 15);
+        
+        // Lives with heart icons
+        g2d.setColor(new Color(255, 100, 100)); // Light red
+        StringBuilder livesDisplay = new StringBuilder();
+        for (int i = 0; i < lives; i++) {
+            livesDisplay.append("♥ ");
+        }
+        if (lives == 0) livesDisplay.append("☠");
+        g2d.drawString(livesDisplay.toString(), x, y + 35);
+        
+        // Time with clock icon
         int minutes = gameTimeSeconds / 60;
         int seconds = gameTimeSeconds % 60;
-        g.drawString(String.format("Time: %d:%02d", minutes, seconds), 150, 20);
+        g2d.setColor(Color.WHITE);
+        g2d.setFont(regularFont);
+        g2d.drawString(String.format("⏰ %d:%02d", minutes, seconds), x, y + 50);
+    }
+    
+    private void drawProgressSection(Graphics2D g2d, int x, int y) {
+        Font labelFont = new Font("Arial", Font.PLAIN, 10); // Smaller labels
+        g2d.setFont(labelFont);
         
-        // Shots info
+        // Bullets progress bar
+        int currentBullets = player.getCurrentBulletCount();
+        int maxBullets = player.getMaxBulletCount();
+        g2d.setColor(new Color(200, 200, 200));
+        g2d.drawString("BULLETS", x, y + 10);
+        drawProgressBar(g2d, x, y + 15, 120, 8, currentBullets, maxBullets, new Color(255, 215, 0), new Color(100, 100, 0));
+        
+        // Speed progress bar
+        int currentSpeed = player.getCurrentSpeed();
+        int maxSpeed = player.getMaxSpeed();
+        g2d.setColor(new Color(200, 200, 200));
+        g2d.drawString("SPEED", x, y + 35);
+        drawProgressBar(g2d, x, y + 40, 120, 8, currentSpeed - 3, maxSpeed - 3, new Color(0, 255, 255), new Color(0, 100, 100));
+        
+        // Active shots indicator
+        int activeShots = shots.size();
         int maxShots = player.getMaxShots();
-        g.drawString("Shots: " + shots.size() + "/" + maxShots, 150, 40);
+        g2d.setColor(new Color(200, 200, 200));
+        g2d.drawString("SHOTS", x + 130, y + 10); // Shorter label
+        drawProgressBar(g2d, x + 130, y + 15, 80, 8, activeShots, maxShots, new Color(255, 100, 255), new Color(100, 0, 100));
+    }
+    
+    private void drawStatusSection(Graphics2D g2d, int x, int y) {
+        Font statusFont = new Font("Arial", Font.BOLD, 11); // Smaller
+        g2d.setFont(statusFont);
         
-        // Show current powerup status
-        g.setColor(Color.yellow);
-        g.drawString("Bullets: " + player.getCurrentBulletCount() + "/" + player.getMaxBulletCount(), 300, 20);
+        // Phase indicator
+        String phaseText = "PHASE " + currentPhase;
+        g2d.setColor(getPhaseColor(currentPhase));
+        g2d.drawString(phaseText, x, y + 15);
         
-        g.setColor(Color.cyan);
-        g.drawString("Speed: " + player.getCurrentSpeed() + "/" + player.getMaxSpeed(), 300, 40);
+        // Powerup availability hints
+        drawPowerupHints(g2d, x, y + 35);
+    }
+    
+    private void drawMultishotStatus(Graphics2D g2d) {
+        int remainingSeconds = player.getMultishotFramesRemaining() / 60;
         
-        // Multishot status
-        g.setColor(Color.white);
-        if (player.hasMultishot()) {
-            int remainingSeconds = player.getMultishotFramesRemaining() / 60;
-            g.setColor(Color.yellow);
-            g.drawString("🔥 MULTISHOT: " + remainingSeconds + "s", 400, 20);
-            g.setColor(Color.red);
-            g.drawString("AUTO-FIRE ACTIVE!", 400, 40);
+        // Much smaller, compact multishot status bar
+        g2d.setColor(new Color(255, 165, 0, 180)); // More transparent
+        g2d.fillRoundRect(10, 85, 200, 18, 6, 6); // Smaller: 200x18 (was 300x25)
+        
+        // Thinner border
+        g2d.setColor(new Color(255, 215, 0));
+        g2d.setStroke(new BasicStroke(1));
+        g2d.drawRoundRect(10, 85, 200, 18, 6, 6);
+        
+        // Smaller text
+        g2d.setColor(Color.BLACK);
+        g2d.setFont(new Font("Arial", Font.BOLD, 10)); // Much smaller font (was 14)
+        g2d.drawString("≡ MULTISHOT: " + remainingSeconds + "s", 15, 96);
+        
+        // Compact auto-fire indicator
+        if (frame % 30 < 15) { // Blinking effect
+            g2d.setColor(Color.RED);
+            g2d.setFont(new Font("Arial", Font.BOLD, 9)); // Even smaller
+            g2d.drawString("● AUTO", 145, 96);
+        }
+    }
+    
+    private void drawProgressBar(Graphics2D g2d, int x, int y, int width, int height, int current, int max, Color fillColor, Color bgColor) {
+        // Background
+        g2d.setColor(bgColor);
+        g2d.fillRoundRect(x, y, width, height, 4, 4);
+        
+        // Fill
+        if (max > 0) {
+            int fillWidth = (int) ((double) current / max * width);
+            g2d.setColor(fillColor);
+            g2d.fillRoundRect(x, y, fillWidth, height, 4, 4);
         }
         
-        // Phase information
-        g.setColor(Color.orange);
-        String phaseText = "Phase " + currentPhase;
+        // Border
+        g2d.setColor(new Color(100, 100, 100));
+        g2d.setStroke(new BasicStroke(1));
+        g2d.drawRoundRect(x, y, width, height, 4, 4);
+        
+        // Value text with contrasting colors
+        g2d.setFont(new Font("Arial", Font.BOLD, 10));
+        String valueText = current + "/" + max;
+        FontMetrics fm = g2d.getFontMetrics();
+        int textX = x + (width - fm.stringWidth(valueText)) / 2;
+        int textY = y + height - 2;
+        
+        // Use contrasting text color based on fill percentage
+        double fillPercent = max > 0 ? (double) current / max : 0;
+        if (fillPercent > 0.5) {
+            g2d.setColor(Color.BLACK); // Dark text on bright fill
+        } else {
+            g2d.setColor(Color.WHITE); // Light text on dark background
+        }
+        g2d.drawString(valueText, textX, textY);
+    }
+    
+    private Color getPhaseColor(int phase) {
+        switch (phase) {
+            case 1: return new Color(0, 255, 0); // Green - Learning
+            case 2: return new Color(255, 255, 0); // Yellow - Threat
+            case 3: return new Color(255, 100, 100); // Red - Escalation
+            default: return Color.WHITE;
+        }
+    }
+    
+    private void drawPowerupHints(Graphics2D g2d, int x, int y) {
+        Font hintFont = new Font("Arial", Font.PLAIN, 10);
+        g2d.setFont(hintFont);
+        
+        // Show phase names instead of powerup availability
+        String phaseDescription;
+        Color phaseColor;
+        
         switch (currentPhase) {
             case 1:
-                phaseText += " (Safe)";
+                phaseDescription = "Learning Phase";
+                phaseColor = new Color(100, 255, 100, 180); // Light green
                 break;
             case 2:
-                phaseText += " (Danger)";
+                phaseDescription = "Threat Phase";
+                phaseColor = new Color(255, 255, 100, 180); // Light yellow
                 break;
             case 3:
-                phaseText += " (WAR!)";
+                phaseDescription = "War Phase";
+                phaseColor = new Color(255, 100, 100, 180); // Light red
+                break;
+            default:
+                phaseDescription = "Unknown Phase";
+                phaseColor = new Color(150, 150, 150);
                 break;
         }
-        g.drawString(phaseText, 550, 20);
         
-        // Wave information
-        // The wave system is now managed by SpawnManager, so we don't need to draw wave info here.
-        
+        g2d.setColor(phaseColor);
+        g2d.drawString(phaseDescription, x, y);
     }
 
     @Override

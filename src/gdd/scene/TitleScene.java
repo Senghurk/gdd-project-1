@@ -8,7 +8,9 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Image;
+import java.awt.RenderingHints;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -94,40 +96,69 @@ public class TitleScene extends JPanel {
     }
 
     private void doDrawing(Graphics g) {
-
+        Graphics2D g2d = (Graphics2D) g;
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        
         g.setColor(Color.black);
         g.fillRect(0, 0, d.width, d.height);
 
-        int imageWidth = (int)(BOARD_WIDTH * 0.8); // Make image 80% of board width
-        int imageHeight = (int)(BOARD_HEIGHT * 0.6); // Make image 60% of board height
-        int imageX = (BOARD_WIDTH - imageWidth) / 2; // Center horizontally
-        int imageY = 50; // Position from top
-        g.drawImage(image, imageX, imageY, imageWidth, imageHeight, null);
+        // Team name in top left corner - stylized
+        // Shadow effect
+        g2d.setColor(new Color(0, 0, 0, 150)); // Semi-transparent black shadow
+        g2d.setFont(new Font("Arial", Font.BOLD, 14));
+        g2d.drawString("Team : UbiRiotHoyoverse", 17, 27);
+        
+        // Main text with gradient-like effect
+        g2d.setColor(new Color(255, 215, 0)); // Gold color
+        g2d.drawString("Team : UbiRiotHoyoverse", 15, 25);
+        
+        // Subtle highlight
+        g2d.setColor(new Color(255, 255, 255, 100)); // Semi-transparent white
+        g2d.drawString("Team : UbiRiotHoyoverse", 14, 24);
 
-        // Draw mode selector
-        drawModeSelector(g);
-
-        if (frame % 60 < 30) {
-            g.setColor(Color.red);
+        // Draw title image first - centered but allowing space for text
+        if (image != null) {
+            int imageWidth = image.getWidth(null);
+            int imageHeight = image.getHeight(null);
+            
+            // Scale image to fit nicely in upper portion (leaving space for text)
+            double maxImageHeight = d.height * 0.5; // Use only 50% of screen height
+            double scale = Math.min(1.0, maxImageHeight / imageHeight);
+            
+            int scaledWidth = (int)(imageWidth * scale);
+            int scaledHeight = (int)(imageHeight * scale);
+            
+            int imageX = (BOARD_WIDTH - scaledWidth) / 2;
+            int imageY = 50; // Slightly lower to avoid team name
+            
+            g.drawImage(image, imageX, imageY, scaledWidth, scaledHeight, null);
+            
+            // Text area starts after image with clear separation
+            int textStartY = imageY + scaledHeight + 40; // 40px gap after image
+            
+            drawTextContent(g2d, textStartY);
         } else {
-            g.setColor(Color.white);
+            // Fallback if image fails to load
+            drawTextContent(g2d, 100);
         }
 
-        /* 
-        g.setFont(g.getFont().deriveFont(32f));
-        String text = "Press SPACE to Start";
-        int stringWidth = g.getFontMetrics().stringWidth(text);
-        int x = (d.width - stringWidth) / 2;
-        // int stringHeight = g.getFontMetrics().getAscent();
-        // int y = (d.height + stringHeight) / 2;
-        g.drawString(text, x, 600);
-        */
-
-        g.setColor(Color.white);
-        g.setFont(g.getFont().deriveFont(16f));
-        g.drawString("Team Members:", (d.width - g.getFontMetrics().stringWidth("Team Members:")) / 2, 450);
+        Toolkit.getDefaultToolkit().sync();
+    }
+    
+    private void drawTextContent(Graphics2D g2d, int startY) {
+        // Semi-transparent background for text area
+        g2d.setColor(new Color(0, 0, 0, 100)); // Semi-transparent black
+        g2d.fillRoundRect(50, startY - 20, d.width - 100, d.height - startY - 50, 15, 15);
         
-        g.setFont(g.getFont().deriveFont(14f));
+        // Team info section
+        g2d.setColor(Color.WHITE);
+        g2d.setFont(new Font("Arial", Font.BOLD, 16));
+        String teamTitle = "Team Members:";
+        int teamTitleX = (d.width - g2d.getFontMetrics().stringWidth(teamTitle)) / 2;
+        g2d.drawString(teamTitle, teamTitleX, startY + 20);
+        
+        // Team members
+        g2d.setFont(new Font("Arial", Font.PLAIN, 14));
         String[] teamMembers = {
             "KHAING THIN ZAR SEIN - ID: 6530381",
             "SAI OAN HSENG HURK - ID: 6440041", 
@@ -135,46 +166,55 @@ public class TitleScene extends JPanel {
         };
         
         for (int i = 0; i < teamMembers.length; i++) {
-            int memberX = (d.width - g.getFontMetrics().stringWidth(teamMembers[i])) / 2;
-            g.drawString(teamMembers[i], memberX, 480 + (i * 20));
+            int memberX = (d.width - g2d.getFontMetrics().stringWidth(teamMembers[i])) / 2;
+            g2d.drawString(teamMembers[i], memberX, startY + 50 + (i * 20));
         }
-        
-        // Mode selector controls
-        g.setColor(Color.cyan);
-        g.setFont(g.getFont().deriveFont(12f));
-        g.drawString("Mode Controls: UP/DOWN arrows to move and ENTER to select", 10, d.height - 50);
-        
-        g.setColor(Color.gray);
-        g.setFont(g.getFont().deriveFont(10f));
-        g.drawString("Game by UbiRiotHoyoverse", 10, 20);
 
-        Toolkit.getDefaultToolkit().sync();
+        // Mode selector
+        drawModeSelector(g2d, startY + 140);
+        
+        // Controls instruction - bottom
+        g2d.setColor(Color.CYAN);
+        g2d.setFont(new Font("Arial", Font.PLAIN, 12));
+        String controls = "Mode Controls: UP/DOWN arrows, ENTER to select";
+        int controlsX = (d.width - g2d.getFontMetrics().stringWidth(controls)) / 2;
+        g2d.drawString(controls, controlsX, d.height - 30);
+        
+        // Game credit - bottom corner (smaller, less prominent)
+        g2d.setColor(new Color(128, 128, 128));
+        g2d.setFont(new Font("Arial", Font.PLAIN, 10));
+        g2d.drawString("Game Development Project", 10, d.height - 10);
     }
     
-    /**
-     * Draws the mode selector UI with highlighting for selected mode
-     */
-    private void drawModeSelector(Graphics g) {
-        g.setColor(Color.white);
-        g.setFont(g.getFont().deriveFont(18f));
-        String modeTitle = "Game Mode:";
-        int titleX = (d.width - g.getFontMetrics().stringWidth(modeTitle)) / 2;
-        g.drawString(modeTitle, titleX - 5, 550);
+    private void drawModeSelector(Graphics2D g2d, int startY) {
+        // Mode selector title
+        g2d.setColor(Color.WHITE);
+        g2d.setFont(new Font("Arial", Font.BOLD, 18));
+        String modeTitle = "Select Game Mode:";
+        int titleX = (d.width - g2d.getFontMetrics().stringWidth(modeTitle)) / 2;
+        g2d.drawString(modeTitle, titleX, startY);
         
-        // Draw mode options with selection highlighting
-        g.setFont(g.getFont().deriveFont(16f));
+        // Mode options
+        g2d.setFont(new Font("Arial", Font.PLAIN, 16));
         for (int i = 0; i < modeNames.length; i++) {
-            // Highlight selected mode
+            String modeText = modeNames[i];
+            int modeX = (d.width - g2d.getFontMetrics().stringWidth(modeText)) / 2;
+            
             if (i == selectedMode) {
-                g.setColor(Color.yellow);
-                g.drawString("> " + modeNames[i] + " <", 
-                    (d.width - g.getFontMetrics().stringWidth("> " + modeNames[i] + " <")) / 2, 
-                    570 + (i * 25));
+                // Selected mode background
+                g2d.setColor(new Color(255, 215, 0, 150)); // Semi-transparent gold
+                g2d.fillRoundRect(modeX - 15, startY + 15 + (i * 30), 
+                                g2d.getFontMetrics().stringWidth(modeText) + 30, 25, 10, 10);
+                
+                // Selected mode text with glow effect
+                g2d.setColor(new Color(255, 255, 255, 100)); // Subtle glow
+                g2d.drawString("▶ " + modeText + " ◀", modeX - 21, startY + 31 + (i * 30));
+                g2d.setColor(Color.YELLOW);
+                g2d.drawString("▶ " + modeText + " ◀", modeX - 20, startY + 30 + (i * 30));
             } else {
-                g.setColor(Color.lightGray);
-                g.drawString(modeNames[i], 
-                    (d.width - g.getFontMetrics().stringWidth(modeNames[i])) / 2, 
-                    570 + (i * 25));
+                // Unselected mode with better contrast
+                g2d.setColor(new Color(200, 200, 200));
+                g2d.drawString(modeText, modeX, startY + 30 + (i * 30));
             }
         }
     }

@@ -1,4 +1,4 @@
-# Galactic Defender - Vertical Shooter
+# Celestial Aegis - Vertical Shooter
 
 A classic arcade-style space shooter built in Java, inspired by the timeless game Space Invaders. Navigate your ship, dodge enemy fire, and survive waves of extraterrestrial threats to save the galaxy!
 
@@ -29,7 +29,7 @@ A classic arcade-style space shooter built in Java, inspired by the timeless gam
 
 ## About The Game
 
-Galactic Defender is a 2D shooter that challenges players with progressively difficult waves of enemies across two distinct levels. The game offers two different screen orientations for gameplay (Horizontal and Vertical) and features a dynamic power-up system to aid you in your mission. Survive the initial onslaught, power up your ship, and prepare to face the final boss to achieve victory.
+Celestial Aegis is a 2D shooter that challenges players with progressively difficult waves of enemies across two distinct levels. The game offers two different screen orientations for gameplay (Horizontal and Vertical) and features a dynamic power-up system to aid you in your mission. Survive the initial onslaught, power up your ship, and prepare to face the final boss to achieve victory.
 
 ## Features
 

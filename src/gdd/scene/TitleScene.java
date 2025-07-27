@@ -1,6 +1,7 @@
 package gdd.scene;
 
 import gdd.AudioPlayer;
+import gdd.FontManager;
 import gdd.Game;
 import gdd.Global;
 import static gdd.Global.*;
@@ -19,7 +20,6 @@ import java.awt.event.KeyEvent;
 import javax.swing.ImageIcon;
 import javax.swing.JPanel;
 import javax.swing.Timer;
-
 public class TitleScene extends JPanel {
 
     private int frame = 0;
@@ -178,7 +178,7 @@ public class TitleScene extends JPanel {
         g2d.setFont(new Font("Arial", Font.PLAIN, 12));
         String controls = "Mode Controls: UP/DOWN arrows, ENTER to select";
         int controlsX = (d.width - g2d.getFontMetrics().stringWidth(controls)) / 2;
-        g2d.drawString(controls, controlsX, d.height - 30);
+        g2d.drawString(controls, controlsX, d.height - 42);
         
         // Game credit - bottom corner (smaller, less prominent)
         g2d.setColor(new Color(128, 128, 128));
@@ -208,6 +208,8 @@ public class TitleScene extends JPanel {
                 
                 // Selected mode text with glow effect
                 g2d.setColor(new Color(255, 255, 255, 100)); // Subtle glow
+                Font unicodeFont = FontManager.getUnicodeFont(16);
+                g2d.setFont(unicodeFont);
                 g2d.drawString("▶ " + modeText + " ◀", modeX - 21, startY + 31 + (i * 30));
                 g2d.setColor(Color.YELLOW);
                 g2d.drawString("▶ " + modeText + " ◀", modeX - 20, startY + 30 + (i * 30));

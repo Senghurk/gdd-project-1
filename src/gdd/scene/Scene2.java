@@ -1,6 +1,7 @@
 package gdd.scene;
 
 import gdd.AudioPlayer;
+import gdd.FontManager;
 import gdd.Game;
 import gdd.Global;
 import static gdd.Global.*;
@@ -38,7 +39,6 @@ import java.util.Random;
 import javax.swing.ImageIcon;
 import javax.swing.JPanel;
 import javax.swing.Timer;
-
 public class Scene2 extends JPanel {
     private int frame = 0;
     private List<PowerUp> powerups;
@@ -325,11 +325,13 @@ public class Scene2 extends JPanel {
     private void drawStatsSection(Graphics2D g2d, int x, int y) {
         Font boldFont = new Font("Arial", Font.BOLD, 13); // Slightly smaller
         Font regularFont = new Font("Arial", Font.PLAIN, 11); // Slightly smaller
-        
+
         // Score with icon
         g2d.setColor(new Color(255, 215, 0)); // Gold
         g2d.setFont(boldFont);
-        g2d.drawString("★ " + score, x, y + 15);
+        Font unicodeFont = FontManager.getUnicodeFont(13);
+        g2d.setFont(unicodeFont);
+        g2d.drawString("⭐ " + score, x, y + 15);
         
         // Lives with heart icons
         g2d.setColor(new Color(255, 100, 100)); // Light red
@@ -345,7 +347,8 @@ public class Scene2 extends JPanel {
         int seconds = gameTimeSeconds % 60;
         g2d.setColor(Color.WHITE);
         g2d.setFont(regularFont);
-        g2d.drawString(String.format("⏰ %d:%02d", minutes, seconds), x, y + 50);
+        g2d.setFont(unicodeFont);
+        g2d.drawString(String.format("🕰️ %d:%02d", minutes, seconds), x, y + 50);
     }
     
     private void drawProgressSection(Graphics2D g2d, int x, int y) {
@@ -383,10 +386,10 @@ public class Scene2 extends JPanel {
         // Boss status or phase info
         if (boss != null && boss.isVisible()) {
             g2d.setColor(new Color(255, 50, 50));
-            g2d.drawString("⚠ BOSS FIGHT", x, y + 35);
+            g2d.drawString("💀 BOSS FIGHT", x, y + 35);
         } else if (bossDefeated) {
             g2d.setColor(new Color(50, 255, 50));
-            g2d.drawString("✓ BOSS DEFEATED", x, y + 35);
+            g2d.drawString("BOSS DEFEATED", x, y + 35);
         } else {
             // Show phase description
             drawPhaseDescription(g2d, x, y + 35);

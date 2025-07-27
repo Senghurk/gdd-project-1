@@ -1,19 +1,20 @@
 package gdd.scene;
 
 import gdd.AudioPlayer;
+import gdd.FontManager;
 import gdd.Game;
 import gdd.Global;
 import static gdd.Global.*;
 import gdd.SoundEffectPlayer;
 import gdd.SpawnDetails;
-import gdd.powerup.PowerUp;
 import gdd.powerup.HealthPickup;
+import gdd.powerup.PowerUp;
 import gdd.sprite.Alien1;
 import gdd.sprite.Alien2;
 import gdd.sprite.Enemy;
 import gdd.sprite.EnemyBomb;
-import gdd.sprite.Missile;
 import gdd.sprite.Explosion;
+import gdd.sprite.Missile;
 import gdd.sprite.Player;
 import gdd.sprite.Shot;
 import java.awt.BasicStroke;
@@ -36,7 +37,6 @@ import java.util.Random;
 import javax.swing.ImageIcon;
 import javax.swing.JPanel;
 import javax.swing.Timer;
-
 public class Scene1 extends JPanel {
 
     private int frame = 0;
@@ -317,7 +317,9 @@ public class Scene1 extends JPanel {
         // Score with icon
         g2d.setColor(new Color(255, 215, 0)); // Gold
         g2d.setFont(boldFont);
-        g2d.drawString("★ " + score, x, y + 15);
+        Font unicodeFont = FontManager.getUnicodeFont(13);
+        g2d.setFont(unicodeFont);
+        g2d.drawString("⭐ " + score, x, y + 15);
         
         // Lives with heart icons
         g2d.setColor(new Color(255, 100, 100)); // Light red
@@ -333,7 +335,8 @@ public class Scene1 extends JPanel {
         int seconds = gameTimeSeconds % 60;
         g2d.setColor(Color.WHITE);
         g2d.setFont(regularFont);
-        g2d.drawString(String.format("⏰ %d:%02d", minutes, seconds), x, y + 50);
+        g2d.setFont(unicodeFont);
+        g2d.drawString(String.format("\n🕰️ %d:%02d", minutes, seconds), x, y + 50);
     }
     
     private void drawProgressSection(Graphics2D g2d, int x, int y) {

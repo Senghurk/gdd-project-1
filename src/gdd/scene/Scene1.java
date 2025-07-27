@@ -37,6 +37,7 @@ import java.util.Random;
 import javax.swing.ImageIcon;
 import javax.swing.JPanel;
 import javax.swing.Timer;
+
 public class Scene1 extends JPanel {
 
     private int frame = 0;
@@ -68,7 +69,7 @@ public class Scene1 extends JPanel {
     private List<Star> stars = new ArrayList<>();
 
     private boolean gameOverSoundPlayed = false; // Flag to prevent multiple game over sounds
-
+    private long gameStartTime;
     // Star class for random background stars
     private static class Star {
         int x, y, size, speed;
@@ -114,6 +115,7 @@ public class Scene1 extends JPanel {
     }
     
     public void start() {
+        gameStartTime = System.currentTimeMillis();
         addKeyListener(new TAdapter());
         setFocusable(true);
         requestFocusInWindow();
@@ -553,11 +555,13 @@ public class Scene1 extends JPanel {
     private void update() {
 
         // Update game timer
-        framesSinceLastSecond++;
-        if (framesSinceLastSecond >= 60) { // 60 FPS
-            gameTimeSeconds++;
-            framesSinceLastSecond = 0;
-        }
+        // framesSinceLastSecond++;
+        // if (framesSinceLastSecond >= 60) { // 60 FPS
+        //     gameTimeSeconds++;
+        //     framesSinceLastSecond = 0;
+        // }
+        long elapsedMs = System.currentTimeMillis() - gameStartTime;
+        gameTimeSeconds = (int) (elapsedMs / 1000);
         
         // Update phase-based enemy behavior
         updateEnemyPhase();

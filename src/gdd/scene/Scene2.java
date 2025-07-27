@@ -74,7 +74,7 @@ public class Scene2 extends JPanel {
     private boolean bossIntroPlayed = false; // Track if boss intro has been played
 
     private boolean gameOverSoundPlayed = false; // Track if game over sound has been played
-
+    private long gameStartTime;
     // Star class for random background stars
     private static class Star {
         int x, y, size, speed;
@@ -131,6 +131,7 @@ public class Scene2 extends JPanel {
     
     public void start() {
         // Indicate to Alien1 that this is level 2
+        gameStartTime = System.currentTimeMillis();
         gdd.sprite.Alien1.IS_LEVEL2 = true;
 
         addKeyListener(new TAdapter());
@@ -727,12 +728,15 @@ public class Scene2 extends JPanel {
         }
         
         // Update game timer
-        framesSinceLastSecond++;
-        if (framesSinceLastSecond >= 60) {
-            gameTimeSeconds++;
-            framesSinceLastSecond = 0;
-        }
+        // framesSinceLastSecond++;
+        // if (framesSinceLastSecond >= 60) {
+        //     gameTimeSeconds++;
+        //     framesSinceLastSecond = 0;
+        // }
         
+        long elapsedMs = System.currentTimeMillis() - gameStartTime;
+        gameTimeSeconds = (int) (elapsedMs / 1000);
+
         updateEnemyPhase();
         updateStarField();
 

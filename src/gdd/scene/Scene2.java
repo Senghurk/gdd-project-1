@@ -112,7 +112,7 @@ public class Scene2 extends JPanel {
 
     private void initAudio() {
         try {
-            String filePath = "src/audio/new_ost/stage2.wav";
+            String filePath = "src/audio/scene2.wav";
             System.out.println("Scene2: Loading audio from: " + filePath);
             audioPlayer = new AudioPlayer(filePath);
             System.out.println("Scene2: AudioPlayer created successfully");
@@ -797,7 +797,7 @@ public class Scene2 extends JPanel {
                 }
                 
                 // Play boss intro from original file for 13 seconds at high volume
-                bossIntroAudioPlayer = new AudioPlayer("src/audio/new_ost/boss_intro.wav");
+                bossIntroAudioPlayer = new AudioPlayer("src/audio/bossIntro.wav");
                 bossIntroAudioPlayer.play();
                 bossIntroFramesRemaining = BOSS_INTRO_DURATION_FRAMES;
                 bossIntroPlayed = true;

@@ -96,7 +96,7 @@ public class Scene1 extends JPanel {
 
     private void initAudio() {
         try {
-            String filePath = "src/audio/new_ost/stage1.wav";
+            String filePath = "src/audio/scene1.wav";
             System.out.println("Scene1: Loading audio from: " + filePath);
             audioPlayer = new AudioPlayer(filePath);
             System.out.println("Scene1: AudioPlayer created successfully");

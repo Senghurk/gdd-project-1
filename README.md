@@ -1,4 +1,4 @@
-# Galactic Defender - Vertical Shooter
+# Celestial Aegis - Vertical Shooter
 
 A classic arcade-style space shooter built in Java, inspired by the timeless game Space Invaders. Navigate your ship, dodge enemy fire, and survive waves of extraterrestrial threats to save the galaxy!
 
@@ -29,7 +29,7 @@ A classic arcade-style space shooter built in Java, inspired by the timeless gam
 
 ## About The Game
 
-Galactic Defender is a 2D shooter that challenges players with progressively difficult waves of enemies across two distinct levels. The game offers two different screen orientations for gameplay (Horizontal and Vertical) and features a dynamic power-up system to aid you in your mission. Survive the initial onslaught, power up your ship, and prepare to face the final boss to achieve victory.
+Celestial Aegis is a 2D shooter that challenges players with progressively difficult waves of enemies across two distinct levels. The game offers two different screen orientations for gameplay (Horizontal and Vertical) and features a dynamic power-up system to aid you in your mission. Survive the initial onslaught, power up your ship, and prepare to face the final boss to achieve victory.
 
 ## Features
 
@@ -46,12 +46,12 @@ Galactic Defender is a 2D shooter that challenges players with progressively dif
 ### Game Modes
 
 At the title screen, the player can select one of two modes:
-* **Horizontal Mode**: The player ship moves left and right at the bottom of the screen, and enemies attack from the top.
-* **Vertical Mode**: The player ship moves up and down on the left side of the screen, and enemies attack from the right.
+* **Horizontal Mode**: The player ship moves up and down on the left side of the screen, and enemies attack from the right.
+* **Vertical Mode**: The player ship moves left and right at the bottom of the screen, and enemies attack from the top.
 
 ### Player Ship
 
-You start the game with the following stats:
+You start the game with the following stats and carry it to the next stage:
 * **Lives**: 3
 * **Speed**: 3 units
 * **Bullet Count**: 1 (can only have 1 bullet on screen at a time)
@@ -59,7 +59,8 @@ You start the game with the following stats:
 ### Enemies
 
 * **UFO**: A basic enemy unit. Its attack patterns change as you progress.
-* **Alien**: A more advanced enemy that appears later in the game.
+* **Alien**: Another type of enemy that appears later in the game.
+* **Boss**: A more advanced enemy that can withstand multiple shots.
 
 ### Level 1: The Invasion Begins
 
@@ -71,8 +72,8 @@ This level is broken down into three phases:
 * **Phase 3 (3:30 - 5:00)**: All-out attack! Aliens begin to spawn alongside UFOs. Both enemy types will shoot at the player.
 
 **Power-ups in Level 1**:
-* **Speed Up**: Increases ship speed. (Max speed: 11)
-* **Bullet Count Add**: Increases the maximum number of bullets you can have on-screen at once. (Max bullets: 5)
+* **Speed Up**: Increases ship speed. Can spawn up to 4 times. (Max speed: 11)
+* **Bullet Count Add**: Increases the maximum number of bullets you can have on-screen at once. Can spawn up to 4 times. (Max bullets: 5)
 * **Lives Add**: If your lives are below 3, this adds one life.
 
 ### Level 2: The Final Stand
@@ -109,12 +110,12 @@ You need to have the Java Development Kit (JDK) installed on your system. Versio
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-username/your-repo-name.git
+   git clone https://github.com/Reon1917/gdd-project-1.git
    ```
 
 2. Navigate to the source directory:
    ```bash
-   cd your-repo-name/src
+   cd gdd-project-1/src
    ```
 
 3. Compile the Java files. Assuming your main class is Game.java:
